@@ -1,0 +1,18 @@
+/.gradle/
+/build/
+/.idea/
+/captures/
+local.properties
+google-services.json
+
+**/build/
+**/*.iml
+.DS_Store
+
+# Kotlin/Java
+*.class
+*.kt~
+*.swp
+
+# Firebase Crashlytics
+crashlytics-build.properties
