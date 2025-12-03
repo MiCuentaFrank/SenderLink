@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.senderlink.app.view.fragments.HomeFragment"
+        android:label="Home" />
+
+    <fragment
+        android:id="@+id/nav_comunidad"
+        android:name="com.senderlink.app.view.fragments.ComunidadFragment"
+        android:label="Comunidad" />
+
+    <fragment
+        android:id="@+id/nav_maps"
+        android:name="com.senderlink.app.view.fragments.MapasFragment"
+        android:label="Mapas" />
+
+    <fragment
+        android:id="@+id/nav_perfil"
+        android:name="com.senderlink.app.view.fragments.PerfilFragment"
+        android:label="Perfil" />
+</navigation>

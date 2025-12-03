@@ -52,6 +52,9 @@ dependencies {
     implementation(libs.firebase.auth.ktx)
     implementation(libs.androidx.cardview)
 
+// Jetpack Navigation
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
