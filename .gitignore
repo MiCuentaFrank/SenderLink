@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Archivos sensibles
+.env
+senderlink_api/.env
