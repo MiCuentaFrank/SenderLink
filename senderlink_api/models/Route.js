@@ -4,7 +4,7 @@ const RouteSchema = new mongoose.Schema({
     uid: {
         type: String,
         required: true,
-        ref: 'User'  // referencia al usuario creador
+
     },
     nombre: {
         type: String,
@@ -38,8 +38,12 @@ const RouteSchema = new mongoose.Schema({
     }],
     imagenPortada: {
         type: String,
-        default: ""
+        default: "",
     },
+     imagenes: {
+          type: [String],
+          default: [],
+        },
     valoracion: {
         type: Number,
         min: 0,

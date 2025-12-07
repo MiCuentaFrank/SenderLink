@@ -24,7 +24,7 @@ app.use(morgan("dev")); // mostrar cada petición en consola
 
 const userRoutes = require("./routes/userRoutes");
 const routeRoutes = require("./routes/routeRoutes");
-const messageRoutes = require("./routes/messageRoutes"); // ⭐ cuando lo tengamos
+const messageRoutes = require("./routes/messageRoutes");
 
 app.use("/api/users", userRoutes);
 app.use("/api/routes", routeRoutes);
