@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- CONTENIDO SCROLLABLE -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Imagen principal -->
+            <ImageView
+                android:id="@+id/imgRutaDetalle"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:scaleType="centerCrop" />
+
+            <!-- Galería -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvGaleria"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:padding="8dp"
+                android:layout_marginTop="8dp" />
+
+            <!-- Nombre -->
+            <TextView
+                android:id="@+id/tvNombreRutaDetalle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:padding="16dp" />
+
+            <!-- Ficha técnica -->
+            <LinearLayout
+                android:id="@+id/lyFichaRuta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/bg_card"
+                android:layout_margin="16dp">
+
+                <TextView
+                    android:id="@+id/tvUbicacion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ubicación"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white" />
+
+                <TextView
+                    android:id="@+id/tvDificultad"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Dificultad:"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@android:color/white" />
+
+                <TextView
+                    android:id="@+id/tvDistancia"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Distancia:"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@android:color/white" />
+
+                <TextView
+                    android:id="@+id/tvDuracion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Duración:"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@android:color/white" />
+            </LinearLayout>
+
+            <!-- Botón mapa -->
+            <Button
+                android:id="@+id/btnVerEnMapa"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Ver en el mapa"
+                android:textAllCaps="false"
+                android:padding="12dp"
+                android:layout_margin="16dp"
+                android:background="@android:color/holo_blue_light"
+                android:textColor="@android:color/white"
+                android:drawableLeft="@android:drawable/ic_dialog_map" />
+
+            <!-- Descripción -->
+            <TextView
+                android:id="@+id/tvDescripcionRutaDetalle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:padding="16dp" />
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- BOTÓN VOLVER FLOTANTE -->
+    <ImageButton
+        android:id="@+id/btnVolver"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginLeft="16dp"
+        android:background="@drawable/bg_circle_transparent"
+        android:padding="10dp"
+        app:srcCompat="@drawable/ic_back"
+        android:layout_gravity="top|start" />
+
+</FrameLayout>

@@ -7,7 +7,25 @@
     <fragment
         android:id="@+id/nav_home"
         android:name="com.senderlink.app.view.fragments.HomeFragment"
-        android:label="Home" />
+        android:label="Home">
+
+        <action
+            android:id="@+id/action_homeFragment_to_routeDetailFragment"
+            app:destination="@id/routeDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/routeDetailFragment"
+        android:name="com.senderlink.app.view.fragments.RouteDetailFragment"
+        android:label="Detalle Ruta">
+
+        <action
+            android:id="@+id/action_routeDetailFragment_to_nav_maps"
+            app:destination="@id/nav_maps" />
+
+    </fragment>
+
+
 
     <fragment
         android:id="@+id/nav_comunidad"
@@ -23,4 +41,5 @@
         android:id="@+id/nav_perfil"
         android:name="com.senderlink.app.view.fragments.PerfilFragment"
         android:label="Perfil" />
+
 </navigation>
