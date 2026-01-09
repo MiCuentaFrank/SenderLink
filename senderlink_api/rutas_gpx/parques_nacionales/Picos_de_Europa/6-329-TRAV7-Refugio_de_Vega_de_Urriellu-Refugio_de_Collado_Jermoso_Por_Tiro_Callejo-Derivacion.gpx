@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Refugio de Vega de Urriellu-Refugio de Collado Jermoso (Por Tiro Callejo) - Derivación</name>
+		<bounds minlat="43.17611000000005" minlon="-4.834636134999926" maxlat="43.17629044100005" maxlon="-4.834169999999915"/>
+	</metadata>
+	<trk>
+        <name>Refugio de Vega de Urriellu-Refugio de Collado Jermoso (Por Tiro Callejo) - Derivación</name>
+        <trkseg>
+            <trkpt lat="43.17629044100005" lon="-4.834636134999926">
+                <ele>2328.7981</ele>
+            </trkpt>
+            <trkpt lat="43.17611000000005" lon="-4.834169999999915">
+                <ele>2326.697</ele>
+            </trkpt>
+            <trkpt lat="43.17629044100005" lon="-4.834636134999926">
+                <ele>2328.7981</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

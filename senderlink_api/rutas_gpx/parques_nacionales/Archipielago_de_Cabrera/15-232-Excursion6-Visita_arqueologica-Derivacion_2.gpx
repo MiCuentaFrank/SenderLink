@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Visita arqueológica - Derivación 2</name>
+		<bounds minlat="39.14402541900006" minlon="2.9378233530000557" maxlat="39.14440754700007" maxlon="2.938056156000073"/>
+	</metadata>
+	<trk>
+        <name>Visita arqueológica - Derivación 2</name>
+        <trkseg>
+            <trkpt lat="39.14440754700007" lon="2.9378233530000557">
+                <ele>7.437000000005355</ele>
+            </trkpt>
+            <trkpt lat="39.14423775600005" lon="2.9379313620000858">
+                <ele>7.210999999995693</ele>
+            </trkpt>
+            <trkpt lat="39.144214016000035" lon="2.9380090280000672">
+                <ele>7.826000000000931</ele>
+            </trkpt>
+            <trkpt lat="39.14419185600008" lon="2.9380350310000836">
+                <ele>7.826000000000931</ele>
+            </trkpt>
+            <trkpt lat="39.14406050900004" lon="2.938056156000073">
+                <ele>6.89100000000326</ele>
+            </trkpt>
+            <trkpt lat="39.14402541900006" lon="2.9380089960000646">
+                <ele>6.6159999999945285</ele>
+            </trkpt>
+            <trkpt lat="39.14406050900004" lon="2.938056156000073">
+                <ele>6.89100000000326</ele>
+            </trkpt>
+            <trkpt lat="39.14419185600008" lon="2.9380350310000836">
+                <ele>7.826000000000931</ele>
+            </trkpt>
+            <trkpt lat="39.144214016000035" lon="2.9380090280000672">
+                <ele>7.826000000000931</ele>
+            </trkpt>
+            <trkpt lat="39.14423775600005" lon="2.9379313620000858">
+                <ele>7.210999999995693</ele>
+            </trkpt>
+            <trkpt lat="39.14440754700007" lon="2.9378233530000557">
+                <ele>7.437000000005355</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

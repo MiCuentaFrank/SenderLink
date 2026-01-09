@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>SA Cuello Gordo - Variante 1</name>
+		<bounds minlat="42.648094692000086" minlon="0.022434435000093345" maxlat="42.649886226000035" maxlon="0.02269746700005726"/>
+	</metadata>
+	<trk>
+        <name>SA Cuello Gordo - Variante 1</name>
+        <trkseg>
+            <trkpt lat="42.648094692000086" lon="0.02269746700005726">
+                <ele>2198.5739999999932</ele>
+            </trkpt>
+            <trkpt lat="42.648172388000035" lon="0.022603494000065893">
+                <ele>2194.6840999999986</ele>
+            </trkpt>
+            <trkpt lat="42.648313027000086" lon="0.022540670000068985">
+                <ele>2189.6731</ele>
+            </trkpt>
+            <trkpt lat="42.64836702000008" lon="0.022539312000048994">
+                <ele>2189.627900000007</ele>
+            </trkpt>
+            <trkpt lat="42.648431824000056" lon="0.022572813000067526">
+                <ele>2190.9860999999946</ele>
+            </trkpt>
+            <trkpt lat="42.64848190300006" lon="0.022559444000080475">
+                <ele>2190.0659000000014</ele>
+            </trkpt>
+            <trkpt lat="42.648579178000034" lon="0.022595054000078107">
+                <ele>2188.3059000000067</ele>
+            </trkpt>
+            <trkpt lat="42.648653273000036" lon="0.022604935000060777">
+                <ele>2187.1570000000065</ele>
+            </trkpt>
+            <trkpt lat="42.64880890400008" lon="0.022564571000089018">
+                <ele>2182.7228999999934</ele>
+            </trkpt>
+            <trkpt lat="42.648858621000045" lon="0.02257195600009254">
+                <ele>2181.800000000003</ele>
+            </trkpt>
+            <trkpt lat="42.648968892000084" lon="0.022553274000074452">
+                <ele>2180.7909999999974</ele>
+            </trkpt>
+            <trkpt lat="42.64910719400007" lon="0.022469824000040717">
+                <ele>2175.8301000000065</ele>
+            </trkpt>
+            <trkpt lat="42.649216883000065" lon="0.022463368000046557">
+                <ele>2174.6089000000065</ele>
+            </trkpt>
+            <trkpt lat="42.649328971000045" lon="0.022479973000088194">
+                <ele>2173.3650000000052</ele>
+            </trkpt>
+            <trkpt lat="42.64969517700007" lon="0.022434435000093345">
+                <ele>2166.8491000000067</ele>
+            </trkpt>
+            <trkpt lat="42.649749125000085" lon="0.022466015000077277">
+                <ele>2166.570099999997</ele>
+            </trkpt>
+            <trkpt lat="42.649886226000035" lon="0.02250948300007849">
+                <ele>2164.6021000000037</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

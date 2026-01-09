@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>SIA Ermitas de Tella - Derivación 1</name>
+		<bounds minlat="42.574680870000066" minlon="0.17505376500008651" maxlat="42.574919528000066" maxlon="0.17603802300004645"/>
+	</metadata>
+	<trk>
+        <name>SIA Ermitas de Tella - Derivación 1</name>
+        <trkseg>
+            <trkpt lat="42.574680870000066" lon="0.17603802300004645">
+                <ele>1354.323000000004</ele>
+            </trkpt>
+            <trkpt lat="42.57473237700009" lon="0.17593579100008583">
+                <ele>1351.172000000006</ele>
+            </trkpt>
+            <trkpt lat="42.57473210100005" lon="0.17577863300004992">
+                <ele>1348.5040000000008</ele>
+            </trkpt>
+            <trkpt lat="42.57485406400008" lon="0.1755391980000809">
+                <ele>1345.524000000005</ele>
+            </trkpt>
+            <trkpt lat="42.574879198000076" lon="0.17545688500007373">
+                <ele>1346.0219999999972</ele>
+            </trkpt>
+            <trkpt lat="42.57485376100004" lon="0.17521210100005646">
+                <ele>1351.0610000000015</ele>
+            </trkpt>
+            <trkpt lat="42.574884600000075" lon="0.17509798600008253">
+                <ele>1352.7290000000066</ele>
+            </trkpt>
+            <trkpt lat="42.57490612700008" lon="0.1750580250000553">
+                <ele>1355.1689000000042</ele>
+            </trkpt>
+            <trkpt lat="42.574919528000066" lon="0.17505376500008651">
+                <ele>1355.1689000000042</ele>
+            </trkpt>
+            <trkpt lat="42.57490612700008" lon="0.1750580250000553">
+                <ele>1355.1689000000042</ele>
+            </trkpt>
+            <trkpt lat="42.574884600000075" lon="0.17509798600008253">
+                <ele>1352.7290000000066</ele>
+            </trkpt>
+            <trkpt lat="42.57485376100004" lon="0.17521210100005646">
+                <ele>1351.0610000000015</ele>
+            </trkpt>
+            <trkpt lat="42.574879198000076" lon="0.17545688500007373">
+                <ele>1346.0219999999972</ele>
+            </trkpt>
+            <trkpt lat="42.57485406400008" lon="0.1755391980000809">
+                <ele>1345.524000000005</ele>
+            </trkpt>
+            <trkpt lat="42.57473210100005" lon="0.17577863300004992">
+                <ele>1348.5040000000008</ele>
+            </trkpt>
+            <trkpt lat="42.57473237700009" lon="0.17593579100008583">
+                <ele>1351.172000000006</ele>
+            </trkpt>
+            <trkpt lat="42.574680870000066" lon="0.17603802300004645">
+                <ele>1354.323000000004</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

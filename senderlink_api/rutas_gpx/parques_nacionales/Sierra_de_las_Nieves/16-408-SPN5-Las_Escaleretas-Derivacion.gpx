@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Las Escaleretas - Derivación</name>
+		<bounds minlat="36.663814793000086" minlon="-5.032012725999948" maxlat="36.664951905000066" maxlon="-5.03157185099991"/>
+	</metadata>
+	<trk>
+        <name>Las Escaleretas - Derivación</name>
+        <trkseg>
+            <trkpt lat="36.664951905000066" lon="-5.032012725999948">
+                <ele>1184.25</ele>
+            </trkpt>
+            <trkpt lat="36.66481449300005" lon="-5.031735677999961">
+                <ele>1189.4100000000035</ele>
+            </trkpt>
+            <trkpt lat="36.66465967800008" lon="-5.031618436999906">
+                <ele>1192.1900000000023</ele>
+            </trkpt>
+            <trkpt lat="36.664225345000034" lon="-5.03157185099991">
+                <ele>1192.5120000000024</ele>
+            </trkpt>
+            <trkpt lat="36.66399693300008" lon="-5.031619108999905">
+                <ele>1196.4020000000019</ele>
+            </trkpt>
+            <trkpt lat="36.663814793000086" lon="-5.031599417999928">
+                <ele>1200.6429999999964</ele>
+            </trkpt>
+            <trkpt lat="36.66399693300008" lon="-5.031619108999905">
+                <ele>1196.4020000000019</ele>
+            </trkpt>
+            <trkpt lat="36.664225345000034" lon="-5.03157185099991">
+                <ele>1192.5120000000024</ele>
+            </trkpt>
+            <trkpt lat="36.66465967800008" lon="-5.031618436999906">
+                <ele>1192.1900000000023</ele>
+            </trkpt>
+            <trkpt lat="36.66481449300005" lon="-5.031735677999961">
+                <ele>1189.4100000000035</ele>
+            </trkpt>
+            <trkpt lat="36.664951905000066" lon="-5.032012725999948">
+                <ele>1184.25</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

@@ -2,11 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Fondo -->
+    <!-- FONDO -->
     <ImageView
         android:id="@+id/bgImage"
         android:layout_width="0dp"
@@ -18,92 +17,113 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/senderistas" />
 
-    <!-- CARD -->
+    <!-- OVERLAY -->
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#66000000"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- TÍTULO -->
     <TextView
         android:id="@+id/tvTitleRegister"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="108dp"
         android:text="Crear cuenta"
         android:textSize="32sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
+        android:textColor="@color/text_on_dark"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/cardRegister"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        android:layout_marginBottom="24dp"/>
 
-    <androidx.cardview.widget.CardView
+    <!-- CARD -->
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardRegister"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:alpha="0.9"
-        android:padding="24dp"
-        app:cardBackgroundColor="#67FFFFFF"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="48dp"
         app:cardCornerRadius="20dp"
-        app:cardElevation="20dp"
+        app:cardElevation="16dp"
+        app:cardBackgroundColor="@color/card_background"
+        app:layout_constraintTop_toBottomOf="@id/tvTitleRegister"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintEnd_toEndOf="parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:padding="24dp">
 
+            <!-- EMAIL -->
             <EditText
                 android:id="@+id/etEmailRegister"
                 android:layout_width="0dp"
                 android:layout_height="48dp"
-                android:layout_marginTop="24dp"
-                android:background="#D0CCBEBE"
+                android:background="@drawable/bg_input_senderlink"
                 android:hint="Correo electrónico"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"
                 android:inputType="textEmailAddress"
-                android:padding="12dp"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvTitleRegister" />
+                app:layout_constraintEnd_toEndOf="parent"/>
 
+            <!-- PASSWORD -->
             <EditText
                 android:id="@+id/etPasswordRegister"
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_marginTop="12dp"
-                android:background="#FCF5FD"
+                android:background="@drawable/bg_input_senderlink"
                 android:hint="Contraseña"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"
                 android:inputType="textPassword"
-                android:padding="12dp"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/etEmailRegister"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/etEmailRegister" />
+                app:layout_constraintEnd_toEndOf="parent"/>
 
+            <!-- CONFIRM PASSWORD -->
             <EditText
                 android:id="@+id/etConfirmPassword"
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_marginTop="12dp"
-                android:background="@android:color/white"
+                android:background="@drawable/bg_input_senderlink"
                 android:hint="Confirmar contraseña"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"
                 android:inputType="textPassword"
-                android:padding="12dp"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/etPasswordRegister"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/etPasswordRegister" />
+                app:layout_constraintEnd_toEndOf="parent"/>
 
+            <!-- BOTÓN -->
             <Button
                 android:id="@+id/btnRegister"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="Registrarse"
-                app:layout_constraintEnd_toEndOf="parent"
+                android:textColor="@color/text_on_dark"
+                android:backgroundTint="@color/sl_primary"
+                app:cornerRadius="14dp"
+                app:layout_constraintTop_toBottomOf="@id/etConfirmPassword"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/etConfirmPassword" />
+                app:layout_constraintEnd_toEndOf="parent"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

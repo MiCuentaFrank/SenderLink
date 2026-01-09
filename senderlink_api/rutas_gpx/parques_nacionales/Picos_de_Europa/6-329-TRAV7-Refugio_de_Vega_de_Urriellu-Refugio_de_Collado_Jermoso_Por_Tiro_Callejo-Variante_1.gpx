@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Refugio de Vega de Urriellu-Refugio de Collado Jermoso (Por Tiro Callejo) - Variante 1</name>
+		<bounds minlat="43.17532235500005" minlon="-4.857639165999956" maxlat="43.17686739900006" maxlon="-4.856342778999931"/>
+	</metadata>
+	<trk>
+        <name>Refugio de Vega de Urriellu-Refugio de Collado Jermoso (Por Tiro Callejo) - Variante 1</name>
+        <trkseg>
+            <trkpt lat="43.17532235500005" lon="-4.856342778999931">
+                <ele>2562.1708999999973</ele>
+            </trkpt>
+            <trkpt lat="43.175590981000084" lon="-4.856411386999923">
+                <ele>2572.9590000000026</ele>
+            </trkpt>
+            <trkpt lat="43.176002372000085" lon="-4.856362977999936">
+                <ele>2586.5769</ele>
+            </trkpt>
+            <trkpt lat="43.17638494400006" lon="-4.856355346999919">
+                <ele>2577.181899999996</ele>
+            </trkpt>
+            <trkpt lat="43.17663442600008" lon="-4.856596798999931">
+                <ele>2545.123000000007</ele>
+            </trkpt>
+            <trkpt lat="43.17683252900008" lon="-4.85696805799995">
+                <ele>2503.5090000000055</ele>
+            </trkpt>
+            <trkpt lat="43.17686739900006" lon="-4.857132518999947">
+                <ele>2487.8701</ele>
+            </trkpt>
+            <trkpt lat="43.17680992500004" lon="-4.8573486489999596">
+                <ele>2493.1478999999963</ele>
+            </trkpt>
+            <trkpt lat="43.17658224000007" lon="-4.857498740999915">
+                <ele>2535.323000000004</ele>
+            </trkpt>
+            <trkpt lat="43.17582444700008" lon="-4.857639165999956">
+                <ele>2487.521999999997</ele>
+            </trkpt>
+            <trkpt lat="43.175449280000066" lon="-4.857536177999918">
+                <ele>2488.747099999993</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

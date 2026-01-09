@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Refugio de Ándara-Canal de San Carlos-Argüébanes - Variante</name>
+		<bounds minlat="43.18756304200008" minlon="-4.6685095779999415" maxlat="43.18970199100005" maxlon="-4.665632829999936"/>
+	</metadata>
+	<trk>
+        <name>Refugio de Ándara-Canal de San Carlos-Argüébanes - Variante</name>
+        <trkseg>
+            <trkpt lat="43.18907940400004" lon="-4.667287770999906">
+                <ele>921.8160000000062</ele>
+            </trkpt>
+            <trkpt lat="43.18915853900006" lon="-4.667066571999953">
+                <ele>922.0329999999958</ele>
+            </trkpt>
+            <trkpt lat="43.189288042000044" lon="-4.666794893999906">
+                <ele>920.0149999999994</ele>
+            </trkpt>
+            <trkpt lat="43.18944860500005" lon="-4.6665958519999435">
+                <ele>915.9729999999981</ele>
+            </trkpt>
+            <trkpt lat="43.18958173800007" lon="-4.666475831999946">
+                <ele>914.9260000000068</ele>
+            </trkpt>
+            <trkpt lat="43.18962404800004" lon="-4.66637727199992">
+                <ele>915.5789999999979</ele>
+            </trkpt>
+            <trkpt lat="43.189605114000074" lon="-4.66607363199995">
+                <ele>915.6520000000019</ele>
+            </trkpt>
+            <trkpt lat="43.18964205200007" lon="-4.665943016999961">
+                <ele>916.9560000000056</ele>
+            </trkpt>
+            <trkpt lat="43.18970199100005" lon="-4.665836957999943">
+                <ele>916.622000000003</ele>
+            </trkpt>
+            <trkpt lat="43.18967653800007" lon="-4.665780426999959">
+                <ele>915.025999999998</ele>
+            </trkpt>
+            <trkpt lat="43.189635562000035" lon="-4.665787288999923">
+                <ele>913.8260000000009</ele>
+            </trkpt>
+            <trkpt lat="43.18950902200004" lon="-4.665855638999915">
+                <ele>912.301999999996</ele>
+            </trkpt>
+            <trkpt lat="43.18934056100005" lon="-4.665795217999914">
+                <ele>907.2020000000048</ele>
+            </trkpt>
+            <trkpt lat="43.189073449000034" lon="-4.665642373999958">
+                <ele>898.2039999999979</ele>
+            </trkpt>
+            <trkpt lat="43.18886921300009" lon="-4.665632829999936">
+                <ele>893.497000000003</ele>
+            </trkpt>
+            <trkpt lat="43.18854025100006" lon="-4.66576746599992">
+                <ele>886.0570000000007</ele>
+            </trkpt>
+            <trkpt lat="43.18831548500009" lon="-4.665964760999941">
+                <ele>881.1609999999928</ele>
+            </trkpt>
+            <trkpt lat="43.187914446000036" lon="-4.66623702499993">
+                <ele>875.778999999995</ele>
+            </trkpt>
+            <trkpt lat="43.18777361800005" lon="-4.666484460999925">
+                <ele>871.551999999996</ele>
+            </trkpt>
+            <trkpt lat="43.187666068000055" lon="-4.666852450999954">
+                <ele>861.676999999996</ele>
+            </trkpt>
+            <trkpt lat="43.18762160600005" lon="-4.6670985189999215">
+                <ele>856.8999999999942</ele>
+            </trkpt>
+            <trkpt lat="43.18765325800007" lon="-4.667330704999927">
+                <ele>854.8600000000006</ele>
+            </trkpt>
+            <trkpt lat="43.18765064200005" lon="-4.66751010999991">
+                <ele>852.75</ele>
+            </trkpt>
+            <trkpt lat="43.18756304200008" lon="-4.667711130999919">
+                <ele>849.3070000000007</ele>
+            </trkpt>
+            <trkpt lat="43.18771051900006" lon="-4.6685095779999415">
+                <ele>853.3340000000026</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

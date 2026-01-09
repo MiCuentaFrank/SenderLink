@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>SIA Ermitas de Tella - Derivación 3</name>
+		<bounds minlat="42.57284291700006" minlon="0.17676550900006305" maxlat="42.573012504000076" maxlon="0.17703319800006057"/>
+	</metadata>
+	<trk>
+        <name>SIA Ermitas de Tella - Derivación 3</name>
+        <trkseg>
+            <trkpt lat="42.57284291700006" lon="0.17676550900006305">
+                <ele>1383.951000000001</ele>
+            </trkpt>
+            <trkpt lat="42.57294618000009" lon="0.1768997380000883">
+                <ele>1386.4719999999943</ele>
+            </trkpt>
+            <trkpt lat="42.573012504000076" lon="0.17703319800006057">
+                <ele>1387.8760000000038</ele>
+            </trkpt>
+            <trkpt lat="42.57294618000009" lon="0.1768997380000883">
+                <ele>1386.4719999999943</ele>
+            </trkpt>
+            <trkpt lat="42.57284291700006" lon="0.17676550900006305">
+                <ele>1383.951000000001</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Ruta Roja. Villarreal de San Carlos-Castillo de Monfragüe - Variante</name>
+		<bounds minlat="39.82986843800006" minlon="-6.035156232999952" maxlat="39.83889915900005" maxlon="-6.026045111999906"/>
+	</metadata>
+	<trk>
+        <name>Ruta Roja. Villarreal de San Carlos-Castillo de Monfragüe - Variante</name>
+        <trkseg>
+            <trkpt lat="39.83889915900005" lon="-6.026087317999952">
+                <ele>227.94599999999627</ele>
+            </trkpt>
+            <trkpt lat="39.83882938100004" lon="-6.026045111999906">
+                <ele>227.08699999999953</ele>
+            </trkpt>
+            <trkpt lat="39.838705288000085" lon="-6.026087129999951">
+                <ele>227.19599999999627</ele>
+            </trkpt>
+            <trkpt lat="39.83820472500008" lon="-6.026749655999936">
+                <ele>230.11100000000442</ele>
+            </trkpt>
+            <trkpt lat="39.837620221000066" lon="-6.027330539999923">
+                <ele>233.62699999999313</ele>
+            </trkpt>
+            <trkpt lat="39.83720136200009" lon="-6.027656879999938">
+                <ele>236.2740000000049</ele>
+            </trkpt>
+            <trkpt lat="39.83649597300007" lon="-6.028107005999914">
+                <ele>239.62900000000081</ele>
+            </trkpt>
+            <trkpt lat="39.83612305100007" lon="-6.028258567999956">
+                <ele>238.9820000000036</ele>
+            </trkpt>
+            <trkpt lat="39.83590768900007" lon="-6.0284008899999435">
+                <ele>237.0170000000071</ele>
+            </trkpt>
+            <trkpt lat="39.83559833700008" lon="-6.028686273999938">
+                <ele>229.4189999999944</ele>
+            </trkpt>
+            <trkpt lat="39.83488616900007" lon="-6.029112889999908">
+                <ele>231.08900000000722</ele>
+            </trkpt>
+            <trkpt lat="39.834561431000054" lon="-6.029451195999911">
+                <ele>235.49700000000303</ele>
+            </trkpt>
+            <trkpt lat="39.833968492000054" lon="-6.030417609999915">
+                <ele>228.9649999999965</ele>
+            </trkpt>
+            <trkpt lat="39.83367043000004" lon="-6.0308044099999165">
+                <ele>231.28399999999965</ele>
+            </trkpt>
+            <trkpt lat="39.83295192200006" lon="-6.031178774999944">
+                <ele>222.45299999999406</ele>
+            </trkpt>
+            <trkpt lat="39.832471987000076" lon="-6.031693473999951">
+                <ele>227.0219999999972</ele>
+            </trkpt>
+            <trkpt lat="39.832279784000036" lon="-6.032158808999952">
+                <ele>226.09500000000116</ele>
+            </trkpt>
+            <trkpt lat="39.83208777700008" lon="-6.032668395999906">
+                <ele>224.1009999999951</ele>
+            </trkpt>
+            <trkpt lat="39.83029682500006" lon="-6.03460003899994">
+                <ele>213.90899999999965</ele>
+            </trkpt>
+            <trkpt lat="39.82986843800006" lon="-6.035156232999952">
+                <ele>224.0679999999993</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

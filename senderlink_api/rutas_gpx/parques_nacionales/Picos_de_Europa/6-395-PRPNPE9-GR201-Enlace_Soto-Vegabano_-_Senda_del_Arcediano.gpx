@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Enlace Soto-Vegabaño - Senda del Arcediano</name>
+		<bounds minlat="43.16375970000007" minlon="-5.0332790659999205" maxlat="43.16394335100006" maxlon="-5.032315168999958"/>
+	</metadata>
+	<trk>
+        <name>Enlace Soto-Vegabaño - Senda del Arcediano</name>
+        <desc>Se trata de una ruta de enlace entre las rutas Soto-Vegabaño y Senda del Arcediano</desc>
+        <trkseg>
+            <trkpt lat="43.16394335100006" lon="-5.032315168999958">
+                <ele>927.6110000000044</ele>
+            </trkpt>
+            <trkpt lat="43.16389233600006" lon="-5.032412332999911">
+                <ele>925.8369999999995</ele>
+            </trkpt>
+            <trkpt lat="43.16391638500005" lon="-5.032538666999926">
+                <ele>924.7719999999972</ele>
+            </trkpt>
+            <trkpt lat="43.163910197000064" lon="-5.032578070999932">
+                <ele>924.6549999999988</ele>
+            </trkpt>
+            <trkpt lat="43.163892747000034" lon="-5.03260404699995">
+                <ele>924.2829999999958</ele>
+            </trkpt>
+            <trkpt lat="43.16379778400005" lon="-5.032673852999949">
+                <ele>923.6609999999928</ele>
+            </trkpt>
+            <trkpt lat="43.16376291600005" lon="-5.032728792999933">
+                <ele>922.7799999999988</ele>
+            </trkpt>
+            <trkpt lat="43.16375970000007" lon="-5.03276046499991">
+                <ele>922.7799999999988</ele>
+            </trkpt>
+            <trkpt lat="43.16377934600007" lon="-5.032908471999917">
+                <ele>921.1059999999998</ele>
+            </trkpt>
+            <trkpt lat="43.16390480900009" lon="-5.0332790659999205">
+                <ele>919.8969999999972</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

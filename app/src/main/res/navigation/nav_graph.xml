@@ -1,23 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/nav_home">
 
     <fragment
         android:id="@+id/nav_home"
         android:name="com.senderlink.app.view.fragments.HomeFragment"
-        android:label="Home">
+        android:label="Home"
+        tools:layout="@layout/fragment_home">
 
         <action
             android:id="@+id/action_homeFragment_to_routeDetailFragment"
-            app:destination="@id/routeDetailFragment" />
+            app:destination="@id/routeDetailFragment"
+            app:enterAnim="@android:anim/slide_in_left"
+            app:exitAnim="@android:anim/slide_out_right"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
     </fragment>
 
     <fragment
         android:id="@+id/routeDetailFragment"
         android:name="com.senderlink.app.view.fragments.RouteDetailFragment"
-        android:label="Detalle Ruta">
+        android:label="Detalle Ruta"
+        tools:layout="@layout/fragment_route_detail">
+
+        <!-- Argumento para recibir el ID de la ruta -->
+        <argument
+            android:name="routeId"
+            app:argType="string" />
 
         <action
             android:id="@+id/action_routeDetailFragment_to_nav_maps"
@@ -25,21 +37,22 @@
 
     </fragment>
 
-
-
     <fragment
         android:id="@+id/nav_comunidad"
         android:name="com.senderlink.app.view.fragments.ComunidadFragment"
-        android:label="Comunidad" />
+        android:label="Comunidad"
+        tools:layout="@layout/fragment_comunidad"/>
 
     <fragment
         android:id="@+id/nav_maps"
         android:name="com.senderlink.app.view.fragments.MapasFragment"
-        android:label="Mapas" />
+        android:label="Mapas"
+        tools:layout="@layout/fragment_mapas"/>
 
     <fragment
         android:id="@+id/nav_perfil"
         android:name="com.senderlink.app.view.fragments.PerfilFragment"
-        android:label="Perfil" />
+        android:label="Perfil"
+        tools:layout="@layout/fragment_perfil"/>
 
 </navigation>

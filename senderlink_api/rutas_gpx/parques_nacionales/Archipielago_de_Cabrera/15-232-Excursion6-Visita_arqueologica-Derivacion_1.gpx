@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Visita arqueológica - Derivación 1</name>
+		<bounds minlat="39.14379457600006" minlon="2.9361338930000898" maxlat="39.144310250000046" maxlon="2.9373740220000855"/>
+	</metadata>
+	<trk>
+        <name>Visita arqueológica - Derivación 1</name>
+        <trkseg>
+            <trkpt lat="39.144310250000046" lon="2.9373740220000855">
+                <ele>3.1900000000023283</ele>
+            </trkpt>
+            <trkpt lat="39.14425237900008" lon="2.937353700000074">
+                <ele>3.2400000000052387</ele>
+            </trkpt>
+            <trkpt lat="39.144173960000046" lon="2.9373010380000437">
+                <ele>3.0209999999933643</ele>
+            </trkpt>
+            <trkpt lat="39.144002166000064" lon="2.937154981000049">
+                <ele>2.7709999999933643</ele>
+            </trkpt>
+            <trkpt lat="39.14391253100007" lon="2.937071170000081">
+                <ele>2.771999999997206</ele>
+            </trkpt>
+            <trkpt lat="39.14385460800008" lon="2.9369561710000767">
+                <ele>2.789999999993597</ele>
+            </trkpt>
+            <trkpt lat="39.14379457600006" lon="2.9363953570000376">
+                <ele>3.974000000001979</ele>
+            </trkpt>
+            <trkpt lat="39.14380387400007" lon="2.9363306330000682">
+                <ele>4.677999999999884</ele>
+            </trkpt>
+            <trkpt lat="39.14387842800005" lon="2.9361412130000417">
+                <ele>4.543999999994412</ele>
+            </trkpt>
+            <trkpt lat="39.143904820000046" lon="2.9361338930000898">
+                <ele>4.543999999994412</ele>
+            </trkpt>
+            <trkpt lat="39.14396078300007" lon="2.936165042000084">
+                <ele>3.135999999998603</ele>
+            </trkpt>
+            <trkpt lat="39.143904820000046" lon="2.9361338930000898">
+                <ele>4.543999999994412</ele>
+            </trkpt>
+            <trkpt lat="39.14387842800005" lon="2.9361412130000417">
+                <ele>4.543999999994412</ele>
+            </trkpt>
+            <trkpt lat="39.14380387400007" lon="2.9363306330000682">
+                <ele>4.677999999999884</ele>
+            </trkpt>
+            <trkpt lat="39.14379457600006" lon="2.9363953570000376">
+                <ele>3.974000000001979</ele>
+            </trkpt>
+            <trkpt lat="39.14385460800008" lon="2.9369561710000767">
+                <ele>2.789999999993597</ele>
+            </trkpt>
+            <trkpt lat="39.14391253100007" lon="2.937071170000081">
+                <ele>2.771999999997206</ele>
+            </trkpt>
+            <trkpt lat="39.144002166000064" lon="2.937154981000049">
+                <ele>2.7709999999933643</ele>
+            </trkpt>
+            <trkpt lat="39.144173960000046" lon="2.9373010380000437">
+                <ele>3.0209999999933643</ele>
+            </trkpt>
+            <trkpt lat="39.14425237900008" lon="2.937353700000074">
+                <ele>3.2400000000052387</ele>
+            </trkpt>
+            <trkpt lat="39.144310250000046" lon="2.9373740220000855">
+                <ele>3.1900000000023283</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

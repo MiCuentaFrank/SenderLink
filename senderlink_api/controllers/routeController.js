@@ -2,23 +2,31 @@ const Route = require("../models/Route");
 const User = require("../models/User");
 const axios = require("axios");
 
-// ==========================================
-// Crear ruta con imagen automática de Google
-// ==========================================
 
+// ==========================================
+// 1. Crear ruta (USER_ROUTE)
+// ==========================================
 async function createRoute(req, res) {
   try {
-    const { uid, nombre, descripcion, dificultad, distancia, duracion, puntos } = req.body;
+    const {
+      uid,
+      name,
+      points,
+      distanceKm,
+      difficulty,
+      comunidad,
+      provincia,
+      startLocality
+    } = req.body;
 
-    // Validaciones
-    if (!uid || !nombre || !distancia || !duracion || !puntos) {
+    // 🔒 Validaciones mínimas
+    if (!uid || !name || !points || points.length < 2) {
       return res.status(400).json({
         ok: false,
-        message: "Faltan campos obligatorios (uid, nombre, distancia, duracion, puntos)"
+        message: "Datos insuficientes para crear la ruta"
       });
     }
 
-    // Verificar que el usuario existe
     const user = await User.findOne({ uid });
     if (!user) {
       return res.status(404).json({
@@ -27,209 +35,237 @@ async function createRoute(req, res) {
       });
     }
 
-    let imagenPortada = "";
+    // 📍 Puntos inicio / fin
+    const startPoint = {
+      lat: points[0].lat,
+      lng: points[0].lng
+    };
 
-    // ============================================================
-    // 1️⃣ Tomamos el primer punto de la ruta para buscar la foto
-    // ============================================================
-    if (puntos && puntos.length > 0) {
-      const lat = puntos[0].latitud;
-      const lng = puntos[0].longitud;
+    const endPoint = {
+      lat: points[points.length - 1].lat,
+      lng: points[points.length - 1].lng
+    };
 
-      try {
-        // 2️⃣ Buscamos lugares naturales cercanos
-        const searchUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=2000&type=tourist_attraction&key=${process.env.GOOGLE_MAPS_KEY}`;
+    // 🗺️ Geometría (simple, válida)
+    const geometry = {
+      type: "LineString",
+      coordinates: points.map(p => [p.lng, p.lat])
+    };
 
-        const searchResponse = await axios.get(searchUrl);
+    // 🖼 Imagen genérica outdoor (NO descriptiva)
+    const coverImage =
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80";
 
-        if (searchResponse.data.results.length > 0) {
-          const place = searchResponse.data.results[0];
-
-          // 3️⃣ Si el lugar tiene fotos, usamos la primera
-          if (place.photos && place.photos.length > 0) {
-            const photoRef = place.photos[0].photo_reference;
-
-            imagenPortada =
-             imagenPortada = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=${photoRef}&key=${process.env.GOOGLE_MAPS_KEY}`;
-
-          }
-        }
-      } catch (error) {
-        console.log("⚠ Error obteniendo imagen de Google:", error.message);
-      }
-    }
-
-    // Si no se obtuvo imagen, ponemos una por defecto
-    if (!imagenPortada) {
-      imagenPortada = "https://images.unsplash.com/photo-1501785888041-af3ef285b470";
-    }
-
-    // 4️⃣ Guardamos la ruta con la imagen ya añadida
     const newRoute = await Route.create({
-      ...req.body,
-      imagenPortada
+      // Identificación
+      type: "USER_ROUTE",
+      source: "USER",
+
+      // Info visible
+      name,
+      description:
+        "Ruta creada por un usuario. La imagen es genérica y no representa necesariamente la localización exacta.",
+
+      // Imágenes (NO featured → 1 sola)
+      coverImage,
+      images: [coverImage],
+
+      // Datos técnicos
+      distanceKm,
+      difficulty,
+
+      // Geografía
+      geometry,
+      startPoint,
+      endPoint,
+
+      // Localización
+      startLocality,
+      comunidad,
+      provincia,
+
+      // Flags
+      featured: false
     });
 
     res.status(201).json({
       ok: true,
-      message: "Ruta creada correctamente con imagen automática",
       route: newRoute
     });
 
   } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
+    res.status(500).json({
+      ok: false,
+      message: err.message
+    });
   }
 }
 
 
-// =======================
-// Obtener todas las rutas
-// =======================
+
+
+// ==========================================
+// 2. Obtener rutas (con filtros + featured + paginación)
+// ==========================================
 async function getRoutes(req, res) {
   try {
-    const { provincia, dificultad, activa } = req.query;
+    const {
+      parque,
+      provincia,
+      localidad,
+      dificultad,
+      page = 1,
+      limit = 20
+    } = req.query;
 
-    let filtro = {};
-    if (provincia) filtro.provincia = provincia;
-    if (dificultad) filtro.dificultad = dificultad;
-    if (activa !== undefined) filtro.activa = activa === "true";
+    const filtro = {};
 
-    const routes = await Route.find(filtro).sort({ createdAt: -1 });
+    if (parque) {
+      filtro.parqueNacional = { $regex: parque, $options: "i" };
+    }
+    if (provincia) {
+      filtro.provincia = { $regex: provincia, $options: "i" };
+    }
+    if (localidad) {
+      filtro.localidad = { $regex: localidad, $options: "i" };
+    }
+    if (dificultad) {
+      filtro.dificultad = dificultad;
+    }
+
+    const pageFinal = parseInt(page, 10);
+    const limitFinal = parseInt(limit, 10);
+    const skip = (pageFinal - 1) * limitFinal;
+
+    const routes = await Route.find(filtro)
+      .sort({ featured: -1, createdAt: -1 }) // ⭐ featured primero
+      .skip(skip)
+      .limit(limitFinal);
+
+    const total = await Route.countDocuments(filtro);
+
+    res.json({
+      ok: true,
+      page: pageFinal,
+      limit: limitFinal,
+      total,
+      pages: Math.ceil(total / limitFinal),
+      routes
+    });
+
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
+  }
+}
+// ==========================================
+// 2.b Obtener rutas destacadas (FEATURED)
+// ==========================================
+async function getFeaturedRoutes(req, res) {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 10;
+
+    const routes = await Route.find({ featured: true })
+      .sort({ createdAt: -1 })
+      .limit(limit);
 
     res.json({
       ok: true,
       count: routes.length,
       routes
     });
+
   } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
+    res.status(500).json({
+      ok: false,
+      message: err.message
+    });
   }
 }
 
-// Obtener ruta por ID
+
+
+// ==========================================
+// 3. Obtener ruta por ID
+// ==========================================
 async function getRouteById(req, res) {
   try {
-    const { id } = req.params;
-
-    const route = await Route.findById(id);
+    const route = await Route.findById(req.params.id);
 
     if (!route) {
-      return res.status(404).json({
-        ok: false,
-        message: "Ruta no encontrada"
-      });
+      return res.status(404).json({ ok: false, message: "Ruta no encontrada" });
     }
 
-    res.json({
-      ok: true,
-      route
-    });
+    res.json({ ok: true, route });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });
   }
 }
 
-// Obtener rutas de un usuario
+// ==========================================
+// 4. Rutas por usuario
+// ==========================================
 async function getRoutesByUser(req, res) {
   try {
-    const { uid } = req.params;
+    const routes = await Route.find({ uid: req.params.uid })
+      .sort({ createdAt: -1 });
 
-    const routes = await Route.find({ uid }).sort({ createdAt: -1 });
-
-    res.json({
-      ok: true,
-      count: routes.length,
-      routes
-    });
+    res.json({ ok: true, count: routes.length, routes });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });
   }
 }
 
-// Actualizar ruta
-async function updateRoute(req, res) {
+// ==========================================
+// 5. Buscar rutas cercanas
+// ==========================================
+async function getRoutesNearMe(req, res) {
   try {
-    const { id } = req.params;
+    const { lat, lng, radio = 50000, limit } = req.query;
 
-    const updatedRoute = await Route.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true
-    });
-
-    if (!updatedRoute) {
-      return res.status(404).json({
-        ok: false,
-        message: "Ruta no encontrada"
-      });
-    }
-
-    res.json({
-      ok: true,
-      message: "Ruta actualizada correctamente",
-      route: updatedRoute
-    });
-  } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
-  }
-}
-
-// Valorar ruta
-async function rateRoute(req, res) {
-  try {
-    const { id } = req.params;
-    const { valoracion } = req.body;
-
-    if (valoracion < 0 || valoracion > 5) {
+    if (!lat || !lng) {
       return res.status(400).json({
         ok: false,
-        message: "La valoración debe estar entre 0 y 5"
+        message: "lat y lng son obligatorios"
       });
     }
 
-    const route = await Route.findById(id);
-    if (!route) {
-      return res.status(404).json({
-        ok: false,
-        message: "Ruta no encontrada"
-      });
-    }
+    const limitFinal = parseInt(limit, 10) || 20;
 
-    // Calcular nueva valoración media
-    const totalValoracion =
-      route.valoracion * route.numeroValoraciones + valoracion;
-    route.numeroValoraciones += 1;
-    route.valoracion =
-      totalValoracion / route.numeroValoraciones;
+    const routes = await Route.find({
+      startPoint: {
+        $nearSphere: {
+          $geometry: {
+            type: "Point",
+            coordinates: [Number(lng), Number(lat)]
+          },
+          $maxDistance: Number(radio)
+        }
+      }
+    }).limit(limitFinal);
 
-    await route.save();
+    res.json({ ok: true, count: routes.length, routes });
 
-    res.json({
-      ok: true,
-      message: "Valoración registrada",
-      route
-    });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });
   }
 }
 
-// Eliminar ruta
-async function deleteRoute(req, res) {
+// ==========================================
+// 6. Obtener parques nacionales (DISTINCT)
+// ==========================================
+async function getParques(req, res) {
   try {
-    const { id } = req.params;
+    const parques = await Route.distinct("parqueNacional");
 
-    const deletedRoute = await Route.findByIdAndDelete(id);
-
-    if (!deletedRoute) {
-      return res.status(404).json({
-        ok: false,
-        message: "Ruta no encontrada"
-      });
-    }
+    // Limpieza: quitar null/"" y ordenar
+    const parquesLimpios = parques
+      .filter(p => typeof p === "string" && p.trim().length > 0)
+      .sort((a, b) => a.localeCompare(b, "es"));
 
     res.json({
       ok: true,
-      message: "Ruta eliminada correctamente"
+      count: parquesLimpios.length,
+      parques: parquesLimpios
     });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });
@@ -241,7 +277,7 @@ module.exports = {
   getRoutes,
   getRouteById,
   getRoutesByUser,
-  updateRoute,
-  rateRoute,
-  deleteRoute
+  getRoutesNearMe,
+  getParques,
+  getFeaturedRoutes
 };

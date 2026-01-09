@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Camino área recreativa del Acebo y las Fuentes - Derivación</name>
+		<bounds minlat="39.49273799100007" minlon="-4.529693327999951" maxlat="39.495421227000065" maxlon="-4.5245178049999595"/>
+	</metadata>
+	<trk>
+        <name>Camino área recreativa del Acebo y las Fuentes - Derivación</name>
+        <trkseg>
+            <trkpt lat="39.49273799100007" lon="-4.5245178049999595">
+                <ele>650.903999999995</ele>
+            </trkpt>
+            <trkpt lat="39.49344565900009" lon="-4.52504392499992">
+                <ele>651.0760000000009</ele>
+            </trkpt>
+            <trkpt lat="39.493301957000085" lon="-4.5256575499999485">
+                <ele>650.025999999998</ele>
+            </trkpt>
+            <trkpt lat="39.493283416000054" lon="-4.526130661999957">
+                <ele>649.4829999999929</ele>
+            </trkpt>
+            <trkpt lat="39.49330656300009" lon="-4.526716102999956">
+                <ele>649.0679999999993</ele>
+            </trkpt>
+            <trkpt lat="39.49333608000006" lon="-4.526816226999927">
+                <ele>649.0399999999936</ele>
+            </trkpt>
+            <trkpt lat="39.49372495700004" lon="-4.527489258999935">
+                <ele>648.7970000000059</ele>
+            </trkpt>
+            <trkpt lat="39.493742299000075" lon="-4.527577180999913">
+                <ele>648.801999999996</ele>
+            </trkpt>
+            <trkpt lat="39.49377139500007" lon="-4.527943901999947">
+                <ele>648.6989999999932</ele>
+            </trkpt>
+            <trkpt lat="39.49380012700004" lon="-4.528103698999928">
+                <ele>648.6699999999983</ele>
+            </trkpt>
+            <trkpt lat="39.49388726300003" lon="-4.528276710999933">
+                <ele>648.7459999999992</ele>
+            </trkpt>
+            <trkpt lat="39.49412296600008" lon="-4.5286400039999535">
+                <ele>648.0660000000062</ele>
+            </trkpt>
+            <trkpt lat="39.49420221300005" lon="-4.528709385999946">
+                <ele>648.101999999999</ele>
+            </trkpt>
+            <trkpt lat="39.494330880000064" lon="-4.528771892999941">
+                <ele>648.0139999999956</ele>
+            </trkpt>
+            <trkpt lat="39.495421227000065" lon="-4.529693327999951">
+                <ele>650.2489999999962</ele>
+            </trkpt>
+            <trkpt lat="39.494330880000064" lon="-4.528771892999941">
+                <ele>648.0139999999956</ele>
+            </trkpt>
+            <trkpt lat="39.49420221300005" lon="-4.528709385999946">
+                <ele>648.101999999999</ele>
+            </trkpt>
+            <trkpt lat="39.49412296600008" lon="-4.5286400039999535">
+                <ele>648.0660000000062</ele>
+            </trkpt>
+            <trkpt lat="39.49388726300003" lon="-4.528276710999933">
+                <ele>648.7459999999992</ele>
+            </trkpt>
+            <trkpt lat="39.49380012700004" lon="-4.528103698999928">
+                <ele>648.6699999999983</ele>
+            </trkpt>
+            <trkpt lat="39.49377139500007" lon="-4.527943901999947">
+                <ele>648.6989999999932</ele>
+            </trkpt>
+            <trkpt lat="39.493742299000075" lon="-4.527577180999913">
+                <ele>648.801999999996</ele>
+            </trkpt>
+            <trkpt lat="39.49372495700004" lon="-4.527489258999935">
+                <ele>648.7970000000059</ele>
+            </trkpt>
+            <trkpt lat="39.49333608000006" lon="-4.526816226999927">
+                <ele>649.0399999999936</ele>
+            </trkpt>
+            <trkpt lat="39.49330656300009" lon="-4.526716102999956">
+                <ele>649.0679999999993</ele>
+            </trkpt>
+            <trkpt lat="39.493283416000054" lon="-4.526130661999957">
+                <ele>649.4829999999929</ele>
+            </trkpt>
+            <trkpt lat="39.493301957000085" lon="-4.5256575499999485">
+                <ele>650.025999999998</ele>
+            </trkpt>
+            <trkpt lat="39.49344565900009" lon="-4.52504392499992">
+                <ele>651.0760000000009</ele>
+            </trkpt>
+            <trkpt lat="39.49273799100007" lon="-4.5245178049999595">
+                <ele>650.903999999995</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

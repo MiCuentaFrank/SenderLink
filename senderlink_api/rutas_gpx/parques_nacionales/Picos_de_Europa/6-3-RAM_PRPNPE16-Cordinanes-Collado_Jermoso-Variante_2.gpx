@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Cordiñanes-Collado Jermoso - Variante 2</name>
+		<bounds minlat="43.17274669600005" minlon="-4.880458780999959" maxlat="43.173701975000085" maxlon="-4.876416462999941"/>
+	</metadata>
+	<trk>
+        <name>Cordiñanes-Collado Jermoso - Variante 2</name>
+        <trkseg>
+            <trkpt lat="43.17274669600005" lon="-4.880458780999959">
+                <ele>1618.2620000000024</ele>
+            </trkpt>
+            <trkpt lat="43.17277091900007" lon="-4.8803664969999545">
+                <ele>1620.119000000006</ele>
+            </trkpt>
+            <trkpt lat="43.17280926400008" lon="-4.880298764999907">
+                <ele>1619.8148999999976</ele>
+            </trkpt>
+            <trkpt lat="43.17282486000005" lon="-4.8801545329999385">
+                <ele>1616.1779999999999</ele>
+            </trkpt>
+            <trkpt lat="43.17289516800008" lon="-4.879918952999958">
+                <ele>1619.5270000000019</ele>
+            </trkpt>
+            <trkpt lat="43.17302689700006" lon="-4.8796301289999064">
+                <ele>1616.4790000000066</ele>
+            </trkpt>
+            <trkpt lat="43.173085418000085" lon="-4.879395333999923">
+                <ele>1620.4640000000072</ele>
+            </trkpt>
+            <trkpt lat="43.17314790700004" lon="-4.879226124999946">
+                <ele>1618.6549999999988</ele>
+            </trkpt>
+            <trkpt lat="43.17319799900008" lon="-4.879142326999954">
+                <ele>1619.8589999999967</ele>
+            </trkpt>
+            <trkpt lat="43.17323382100005" lon="-4.87903696099994">
+                <ele>1621.9199999999983</ele>
+            </trkpt>
+            <trkpt lat="43.17328529200006" lon="-4.8789512529999115">
+                <ele>1623.9170000000013</ele>
+            </trkpt>
+            <trkpt lat="43.17332286300007" lon="-4.878837554999961">
+                <ele>1626.8699999999953</ele>
+            </trkpt>
+            <trkpt lat="43.17332339300009" lon="-4.878730760999929">
+                <ele>1628.1331000000064</ele>
+            </trkpt>
+            <trkpt lat="43.173338615000034" lon="-4.878683570999954">
+                <ele>1629.2679000000062</ele>
+            </trkpt>
+            <trkpt lat="43.17326090800009" lon="-4.878285523999921">
+                <ele>1636.5529999999999</ele>
+            </trkpt>
+            <trkpt lat="43.17328949000006" lon="-4.878132501999914">
+                <ele>1640.7280000000028</ele>
+            </trkpt>
+            <trkpt lat="43.173275868000076" lon="-4.878040203999944">
+                <ele>1644.1670000000013</ele>
+            </trkpt>
+            <trkpt lat="43.17321111100006" lon="-4.8777844009999285">
+                <ele>1652.9360000000015</ele>
+            </trkpt>
+            <trkpt lat="43.173203974000046" lon="-4.877655602999937">
+                <ele>1651.520000000004</ele>
+            </trkpt>
+            <trkpt lat="43.17342606300008" lon="-4.877394755999944">
+                <ele>1663.8089999999938</ele>
+            </trkpt>
+            <trkpt lat="43.173617412000056" lon="-4.8770043839999175">
+                <ele>1674.8479999999981</ele>
+            </trkpt>
+            <trkpt lat="43.17365410700006" lon="-4.876873429999932">
+                <ele>1673.5479999999952</ele>
+            </trkpt>
+            <trkpt lat="43.17370172100004" lon="-4.876585464999948">
+                <ele>1677.6659999999974</ele>
+            </trkpt>
+            <trkpt lat="43.173701975000085" lon="-4.876416462999941">
+                <ele>1679.4611000000004</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

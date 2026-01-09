@@ -1,120 +1,448 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
 
-    <!-- CONTENIDO SCROLLABLE -->
-    <ScrollView
+    <!-- ============================================ -->
+    <!-- HEADER CON IMAGEN COLAPSABLE -->
+    <!-- ============================================ -->
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="300dp"
+        android:fitsSystemWindows="true"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/collapsingToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:contentScrim="@color/sl_primary"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:expandedTitleMarginStart="16dp"
+            app:expandedTitleMarginBottom="28dp">
+
+            <ImageView
+                android:id="@+id/imgRouteCover"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:fitsSystemWindows="true"
+                android:contentDescription="Imagen de la ruta"
+                app:layout_collapseMode="parallax"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/gradient_overlay"/>
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:layout_collapseMode="pin"
+                app:navigationIcon="@drawable/ic_back"
+                app:title="Detalle de Ruta"
+                app:titleTextColor="@color/text_on_dark"/>
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Progress Bar -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"/>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO SCROLLABLE -->
+    <!-- ============================================ -->
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <!-- Imagen principal -->
-            <ImageView
-                android:id="@+id/imgRutaDetalle"
-                android:layout_width="match_parent"
-                android:layout_height="250dp"
-                android:scaleType="centerCrop" />
+            <!-- ============================================ -->
+            <!-- SECCIÓN 1: GALERÍA (JUSTO DEBAJO DE LA IMAGEN) -->
+            <!-- ============================================ -->
 
-            <!-- Galería -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvGaleria"
-                android:layout_width="match_parent"
-                android:layout_height="120dp"
-                android:padding="8dp"
-                android:layout_marginTop="8dp" />
-
-            <!-- Nombre -->
             <TextView
-                android:id="@+id/tvNombreRutaDetalle"
+                android:id="@+id/tvGalleryTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:padding="16dp" />
-
-            <!-- Ficha técnica -->
-            <LinearLayout
-                android:id="@+id/lyFichaRuta"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:background="@drawable/bg_card"
-                android:layout_margin="16dp">
-
-                <TextView
-                    android:id="@+id/tvUbicacion"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Ubicación"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/white" />
-
-                <TextView
-                    android:id="@+id/tvDificultad"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Dificultad:"
-                    android:layout_marginTop="8dp"
-                    android:textColor="@android:color/white" />
-
-                <TextView
-                    android:id="@+id/tvDistancia"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Distancia:"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@android:color/white" />
-
-                <TextView
-                    android:id="@+id/tvDuracion"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Duración:"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@android:color/white" />
-            </LinearLayout>
-
-            <!-- Botón mapa -->
-            <Button
-                android:id="@+id/btnVerEnMapa"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Ver en el mapa"
-                android:textAllCaps="false"
-                android:padding="12dp"
-                android:layout_margin="16dp"
-                android:background="@android:color/holo_blue_light"
-                android:textColor="@android:color/white"
-                android:drawableLeft="@android:drawable/ic_dialog_map" />
-
-            <!-- Descripción -->
-            <TextView
-                android:id="@+id/tvDescripcionRutaDetalle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:text="📸 Más fotos"
                 android:textSize="16sp"
-                android:padding="16dp" />
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvGallery"
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                android:clipToPadding="false"
+                android:paddingStart="0dp"
+                android:paddingEnd="8dp"
+                android:visibility="gone"
+                android:layout_marginBottom="20dp"/>
+
+            <!-- ============================================ -->
+            <!-- SECCIÓN 2: HEADER (Badge + Tipo + Nombre) -->
+            <!-- ============================================ -->
+
+            <!-- Badge Destacada -->
+            <TextView
+                android:id="@+id/tvBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:text="⭐ DESTACADA"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_on_dark"
+                android:background="@drawable/bg_badge"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Tipo de Ruta -->
+            <TextView
+                android:id="@+id/tvRouteType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Gran Recorrido · FEDME"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="4dp"/>
+
+            <!-- Nombre de la ruta -->
+            <TextView
+                android:id="@+id/tvRouteName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nombre de la Ruta"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="20dp"/>
+
+            <!-- ============================================ -->
+            <!-- SECCIÓN 3: DATOS TÉCNICOS (Card) -->
+            <!-- ============================================ -->
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="20dp">
+
+                    <!-- Distancia -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📏 Distancia"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_secondary"
+                            android:layout_marginBottom="4dp"/>
+
+                        <TextView
+                            android:id="@+id/tvDistance"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 km"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/sl_primary"/>
+
+                    </LinearLayout>
+
+                    <!-- Divisor -->
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:background="@color/card_border"
+                        android:layout_marginHorizontal="12dp"/>
+
+                    <!-- Duración -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⏱️ Duración"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_secondary"
+                            android:layout_marginBottom="4dp"/>
+
+                        <TextView
+                            android:id="@+id/tvDuration"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0h"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/sl_primary"/>
+
+                    </LinearLayout>
+
+                    <!-- Divisor -->
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:background="@color/card_border"
+                        android:layout_marginHorizontal="12dp"/>
+
+                    <!-- Dificultad -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⚡ Dificultad"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_secondary"
+                            android:layout_marginBottom="4dp"/>
+
+                        <TextView
+                            android:id="@+id/tvDifficulty"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Moderada"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/sl_primary"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ============================================ -->
+            <!-- SECCIÓN 4: UBICACIÓN (Card) -->
+            <!-- ============================================ -->
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp"
+                android:layout_marginBottom="20dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📍 Ubicación"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginBottom="16dp"/>
+
+                    <!-- Municipio -->
+                    <LinearLayout
+                        android:id="@+id/layoutMunicipio"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="10dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="100dp"
+                            android:layout_height="wrap_content"
+                            android:text="🏘️ Municipio"
+                            android:textSize="14sp"
+                            android:textColor="@color/text_secondary"/>
+
+                        <TextView
+                            android:id="@+id/tvMunicipio"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="--"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_primary"/>
+
+                    </LinearLayout>
+
+                    <!-- Provincia -->
+                    <LinearLayout
+                        android:id="@+id/layoutProvincia"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="10dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="100dp"
+                            android:layout_height="wrap_content"
+                            android:text="🗺️ Provincia"
+                            android:textSize="14sp"
+                            android:textColor="@color/text_secondary"/>
+
+                        <TextView
+                            android:id="@+id/tvProvincia"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="--"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_primary"/>
+
+                    </LinearLayout>
+
+                    <!-- Comunidad -->
+                    <LinearLayout
+                        android:id="@+id/layoutComunidad"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="100dp"
+                            android:layout_height="wrap_content"
+                            android:text="🏛️ Comunidad"
+                            android:textSize="14sp"
+                            android:textColor="@color/text_secondary"/>
+
+                        <TextView
+                            android:id="@+id/tvComunidad"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="--"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_primary"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ============================================ -->
+            <!-- SECCIÓN 5: DESCRIPCIÓN -->
+            <!-- ============================================ -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📝 Descripción"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Descripción de la ruta..."
+                android:textSize="15sp"
+                android:textColor="@color/text_secondary"
+                android:lineSpacingMultiplier="1.4"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- ============================================ -->
+            <!-- SECCIÓN 6: INFORMACIÓN ÚTIL (Opcional) -->
+            <!-- ============================================ -->
+
+            <TextView
+                android:id="@+id/tvAdditionalInfoTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ℹ️ Información GPS"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone"/>
+
+            <TextView
+                android:id="@+id/tvAdditionalInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Información adicional..."
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:lineSpacingMultiplier="1.3"
+                android:layout_marginBottom="24dp"
+                android:visibility="gone"
+                android:fontFamily="monospace"/>
+
+            <!-- ============================================ -->
+            <!-- SECCIÓN 7: BOTÓN VER EN MAPA -->
+            <!-- ============================================ -->
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewOnMap"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="🗺️ Ver en Mapa"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="30dp"
+                app:backgroundTint="@color/sl_primary"
+                android:textColor="@color/text_on_dark"
+                app:elevation="6dp"
+                app:icon="@android:drawable/ic_dialog_map"
+                app:iconGravity="textStart"
+                app:iconTint="@color/text_on_dark"/>
+
         </LinearLayout>
-    </ScrollView>
 
-    <!-- BOTÓN VOLVER FLOTANTE -->
-    <ImageButton
-        android:id="@+id/btnVolver"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginLeft="16dp"
-        android:background="@drawable/bg_circle_transparent"
-        android:padding="10dp"
-        app:srcCompat="@drawable/ic_back"
-        android:layout_gravity="top|start" />
+    </androidx.core.widget.NestedScrollView>
 
-</FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Ruta de los Lagos - Variante</name>
+		<bounds minlat="43.27300880900009" minlon="-4.981527770999946" maxlat="43.27468716100009" maxlon="-4.981298434999928"/>
+	</metadata>
+	<trk>
+        <name>Ruta de los Lagos - Variante</name>
+        <trkseg>
+            <trkpt lat="43.27464755600005" lon="-4.981371464999938">
+                <ele>1096.7149999999965</ele>
+            </trkpt>
+            <trkpt lat="43.27468716100009" lon="-4.98149954999991">
+                <ele>1096.0629999999946</ele>
+            </trkpt>
+            <trkpt lat="43.27467008000008" lon="-4.981527770999946">
+                <ele>1096.4330000000045</ele>
+            </trkpt>
+            <trkpt lat="43.274604396000086" lon="-4.981514410999921">
+                <ele>1099.426999999996</ele>
+            </trkpt>
+            <trkpt lat="43.27453829700005" lon="-4.981479536999927">
+                <ele>1100.3530000000028</ele>
+            </trkpt>
+            <trkpt lat="43.274422951000076" lon="-4.9814555529999325">
+                <ele>1104.3650000000052</ele>
+            </trkpt>
+            <trkpt lat="43.27427336300008" lon="-4.981468407999955">
+                <ele>1108.0090000000055</ele>
+            </trkpt>
+            <trkpt lat="43.27413655300006" lon="-4.981357704999937">
+                <ele>1107.974000000002</ele>
+            </trkpt>
+            <trkpt lat="43.27390525700008" lon="-4.981339626999954">
+                <ele>1110.8889999999956</ele>
+            </trkpt>
+            <trkpt lat="43.27387074500007" lon="-4.9813318339999455">
+                <ele>1110.8889999999956</ele>
+            </trkpt>
+            <trkpt lat="43.27383415800006" lon="-4.981302349999908">
+                <ele>1110.8650000000052</ele>
+            </trkpt>
+            <trkpt lat="43.273787250000055" lon="-4.981298434999928">
+                <ele>1111.1809999999969</ele>
+            </trkpt>
+            <trkpt lat="43.27365922200005" lon="-4.9813318339999455">
+                <ele>1112.020000000004</ele>
+            </trkpt>
+            <trkpt lat="43.27357461300005" lon="-4.981369684999947">
+                <ele>1113.1059999999998</ele>
+            </trkpt>
+            <trkpt lat="43.273275141000056" lon="-4.981385270999908">
+                <ele>1111.7590000000055</ele>
+            </trkpt>
+            <trkpt lat="43.27300880900009" lon="-4.9814789529999075">
+                <ele>1113.6269999999931</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

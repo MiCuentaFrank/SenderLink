@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>SA Casa dero Puerto a la Estiva - Derivación</name>
+		<bounds minlat="42.606640189000075" minlon="0.026157521000072848" maxlat="42.60787838500005" maxlon="0.028979558000060024"/>
+	</metadata>
+	<trk>
+        <name>SA Casa dero Puerto a la Estiva - Derivación</name>
+        <trkseg>
+            <trkpt lat="42.60787838500005" lon="0.026157521000072848">
+                <ele>1924.729999999996</ele>
+            </trkpt>
+            <trkpt lat="42.60781420300009" lon="0.026613704000055804">
+                <ele>1925.9679999999935</ele>
+            </trkpt>
+            <trkpt lat="42.60773838400007" lon="0.02681479200003878">
+                <ele>1926.926999999996</ele>
+            </trkpt>
+            <trkpt lat="42.60741264900008" lon="0.027933488000087436">
+                <ele>1932.548999999999</ele>
+            </trkpt>
+            <trkpt lat="42.60704905000006" lon="0.02856515900003842">
+                <ele>1936.323000000004</ele>
+            </trkpt>
+            <trkpt lat="42.606640189000075" lon="0.028979558000060024">
+                <ele>1939.9030000000057</ele>
+            </trkpt>
+            <trkpt lat="42.60704905000006" lon="0.02856515900003842">
+                <ele>1936.323000000004</ele>
+            </trkpt>
+            <trkpt lat="42.60741264900008" lon="0.027933488000087436">
+                <ele>1932.548999999999</ele>
+            </trkpt>
+            <trkpt lat="42.60773838400007" lon="0.02681479200003878">
+                <ele>1926.926999999996</ele>
+            </trkpt>
+            <trkpt lat="42.60781420300009" lon="0.026613704000055804">
+                <ele>1925.9679999999935</ele>
+            </trkpt>
+            <trkpt lat="42.60787838500005" lon="0.026157521000072848">
+                <ele>1924.729999999996</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

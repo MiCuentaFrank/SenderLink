@@ -1,36 +1,45 @@
-const express= require("express");
+const express = require("express");
 const router = express.Router();
 
 const {
-createRoute,
-getRoutes,
-getRouteById,
-getRoutesByUser,
-updateRoute,
-rateRoute,
-deleteRoute
-}=require("../controllers/routeController");
+  createRoute,
+  getRoutes,
+  getFeaturedRoutes,
+  getRouteById,
+  getRoutesByUser,
+  getRoutesNearMe,
+  getParques
+} = require("../controllers/routeController");
 
-// Crear ruta
+// ===============================
+// POST
+// ===============================
 router.post("/", createRoute);
 
-// Obtener todas las rutas
-router.get("/", getRoutes);
+// ===============================
+// GET ESPECÍFICAS
+// ===============================
 
-// Obtener ruta por ID
-router.get("/:id", getRouteById);
+// ⭐ Rutas destacadas
+router.get("/featured", getFeaturedRoutes);
 
-// Obtener rutas de un usuario
+// 🌲 Parques nacionales
+router.get("/parques", getParques);
+
+// 📍 Rutas cercanas
+router.get("/cerca", getRoutesNearMe);
+
+// 👤 Rutas por usuario
 router.get("/user/:uid", getRoutesByUser);
 
-// Actualizar ruta
-router.put("/:id", updateRoute);
+// ===============================
+// GET GENERALES
+// ===============================
 
-// Valorar ruta
-router.put("/:id/rate", rateRoute);
+// 📋 Todas las rutas (con filtros)
+router.get("/", getRoutes);
 
-
-// Eliminar
-router.delete("/:id", deleteRoute);
+// 🆔 Ruta por ID (SIEMPRE LA ÚLTIMA)
+router.get("/:id", getRouteById);
 
 module.exports = router;

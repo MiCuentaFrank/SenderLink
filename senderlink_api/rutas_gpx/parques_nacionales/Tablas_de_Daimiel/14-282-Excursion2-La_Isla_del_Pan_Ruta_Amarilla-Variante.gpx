@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>La Isla del Pan. Ruta Amarilla - Variante</name>
+		<bounds minlat="39.13757638200008" minlon="-3.69940386199994" maxlat="39.13767188500009" maxlon="-3.6977078629999482"/>
+	</metadata>
+	<trk>
+        <name>La Isla del Pan. Ruta Amarilla - Variante</name>
+        <trkseg>
+            <trkpt lat="39.13767188500009" lon="-3.6977078629999482">
+                <ele>607.6469999999972</ele>
+            </trkpt>
+            <trkpt lat="39.13761439800004" lon="-3.697827631999928">
+                <ele>607.7660000000033</ele>
+            </trkpt>
+            <trkpt lat="39.13758773500007" lon="-3.697916462999956">
+                <ele>607.4879999999976</ele>
+            </trkpt>
+            <trkpt lat="39.13757638200008" lon="-3.698006601999907">
+                <ele>607.4780000000028</ele>
+            </trkpt>
+            <trkpt lat="39.13757689400006" lon="-3.698071402999915">
+                <ele>607.369000000006</ele>
+            </trkpt>
+            <trkpt lat="39.13763183800006" lon="-3.6983762559999604">
+                <ele>607.429999999993</ele>
+            </trkpt>
+            <trkpt lat="39.13763136000006" lon="-3.698456088999933">
+                <ele>607.5749999999971</ele>
+            </trkpt>
+            <trkpt lat="39.13758302700006" lon="-3.6987020669999424">
+                <ele>607.8579999999929</ele>
+            </trkpt>
+            <trkpt lat="39.13758701800003" lon="-3.699088568999912">
+                <ele>607.8990000000049</ele>
+            </trkpt>
+            <trkpt lat="39.137644600000044" lon="-3.69940386199994">
+                <ele>607.6530000000057</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

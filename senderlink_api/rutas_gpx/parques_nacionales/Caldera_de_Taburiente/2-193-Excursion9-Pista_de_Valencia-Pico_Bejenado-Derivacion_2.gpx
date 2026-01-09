@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Pista de Valencia-Pico Bejenado - Derivación 2</name>
+		<bounds minlat="28.68652389400006" minlon="-17.861869601999956" maxlat="28.686728541000036" maxlon="-17.860475228999917"/>
+	</metadata>
+	<trk>
+        <name>Pista de Valencia-Pico Bejenado - Derivación 2</name>
+        <trkseg>
+            <trkpt lat="28.68652389400006" lon="-17.861869601999956">
+                <ele>1383.8129999999946</ele>
+            </trkpt>
+            <trkpt lat="28.68664777500004" lon="-17.861684753999953">
+                <ele>1383.451000000001</ele>
+            </trkpt>
+            <trkpt lat="28.686702853000043" lon="-17.861554294999905">
+                <ele>1384.8600000000006</ele>
+            </trkpt>
+            <trkpt lat="28.686722513000063" lon="-17.861435146999952">
+                <ele>1387.5160000000033</ele>
+            </trkpt>
+            <trkpt lat="28.686728541000036" lon="-17.860995990999925">
+                <ele>1391.0120000000024</ele>
+            </trkpt>
+            <trkpt lat="28.68668806000005" lon="-17.860859512999923">
+                <ele>1389.9229999999952</ele>
+            </trkpt>
+            <trkpt lat="28.68668910000008" lon="-17.86059677299994">
+                <ele>1390.3650000000052</ele>
+            </trkpt>
+            <trkpt lat="28.68670219200004" lon="-17.860475228999917">
+                <ele>1391.078999999998</ele>
+            </trkpt>
+            <trkpt lat="28.68668910000008" lon="-17.86059677299994">
+                <ele>1390.3650000000052</ele>
+            </trkpt>
+            <trkpt lat="28.68668806000005" lon="-17.860859512999923">
+                <ele>1389.9229999999952</ele>
+            </trkpt>
+            <trkpt lat="28.686728541000036" lon="-17.860995990999925">
+                <ele>1391.0120000000024</ele>
+            </trkpt>
+            <trkpt lat="28.686722513000063" lon="-17.861435146999952">
+                <ele>1387.5160000000033</ele>
+            </trkpt>
+            <trkpt lat="28.686702853000043" lon="-17.861554294999905">
+                <ele>1384.8600000000006</ele>
+            </trkpt>
+            <trkpt lat="28.68664777500004" lon="-17.861684753999953">
+                <ele>1383.451000000001</ele>
+            </trkpt>
+            <trkpt lat="28.68652389400006" lon="-17.861869601999956">
+                <ele>1383.8129999999946</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

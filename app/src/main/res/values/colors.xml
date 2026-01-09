@@ -1,5 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- 🎨 BASE -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+
+    <!-- 🎨 Base SenderLink -->
+    <color name="sl_primary">#2E7D32</color>      <!-- Verde senderismo -->
+    <color name="sl_primary_dark">#1B5E20</color>
+    <color name="sl_secondary">#81C784</color>
+    <color name="sl_accent">#FFC107</color>
+
+    <!-- 🖤 Textos -->
+    <color name="text_primary">#1F2933</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="text_on_dark">#FFFFFF</color>
+
+    <!-- 🧱 Fondos -->
+    <color name="bg_app">#F5F7FA</color>
+    <color name="bg_card">#FFFFFF</color>
+    <color name="bg_divider">#E5E7EB</color>
+
+    <!-- 🏷️ BADGES -->
+    <color name="badge_featured">#2E7D32</color>  <!-- Destacada -->
+    <color name="badge_user">#1565C0</color>      <!-- Comunidad -->
+
+    <!-- ⚠️ Estados -->
+    <color name="success">#388E3C</color>
+    <color name="warning">#F9A825</color>
+    <color name="error">#D32F2F</color>
+
+    <!-- 🧱 Cards -->
+    <color name="card_background">#FFFFFF</color>
+    <color name="card_border">#E5E7EB</color>
+
+    <!-- 🌿 Imagen preview -->
+    <color name="green_forest_light">#E8F5E9</color>
+
+
 </resources>

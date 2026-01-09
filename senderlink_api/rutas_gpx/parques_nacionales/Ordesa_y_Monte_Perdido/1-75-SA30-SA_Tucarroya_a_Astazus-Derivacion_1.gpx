@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>SA Tucarroya a Astazus - Derivación 1</name>
+		<bounds minlat="42.69716233100007" minlon="0.04004438400005483" maxlat="42.697629945000074" maxlon="0.040128034000076696"/>
+	</metadata>
+	<trk>
+        <name>SA Tucarroya a Astazus - Derivación 1</name>
+        <trkseg>
+            <trkpt lat="42.69716233100007" lon="0.04004438400005483">
+                <ele>2619.8169000000053</ele>
+            </trkpt>
+            <trkpt lat="42.69718127800007" lon="0.04011550700005273">
+                <ele>2621.575899999996</ele>
+            </trkpt>
+            <trkpt lat="42.69733139200008" lon="0.04007052800005795">
+                <ele>2637.5409999999974</ele>
+            </trkpt>
+            <trkpt lat="42.697371941000085" lon="0.04010644400005958">
+                <ele>2642.2981</ele>
+            </trkpt>
+            <trkpt lat="42.69745949500009" lon="0.04011449000006451">
+                <ele>2650.128899999996</ele>
+            </trkpt>
+            <trkpt lat="42.697489472000086" lon="0.04008987000008801">
+                <ele>2649.8579000000027</ele>
+            </trkpt>
+            <trkpt lat="42.697559795000075" lon="0.040128034000076696">
+                <ele>2657.145000000004</ele>
+            </trkpt>
+            <trkpt lat="42.697629945000074" lon="0.040124699000045894">
+                <ele>2660.7379999999976</ele>
+            </trkpt>
+            <trkpt lat="42.697559795000075" lon="0.040128034000076696">
+                <ele>2657.145000000004</ele>
+            </trkpt>
+            <trkpt lat="42.697489472000086" lon="0.04008987000008801">
+                <ele>2649.8579000000027</ele>
+            </trkpt>
+            <trkpt lat="42.69745949500009" lon="0.04011449000006451">
+                <ele>2650.128899999996</ele>
+            </trkpt>
+            <trkpt lat="42.697371941000085" lon="0.04010644400005958">
+                <ele>2642.2981</ele>
+            </trkpt>
+            <trkpt lat="42.69733139200008" lon="0.04007052800005795">
+                <ele>2637.5409999999974</ele>
+            </trkpt>
+            <trkpt lat="42.69718127800007" lon="0.04011550700005273">
+                <ele>2621.575899999996</ele>
+            </trkpt>
+            <trkpt lat="42.69716233100007" lon="0.04004438400005483">
+                <ele>2619.8169000000053</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Macizo de Ándara - Derivación</name>
+		<bounds minlat="43.21405000000004" minlon="-4.712357638999947" maxlat="43.21544533700006" maxlon="-4.712033720999955"/>
+	</metadata>
+	<trk>
+        <name>Macizo de Ándara - Derivación</name>
+        <trkseg>
+            <trkpt lat="43.21544533700006" lon="-4.712357638999947">
+                <ele>1699.1499999999942</ele>
+            </trkpt>
+            <trkpt lat="43.21527814500007" lon="-4.712311651999926">
+                <ele>1701.9030000000057</ele>
+            </trkpt>
+            <trkpt lat="43.21477485200006" lon="-4.712033720999955">
+                <ele>1708.3120000000054</ele>
+            </trkpt>
+            <trkpt lat="43.21459959800006" lon="-4.712043474999916">
+                <ele>1709.9579999999987</ele>
+            </trkpt>
+            <trkpt lat="43.214367623000044" lon="-4.712142031999917">
+                <ele>1709.1779999999999</ele>
+            </trkpt>
+            <trkpt lat="43.214311999000074" lon="-4.712157576999914">
+                <ele>1709.5290999999997</ele>
+            </trkpt>
+            <trkpt lat="43.21406095000009" lon="-4.712121540999931">
+                <ele>1713.4980000000069</ele>
+            </trkpt>
+            <trkpt lat="43.21405000000004" lon="-4.712109999999939">
+                <ele>1713.4980000000069</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

@@ -1,8 +1,18 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.SenderLink" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <style name="Base.Theme.SenderLink" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Colores principales de SenderLink -->
+        <item name="colorPrimary">@color/sl_primary</item>
+        <item name="colorPrimaryVariant">@color/sl_primary_dark</item>
+        <item name="colorOnPrimary">@color/text_on_dark</item>
+        <item name="colorSecondary">@color/sl_accent</item>
+
+        <!-- Configuración de la barra de estado -->
+        <item name="android:statusBarColor">@color/sl_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+
+        <!-- Fondo de la app -->
+        <item name="android:windowBackground">@color/bg_app</item>
     </style>
 
     <style name="Theme.SenderLink" parent="Base.Theme.SenderLink" />

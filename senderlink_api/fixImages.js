@@ -1,82 +1,54 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
 const Route = require("./models/Route");
-const axios = require("axios");
 
-async function fixImages() {
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("🔥 Conectado a MongoDB");
+// 🌄 Unsplash SOLO paisajes / outdoor
+const UNSPLASH_OUTDOOR = [
+  // Montaña
+  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&q=80",
+  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80",
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80",
 
-    let rutas = await Route.find({});
-    console.log(`📌 Encontradas ${rutas.length} rutas`);
+  // Senderos / hiking
+  "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=1200&q=80",
+  "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&q=80",
 
-    for (let ruta of rutas) {
-      console.log(`\n🔍 Procesando ruta: ${ruta.nombre}`);
+  // Naturaleza / bosque
+  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&q=80",
+  "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1200&q=80"
+];
 
-      const primerPunto = ruta.puntos?.[0];
-      if (!primerPunto) {
-        console.log("⛔ La ruta no tiene puntos → No se pueden generar imágenes");
-        continue;
-      }
+async function fixNonFeaturedImages() {
+  await mongoose.connect(process.env.MONGO_URI);
+  console.log("🟢 Conectado a MongoDB");
 
-      const { latitud, longitud } = primerPunto;
+  const rutas = await Route.find({ featured: { $ne: true } });
+  console.log(`🟡 Rutas no destacadas encontradas: ${rutas.length}`);
 
-      const url =
-        `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitud},${longitud}&radius=5000&type=tourist_attraction&key=${process.env.GOOGLE_MAPS_KEY}`;
+  let i = 0;
 
-      const resp = await axios.get(url);
-      const lugares = resp.data.results;
+  for (const ruta of rutas) {
+    const img = UNSPLASH_OUTDOOR[i % UNSPLASH_OUTDOOR.length];
 
-      if (!lugares || lugares.length === 0) {
-        console.log("❌ No se encontraron lugares cercanos → usando imagen por defecto");
-        ruta.imagenPortada = "https://images.unsplash.com/photo-1501785888041-af3ef285b470";
-        ruta.imagenes = [
-          "https://images.unsplash.com/photo-1501785888041-af3ef285b470"
-        ];
-        await ruta.save();
-        continue;
-      }
+    ruta.coverImage = img;
+    ruta.images = [img];
 
-      console.log(`📸 Encontrados ${lugares.length} lugares → Generando fotos...`);
+    ruta.extraInfo = {
+      ...ruta.extraInfo,
+      imagenGenerica: true,
+      avisoImagen:
+        "Imagen genérica de paisaje. No representa la localización exacta de la ruta."
+    };
 
-      // --- Foto principal (STRING) ---
-      const place = lugares[0];
-      if (place.photos && place.photos.length > 0) {
-        const photoRef = place.photos[0].photo_reference;
-        ruta.imagenPortada =
-          `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=${photoRef}&key=${process.env.GOOGLE_MAPS_KEY}`;
-      } else {
-        ruta.imagenPortada = "https://images.unsplash.com/photo-1501785888041-af3ef285b470";
-      }
-
-      // --- Galería de imágenes (ARRAY) ---
-      ruta.imagenes = [];
-
-      for (let lugar of lugares.slice(0, 5)) {
-        if (lugar.photos && lugar.photos.length > 0) {
-          const ref = lugar.photos[0].photo_reference;
-
-          ruta.imagenes.push(
-            `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=${ref}&key=${process.env.GOOGLE_MAPS_KEY}`
-          );
-        }
-      }
-
-      if (ruta.imagenes.length === 0) {
-        ruta.imagenes = [ruta.imagenPortada];
-      }
-
-      await ruta.save();
-      console.log(`✨ Imágenes generadas: ${ruta.imagenes.length}`);
-      console.log(`✔ imagenPortada asignada`);
-    }
-
-    console.log("\n🎉 TODAS LAS RUTAS HAN SIDO PROCESADAS EXITOSAMENTE");
-    process.exit();
-  } catch (err) {
-    console.error("💥 ERROR:", err);
+    await ruta.save();
+    i++;
   }
+
+  console.log("✅ Imágenes outdoor aplicadas a rutas no destacadas");
+  process.exit(0);
 }
 
-fixImages();
+fixNonFeaturedImages().catch(err => {
+  console.error("💥 ERROR:", err);
+  process.exit(1);
+});

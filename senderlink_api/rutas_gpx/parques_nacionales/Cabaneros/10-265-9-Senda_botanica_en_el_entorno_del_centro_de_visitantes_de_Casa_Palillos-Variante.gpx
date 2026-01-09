@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Senda botánica en el entorno del centro de visitantes de Casa Palillos - Variante</name>
+		<bounds minlat="39.30271430200008" minlon="-4.315402709999944" maxlat="39.30311040200007" maxlon="-4.314619198999935"/>
+	</metadata>
+	<trk>
+        <name>Senda botánica en el entorno del centro de visitantes de Casa Palillos - Variante</name>
+        <trkseg>
+            <trkpt lat="39.30311040200007" lon="-4.314619198999935">
+                <ele>613.4180000000051</ele>
+            </trkpt>
+            <trkpt lat="39.30300181300004" lon="-4.314664623999931">
+                <ele>613.4930000000022</ele>
+            </trkpt>
+            <trkpt lat="39.30279452700006" lon="-4.31478020499992">
+                <ele>613.351999999999</ele>
+            </trkpt>
+            <trkpt lat="39.30277136700005" lon="-4.314804317999915">
+                <ele>613.4419999999955</ele>
+            </trkpt>
+            <trkpt lat="39.30271740000006" lon="-4.3149669519999065">
+                <ele>613.4909999999945</ele>
+            </trkpt>
+            <trkpt lat="39.30271430200008" lon="-4.315015986999924">
+                <ele>613.5390000000043</ele>
+            </trkpt>
+            <trkpt lat="39.302756539000086" lon="-4.315216421999935">
+                <ele>613.3479999999981</ele>
+            </trkpt>
+            <trkpt lat="39.302837597000064" lon="-4.315357035999909">
+                <ele>613.2309999999998</ele>
+            </trkpt>
+            <trkpt lat="39.30291718500007" lon="-4.315402709999944">
+                <ele>613.3289999999979</ele>
+            </trkpt>
+            <trkpt lat="39.30301385300004" lon="-4.315399609999929">
+                <ele>613.3000000000029</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

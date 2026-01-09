@@ -1,0 +1,148 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>El Acebuche - Principal</name>
+		<bounds minlat="37.04559125700007" minlon="-6.565644280999948" maxlat="37.04776601400005" maxlon="-6.5589545329999055"/>
+	</metadata>
+	<trk>
+        <name>El Acebuche - Principal</name>
+        <desc>Se localiza en la finca de propiedad estatal El Acebuche que ocupa una extensión aproximada de 3.000 hectáreas y se encuentra situado en término municipal de Almonte (Huelva) en la carretera A-483 a unos cinco kilómetros de la urbanización de Matalascañas y a unos doce de la aldea del Rocío. Esta finca esta incluida en el Parque Natural de Doñana.
+En este Centro se disponen una serie de servicios de atención al visitante como son: punto de información, sala de exposiciones, sala de audiovisuales, cafetería y tienda de recuerdos, punto de reserva y venta de plazas para el recorrido por el interior de Doñana, merendero y senderos peatonales con observatorios. La finca también alberga otras infraestructuras como el centro administrativo del Parque Nacional, viviendas del personal (fundamentalmente guardas), el centro de cría en cautividad de especies faunísticas amenazadas y el de recuperación de fauna silvestre. Ninguno de los dos es visitable. Otro sector de la finca alberga las instalaciones del Aula de la Naturaleza a las que se accede desde la carretera que une Matalascañas con Huelva.
+El Acebuche fue uno de los primeros Centros que abrió sus puertas al público a comienzo de la década de los años ochenta, poco después de que se promulgase la ley de Doñana en el año 1978. Mediante esta Ley se ampliaron los límites del Parque y se declararon una serie de Zonas de Protección entre las que se encuentra, ya esta incluida en el Parque Natural, una parte de la finca que nos ocupa.
+Desde el Centro parte el sendero peatonal que conduce al complejo lagunar de Acebuche, Huerto y Pajas, con una longitud aproximada de unos cuatro kilómetros y cuyo trazado se dispone en diversos circuitos. Este sendero está totalmente entablado, por lo que su dificultad es mínima, permitiendo de esta forma la circulación de personas con movilidad reducida. Cuenta asimismo con un conjunto de pasarelas que posibilitan el cruce por el entramado de caños que conectan entre sí las lagunas, así como zonas de descanso en las que el visitante se puede detener y disfrutar del contacto con el medio natural. En todo su recorrido un conjunto de placas temáticas interpretan distintos aspectos del paisaje, de la flora y de la fauna más comunes de la zona.
+El sendero conduce a un conjunto de observatorios que, situados junto a las lagunas, permiten apreciar detenidamente la avifauna existente en la laguna. Bautizados con los nombres de las especies observables más representativas, mantienen la tipología de las chozas tradicionales que se construían en el territorio y que se pueden apreciar en distintos puntos del Parque Nacional, fundamentalmente en el Poblado de la Plancha (punto de parada de los itinerarios por el interior y fluvial).
+El itinerario discurre por zonas de matorral denominado monte blanco, que se dispone en las zonas más altas y alejadas del manto freático. Esta denominación la adquiere por la tonalidad ligeramente grisácea de las hojas de la planta predominante, el jaguarzo, con el que se asocian otras como la aulaga, el jaguarzo morisco, el romero, la mejorana o el cantueso. El pino piñonero supone la mayor parte de la cobertura arbórea y junto a él se pueden encontrar algunos pies de sabinas, madroños, alcornoques y también acebuches de los que este Centro toma prestado su nombre. En las zonas más próximas a las lagunas y actuando como barrera y pantalla natural se encuentran álamos y un enramado de plantas que permiten el tránsito de las personas por la zona sin molestar a la fauna.
+La laguna del Acebuche fue adecuada para su uso y disfrute en la década de los años setenta con la excavación de su suelo y la construcción de islas-refugio para la fauna. Se mantiene permanentemente encharcada, dando cobijo a un gran número de aves, cuando el resto del Parque y de las áreas adyacentes cuentan con un bajo nivel de agua o están completamente secas. Por su parte, las lagunas del Huerto y las Pajas fueron recientemente restauradas e incorporadas parcialmente al sistema de visitas. Las aves favorecidas con todos estos trabajos más fácilmente observables son calamones, zampullines, somormujos, fochas, así como distintas especies de anátidas y ardeidos.</desc>
+        <trkseg>
+            <trkpt lat="37.047650247000036" lon="-6.565644280999948">
+                <ele>39.78900000000431</ele>
+            </trkpt>
+            <trkpt lat="37.04768426900006" lon="-6.565534734999915">
+                <ele>39.78900000000431</ele>
+            </trkpt>
+            <trkpt lat="37.04768817200005" lon="-6.564919069999917">
+                <ele>38.34799999999814</ele>
+            </trkpt>
+            <trkpt lat="37.04776284800005" lon="-6.5645506329999535">
+                <ele>38.19199999999546</ele>
+            </trkpt>
+            <trkpt lat="37.04776601400005" lon="-6.564371066999911">
+                <ele>38.129000000000815</ele>
+            </trkpt>
+            <trkpt lat="37.047742775000074" lon="-6.564296320999915">
+                <ele>37.58999999999651</ele>
+            </trkpt>
+            <trkpt lat="37.04775398700008" lon="-6.564097658999913">
+                <ele>37.36599999999453</ele>
+            </trkpt>
+            <trkpt lat="37.04771629700008" lon="-6.5637302889999205">
+                <ele>37.362999999997555</ele>
+            </trkpt>
+            <trkpt lat="37.047696631000065" lon="-6.563184957999908">
+                <ele>37.32600000000093</ele>
+            </trkpt>
+            <trkpt lat="37.04761950300008" lon="-6.563060527999937">
+                <ele>37.37799999999697</ele>
+            </trkpt>
+            <trkpt lat="37.04755701000005" lon="-6.562751847999948">
+                <ele>37.611000000004424</ele>
+            </trkpt>
+            <trkpt lat="37.047476359000086" lon="-6.56256005399996">
+                <ele>37.76799999999639</ele>
+            </trkpt>
+            <trkpt lat="37.04701395400008" lon="-6.561583749999954">
+                <ele>37.98500000000058</ele>
+            </trkpt>
+            <trkpt lat="37.04683375600007" lon="-6.561108717999957">
+                <ele>38.130999999993946</ele>
+            </trkpt>
+            <trkpt lat="37.04648135800005" lon="-6.560396262999916">
+                <ele>38.888999999995576</ele>
+            </trkpt>
+            <trkpt lat="37.04634469800004" lon="-6.560094970999955">
+                <ele>39.145000000004075</ele>
+            </trkpt>
+            <trkpt lat="37.04600610300008" lon="-6.559553421999908">
+                <ele>38.96600000000035</ele>
+            </trkpt>
+            <trkpt lat="37.04595186600005" lon="-6.55941557999995">
+                <ele>39.262000000002445</ele>
+            </trkpt>
+            <trkpt lat="37.04586200500006" lon="-6.559267483999918">
+                <ele>39.353000000002794</ele>
+            </trkpt>
+            <trkpt lat="37.045809407000036" lon="-6.559209348999957">
+                <ele>39.445000000006985</ele>
+            </trkpt>
+            <trkpt lat="37.04573974200008" lon="-6.5590990629999055">
+                <ele>39.403000000005704</ele>
+            </trkpt>
+            <trkpt lat="37.04559125700007" lon="-6.5589545329999055">
+                <ele>39.63400000000547</ele>
+            </trkpt>
+            <trkpt lat="37.04573974200008" lon="-6.5590990629999055">
+                <ele>39.403000000005704</ele>
+            </trkpt>
+            <trkpt lat="37.045809407000036" lon="-6.559209348999957">
+                <ele>39.445000000006985</ele>
+            </trkpt>
+            <trkpt lat="37.04586200500006" lon="-6.559267483999918">
+                <ele>39.353000000002794</ele>
+            </trkpt>
+            <trkpt lat="37.04595186600005" lon="-6.55941557999995">
+                <ele>39.262000000002445</ele>
+            </trkpt>
+            <trkpt lat="37.04600610300008" lon="-6.559553421999908">
+                <ele>38.96600000000035</ele>
+            </trkpt>
+            <trkpt lat="37.04634469800004" lon="-6.560094970999955">
+                <ele>39.145000000004075</ele>
+            </trkpt>
+            <trkpt lat="37.04648135800005" lon="-6.560396262999916">
+                <ele>38.888999999995576</ele>
+            </trkpt>
+            <trkpt lat="37.04683375600007" lon="-6.561108717999957">
+                <ele>38.130999999993946</ele>
+            </trkpt>
+            <trkpt lat="37.04701395400008" lon="-6.561583749999954">
+                <ele>37.98500000000058</ele>
+            </trkpt>
+            <trkpt lat="37.047476359000086" lon="-6.56256005399996">
+                <ele>37.76799999999639</ele>
+            </trkpt>
+            <trkpt lat="37.04755701000005" lon="-6.562751847999948">
+                <ele>37.611000000004424</ele>
+            </trkpt>
+            <trkpt lat="37.04761950300008" lon="-6.563060527999937">
+                <ele>37.37799999999697</ele>
+            </trkpt>
+            <trkpt lat="37.047696631000065" lon="-6.563184957999908">
+                <ele>37.32600000000093</ele>
+            </trkpt>
+            <trkpt lat="37.04771629700008" lon="-6.5637302889999205">
+                <ele>37.362999999997555</ele>
+            </trkpt>
+            <trkpt lat="37.04775398700008" lon="-6.564097658999913">
+                <ele>37.36599999999453</ele>
+            </trkpt>
+            <trkpt lat="37.047742775000074" lon="-6.564296320999915">
+                <ele>37.58999999999651</ele>
+            </trkpt>
+            <trkpt lat="37.04776601400005" lon="-6.564371066999911">
+                <ele>38.129000000000815</ele>
+            </trkpt>
+            <trkpt lat="37.04776284800005" lon="-6.5645506329999535">
+                <ele>38.19199999999546</ele>
+            </trkpt>
+            <trkpt lat="37.04768817200005" lon="-6.564919069999917">
+                <ele>38.34799999999814</ele>
+            </trkpt>
+            <trkpt lat="37.04768426900006" lon="-6.565534734999915">
+                <ele>39.78900000000431</ele>
+            </trkpt>
+            <trkpt lat="37.047650247000036" lon="-6.565644280999948">
+                <ele>39.78900000000431</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

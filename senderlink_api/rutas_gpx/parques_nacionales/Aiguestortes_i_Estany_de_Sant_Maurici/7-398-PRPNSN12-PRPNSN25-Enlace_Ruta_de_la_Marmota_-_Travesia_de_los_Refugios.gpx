@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Enlace Ruta de la Marmota - Travesía de los Refugios</name>
+		<bounds minlat="42.60532269400005" minlon="0.8762416340000527" maxlat="42.60602195200005" maxlon="0.8772216140000637"/>
+	</metadata>
+	<trk>
+        <name>Enlace Ruta de la Marmota - Travesía de los Refugios</name>
+        <desc>Se trata de una ruta de enlace entre la Ruta de la Marmota y la Travesía de los Refugios. </desc>
+        <trkseg>
+            <trkpt lat="42.60602195200005" lon="0.8762416340000527">
+                <ele>2200.2109000000055</ele>
+            </trkpt>
+            <trkpt lat="42.605997510000066" lon="0.8762561480000386">
+                <ele>2200.2109000000055</ele>
+            </trkpt>
+            <trkpt lat="42.60597874700005" lon="0.8762965920000738">
+                <ele>2200.051999999996</ele>
+            </trkpt>
+            <trkpt lat="42.605910435000055" lon="0.8763621880000869">
+                <ele>2199.596900000004</ele>
+            </trkpt>
+            <trkpt lat="42.60584485800007" lon="0.876485556000091">
+                <ele>2198.8689000000013</ele>
+            </trkpt>
+            <trkpt lat="42.605802965000066" lon="0.8765003040000465">
+                <ele>2198.5060999999987</ele>
+            </trkpt>
+            <trkpt lat="42.60572723300004" lon="0.8765980700000569">
+                <ele>2198.9398999999976</ele>
+            </trkpt>
+            <trkpt lat="42.60563114000007" lon="0.8766577460000917">
+                <ele>2199.3129999999946</ele>
+            </trkpt>
+            <trkpt lat="42.60561302800005" lon="0.8766902970000388">
+                <ele>2200.0271000000066</ele>
+            </trkpt>
+            <trkpt lat="42.605600535000065" lon="0.8768383170000789">
+                <ele>2202.228000000003</ele>
+            </trkpt>
+            <trkpt lat="42.60560582900007" lon="0.876898901000061">
+                <ele>2203.279999999999</ele>
+            </trkpt>
+            <trkpt lat="42.60555043000005" lon="0.8769883260000597">
+                <ele>2205.3821000000025</ele>
+            </trkpt>
+            <trkpt lat="42.605476476000035" lon="0.8770442890000822">
+                <ele>2208.021999999997</ele>
+            </trkpt>
+            <trkpt lat="42.60542531800007" lon="0.8771038980000867">
+                <ele>2209.0228999999963</ele>
+            </trkpt>
+            <trkpt lat="42.605407040000046" lon="0.8771591330000774">
+                <ele>2210.282999999996</ele>
+            </trkpt>
+            <trkpt lat="42.60532269400005" lon="0.8772216140000637">
+                <ele>2211.841100000005</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

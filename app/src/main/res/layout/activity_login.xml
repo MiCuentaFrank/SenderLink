@@ -17,16 +17,26 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/senderistas" />
 
+    <!-- OVERLAY OSCURO -->
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#66000000"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <!-- TÍTULO -->
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Iniciar sesión"
-        android:textColor="@android:color/black"
+        android:textColor="@color/text_on_dark"
         android:textSize="28sp"
         android:textStyle="bold"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="56dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
@@ -37,14 +47,16 @@
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="88dp"
+        android:layout_marginTop="80dp"
         android:layout_marginEnd="24dp"
-        android:background="@android:color/white"
+        android:background="@drawable/bg_input_senderlink"
         android:hint="Correo electrónico"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_secondary"
         android:inputType="textEmailAddress"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvTitle" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- PASSWORD -->
     <EditText
@@ -54,12 +66,14 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="24dp"
-        android:background="@android:color/white"
+        android:background="@drawable/bg_input_senderlink"
         android:hint="Contraseña"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_secondary"
         android:inputType="textPassword"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etEmail"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etEmail" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- BOTÓN -->
     <Button
@@ -67,12 +81,15 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="24dp"
         android:text="Entrar"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textColor="@color/text_on_dark"
+        android:backgroundTint="@color/sl_primary"
+        app:cornerRadius="14dp"
+        app:layout_constraintTop_toBottomOf="@id/etPassword"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etPassword" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- LINK REGISTRO -->
     <TextView
@@ -81,9 +98,10 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="¿No tienes cuenta? Regístrate"
-        android:textColor="@android:color/holo_blue_light"
+        android:textColor="@color/sl_primary"
         android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="@+id/btnLogin"
-        app:layout_constraintTop_toBottomOf="@id/btnLogin" />
+        app:layout_constraintTop_toBottomOf="@id/btnLogin"
+        app:layout_constraintStart_toStartOf="@id/btnLogin"
+        app:layout_constraintEnd_toEndOf="@id/btnLogin" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

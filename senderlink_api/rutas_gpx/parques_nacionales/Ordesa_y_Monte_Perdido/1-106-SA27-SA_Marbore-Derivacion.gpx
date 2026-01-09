@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>SA Marboré - Derivación</name>
+		<bounds minlat="42.69264171700007" minlon="0.03811820100008845" maxlat="42.69354431800008" maxlon="0.03910091800008786"/>
+	</metadata>
+	<trk>
+        <name>SA Marboré - Derivación</name>
+        <trkseg>
+            <trkpt lat="42.69264171700007" lon="0.03811820100008845">
+                <ele>2572.1489</ele>
+            </trkpt>
+            <trkpt lat="42.69280986400008" lon="0.03817856200004144">
+                <ele>2578.4541000000027</ele>
+            </trkpt>
+            <trkpt lat="42.69287914600005" lon="0.038176487000043835">
+                <ele>2580.2051000000065</ele>
+            </trkpt>
+            <trkpt lat="42.69301076800008" lon="0.038252013000089846">
+                <ele>2581.127900000007</ele>
+            </trkpt>
+            <trkpt lat="42.69304309700004" lon="0.03828343300006054">
+                <ele>2582.2728999999963</ele>
+            </trkpt>
+            <trkpt lat="42.69317623100005" lon="0.038347901000065576">
+                <ele>2583.0081000000064</ele>
+            </trkpt>
+            <trkpt lat="42.693328111000085" lon="0.03837119500008157">
+                <ele>2585.8239999999932</ele>
+            </trkpt>
+            <trkpt lat="42.69336195500006" lon="0.03839155800005756">
+                <ele>2585.8239999999932</ele>
+            </trkpt>
+            <trkpt lat="42.69343483400007" lon="0.03852847100006329">
+                <ele>2585.782999999996</ele>
+            </trkpt>
+            <trkpt lat="42.693458501000066" lon="0.03853833100004067">
+                <ele>2586.3540000000066</ele>
+            </trkpt>
+            <trkpt lat="42.69347806500008" lon="0.0385984350000399">
+                <ele>2584.9939000000013</ele>
+            </trkpt>
+            <trkpt lat="42.693510805000074" lon="0.038645706000068">
+                <ele>2585.841100000005</ele>
+            </trkpt>
+            <trkpt lat="42.693527860000074" lon="0.03878283200003807">
+                <ele>2587.3978999999963</ele>
+            </trkpt>
+            <trkpt lat="42.69354431800008" lon="0.03910091800008786">
+                <ele>2590.8159000000014</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

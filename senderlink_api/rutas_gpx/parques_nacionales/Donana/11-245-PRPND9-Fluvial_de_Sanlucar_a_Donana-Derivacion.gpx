@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Fluvial de Sanlúcar a Doñana - Derivación</name>
+		<bounds minlat="36.835101816000076" minlon="-6.359198065999919" maxlat="36.83528101100006" maxlon="-6.35807544499994"/>
+	</metadata>
+	<trk>
+        <name>Fluvial de Sanlúcar a Doñana - Derivación</name>
+        <trkseg>
+            <trkpt lat="36.835101816000076" lon="-6.35807544499994">
+                <ele>0.19999999999708962</ele>
+            </trkpt>
+            <trkpt lat="36.83511030900007" lon="-6.358400569999958">
+                <ele>0.19999999999708962</ele>
+            </trkpt>
+            <trkpt lat="36.83514983300006" lon="-6.358781667999949">
+                <ele>0.19999999999708962</ele>
+            </trkpt>
+            <trkpt lat="36.83517591300006" lon="-6.358942059999947">
+                <ele>0.19999999999708962</ele>
+            </trkpt>
+            <trkpt lat="36.83528101100006" lon="-6.359198065999919">
+                <ele>2.2400000000052387</ele>
+            </trkpt>
+            <trkpt lat="36.83517591300006" lon="-6.358942059999947">
+                <ele>0.19999999999708962</ele>
+            </trkpt>
+            <trkpt lat="36.83514983300006" lon="-6.358781667999949">
+                <ele>0.19999999999708962</ele>
+            </trkpt>
+            <trkpt lat="36.83511030900007" lon="-6.358400569999958">
+                <ele>0.19999999999708962</ele>
+            </trkpt>
+            <trkpt lat="36.835101816000076" lon="-6.35807544499994">
+                <ele>0.19999999999708962</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

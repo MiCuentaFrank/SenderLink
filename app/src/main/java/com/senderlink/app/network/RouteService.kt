@@ -1,18 +1,35 @@
 package com.senderlink.app.network
 
-import com.senderlink.app.model.Route
+import com.senderlink.app.viewmodel.RouteDetailResponse
 import retrofit2.Call
 import retrofit2.http.GET
-
-// La respuesta que devuelve tu backend en GET /api/routes
-data class RouteResponse(
-    val ok: Boolean,
-    val count: Int,
-    val routes: List<Route>
-)
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface RouteService {
 
+    // 🔹 Todas las rutas
     @GET("routes")
-    fun getRoutes(): Call<RouteResponse>
+    fun getAllRoutes(
+        @Query("limit") limit: Int
+    ): Call<RouteResponse>
+
+    // 🔹 Rutas destacadas
+    @GET("routes/featured")
+    fun getFeaturedRoutes(
+        @Query("limit") limit: Int
+    ): Call<RouteResponse>
+
+    // 🔹 Rutas por parque nacional
+    @GET("routes/parques")
+    fun getRoutesByPark(
+        @Query("name") parque: String,
+        @Query("limit") limit: Int
+    ): Call<RouteResponse>
+
+    // 🔹 Obtener ruta por ID
+    @GET("routes/{id}")
+    fun getRouteById(
+        @Path("id") routeId: String
+    ): Call<RouteDetailResponse>
 }

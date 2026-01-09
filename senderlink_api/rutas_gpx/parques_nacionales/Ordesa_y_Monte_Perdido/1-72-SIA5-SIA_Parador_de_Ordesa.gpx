@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>SIA Parador de Ordesa</name>
+		<bounds minlat="42.65414049000009" minlon="-0.09868527599991239" maxlat="42.65469133900007" maxlon="-0.0975321059999601"/>
+	</metadata>
+	<trk>
+        <name>SIA Parador de Ordesa</name>
+        <desc>La explanada frente a la entrada del antiguo Centro de Visitantes del Parque está protegida por un barandado que se abre a un tramo de escaleras donde comienza nuestro paseo. Un panel señala el inicio del recorrido, acondicionado en su tramo inicial con piso empedrado. La estrecha senda discurre entre campos de cultivo abandonados y monte bajo colonizados por hierbas y arbustos. A lo largo del paseo encontramos otras mesas interpretativas sobre la vegetación, la geología y las bordas, construcciones de piedra tradicionales del Pirineo
+que servían para dar cobijo a pastores y rebaños.</desc>
+        <trkseg>
+            <trkpt lat="42.65423630300006" lon="-0.0975321059999601">
+                <ele>1213.1100000000006</ele>
+            </trkpt>
+            <trkpt lat="42.65428523500009" lon="-0.0975540549999323">
+                <ele>1212.6779999999999</ele>
+            </trkpt>
+            <trkpt lat="42.654357239000035" lon="-0.09755519199995888">
+                <ele>1213.3709999999992</ele>
+            </trkpt>
+            <trkpt lat="42.65438722000005" lon="-0.09757863999993788">
+                <ele>1214.2660000000033</ele>
+            </trkpt>
+            <trkpt lat="42.654482114000075" lon="-0.09773218299994824">
+                <ele>1214.5709999999963</ele>
+            </trkpt>
+            <trkpt lat="42.65465085400007" lon="-0.09791867199993476">
+                <ele>1214.895000000004</ele>
+            </trkpt>
+            <trkpt lat="42.65469133900007" lon="-0.09798655899993491">
+                <ele>1214.6209999999992</ele>
+            </trkpt>
+            <trkpt lat="42.65466537600008" lon="-0.09804748399994878">
+                <ele>1211.199999999997</ele>
+            </trkpt>
+            <trkpt lat="42.65456634600008" lon="-0.09811331899993547">
+                <ele>1208.869000000006</ele>
+            </trkpt>
+            <trkpt lat="42.654534122000086" lon="-0.0981727129999399">
+                <ele>1206.7531000000017</ele>
+            </trkpt>
+            <trkpt lat="42.65450115600004" lon="-0.09819303299991589">
+                <ele>1206.7531000000017</ele>
+            </trkpt>
+            <trkpt lat="42.654464379000046" lon="-0.09828757899992979">
+                <ele>1204.349000000002</ele>
+            </trkpt>
+            <trkpt lat="42.65429044800004" lon="-0.09849241899991057">
+                <ele>1202.8390000000072</ele>
+            </trkpt>
+            <trkpt lat="42.654169969000066" lon="-0.09868527599991239">
+                <ele>1201.1089999999967</ele>
+            </trkpt>
+            <trkpt lat="42.654154847000086" lon="-0.09867842499994595">
+                <ele>1201.1089999999967</ele>
+            </trkpt>
+            <trkpt lat="42.65414064000004" lon="-0.09860452499992789">
+                <ele>1202.7519999999931</ele>
+            </trkpt>
+            <trkpt lat="42.65414049000009" lon="-0.09854352299993252">
+                <ele>1202.5529999999999</ele>
+            </trkpt>
+            <trkpt lat="42.65415982700006" lon="-0.09849446799995576">
+                <ele>1202.4410000000062</ele>
+            </trkpt>
+            <trkpt lat="42.65415028100006" lon="-0.09841469999992114">
+                <ele>1202.6281000000017</ele>
+            </trkpt>
+            <trkpt lat="42.654159948000085" lon="-0.09832368799993674">
+                <ele>1203.4330000000045</ele>
+            </trkpt>
+            <trkpt lat="42.654230270000085" lon="-0.09825398799995355">
+                <ele>1205.1898999999976</ele>
+            </trkpt>
+            <trkpt lat="42.65425016800003" lon="-0.09818422199992938">
+                <ele>1205.5310000000027</ele>
+            </trkpt>
+            <trkpt lat="42.65430040800004" lon="-0.09812450399994077">
+                <ele>1206.9611000000004</ele>
+            </trkpt>
+            <trkpt lat="42.65425045000006" lon="-0.09787438099994006">
+                <ele>1210.775999999998</ele>
+            </trkpt>
+            <trkpt lat="42.65426038800007" lon="-0.097673590999932">
+                <ele>1211.8640000000014</ele>
+            </trkpt>
+            <trkpt lat="42.65420907100008" lon="-0.09757344999991346">
+                <ele>1212.3620999999985</ele>
+            </trkpt>
+            <trkpt lat="42.654210126000066" lon="-0.09753446599995641">
+                <ele>1212.9949999999953</ele>
+            </trkpt>
+            <trkpt lat="42.65423630300006" lon="-0.0975321059999601">
+                <ele>1213.1100000000006</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

@@ -1,0 +1,186 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Los Barranquillos</name>
+		<bounds minlat="28.15245126500008" minlon="-17.306236032999948" maxlat="28.155582278000054" maxlon="-17.305134017999933"/>
+	</metadata>
+	<trk>
+        <name>Los Barranquillos</name>
+        <desc>Una de las rutas más cortas de la presente guía no está exenta en cambio de grandes atractivos, pues permite disfrutar de fayal brezal y laurisilva de ladera, además de una estupenda perspectiva sobre los acantilados de la zona de Alojera. Sendero autoguiado.
+
+Es este un sendero absolutamente recomendable por su escasa longitud y las grandes recompensas visuales que ofrece, con las mejores panorámicas sobre Alojera y la parte noroeste de la isla desde la vertiginosa verticalidad de los acantilados conocidos como los Andenes de Alojera, desde esta pista que transita en torno a los 1.000 metros de altitud.
+
+Además, es un recorrido llano que permite descubrir las dos formaciones que integran el monteverde: el fayal brezal, tanto en estado joven en las zonas donde antiguamente más intervenía el hombre, como en estado adulto debido precisamente a la ausencia de actuación humana, y el bosque de laurisilva de ladera, en las zonas más profundas.
+
+El arranque del sendero se asemeja a una «avenida» si lo comparamos con la anchura del resto del recorrido. Se trata de una antigua pista forestal que se utilizó principalmente como vía de saca para extraer los recursos que del monte se obtenían: madera, leña y hojarasca para materia orgánica. Ahora es posible descubrir las huellas de ese intenso aprovechamiento: delgada capa de humus, alteración de la estructura edáfica y afloramientos rocosos en algunas zonas, restos de talas, escasos ejemplares añejos y una tímida recuperación del fayal-brezal.
+
+Tomamos la bifurcación de la izquierda para alcanzar el borde del acantilado, desde donde veremos el pueblo de Alojera, cercano al mar. La vegetación, escasa y achaparrada se adapta a las condiciones del viento reinante y al escaso suelo. Ya en la vaguada, podemos ver con claridad la diferencia entre el lomo y este pequeño valle, donde la laurisilva de ladera se beneficia del abrigo y protección que le ofrece el relieve, y de la neblina y la precipitación horizontal. En consecuencia, pasearemos por un monte húmedo, umbrío, cerrado y rico en especies (musgo, helechos, brezos, acebiños, líquenes, epífitas...).</desc>
+        <trkseg>
+            <trkpt lat="28.15245126500008" lon="-17.305140304999952">
+                <ele>999.2540000000008</ele>
+            </trkpt>
+            <trkpt lat="28.152717752000058" lon="-17.305318211999918">
+                <ele>999.0810000000056</ele>
+            </trkpt>
+            <trkpt lat="28.15280397500004" lon="-17.30533944499996">
+                <ele>998.8249999999971</ele>
+            </trkpt>
+            <trkpt lat="28.15315652000004" lon="-17.30525665899995">
+                <ele>1000.2419999999984</ele>
+            </trkpt>
+            <trkpt lat="28.15332231000008" lon="-17.305263666999906">
+                <ele>999.7820000000065</ele>
+            </trkpt>
+            <trkpt lat="28.153426296000077" lon="-17.305250831999956">
+                <ele>999.6640000000043</ele>
+            </trkpt>
+            <trkpt lat="28.153482677000056" lon="-17.305213968999908">
+                <ele>999.8010000000068</ele>
+            </trkpt>
+            <trkpt lat="28.153648649000047" lon="-17.30520072099995">
+                <ele>999.4220000000059</ele>
+            </trkpt>
+            <trkpt lat="28.15384638900008" lon="-17.305134017999933">
+                <ele>998.9119999999966</ele>
+            </trkpt>
+            <trkpt lat="28.154085492000036" lon="-17.305150431999948">
+                <ele>997.7960000000021</ele>
+            </trkpt>
+            <trkpt lat="28.154322240000056" lon="-17.305199685999924">
+                <ele>996.7449999999953</ele>
+            </trkpt>
+            <trkpt lat="28.15442809700005" lon="-17.30526790999994">
+                <ele>995.5149999999994</ele>
+            </trkpt>
+            <trkpt lat="28.15451160100008" lon="-17.305362358999957">
+                <ele>995.051999999996</ele>
+            </trkpt>
+            <trkpt lat="28.15461169100007" lon="-17.305559460999916">
+                <ele>994.3029999999999</ele>
+            </trkpt>
+            <trkpt lat="28.154654891000064" lon="-17.30568440499991">
+                <ele>994.2149999999965</ele>
+            </trkpt>
+            <trkpt lat="28.154667078000045" lon="-17.305808929999955">
+                <ele>994.497000000003</ele>
+            </trkpt>
+            <trkpt lat="28.154664610000054" lon="-17.306023443999948">
+                <ele>996.221000000005</ele>
+            </trkpt>
+            <trkpt lat="28.15469629800009" lon="-17.306086945999937">
+                <ele>996.1300000000047</ele>
+            </trkpt>
+            <trkpt lat="28.15482987100006" lon="-17.306223023999905">
+                <ele>996.3579999999929</ele>
+            </trkpt>
+            <trkpt lat="28.154892618000076" lon="-17.306236032999948">
+                <ele>996.0240000000049</ele>
+            </trkpt>
+            <trkpt lat="28.15512926400004" lon="-17.306189221999944">
+                <ele>992.7379999999976</ele>
+            </trkpt>
+            <trkpt lat="28.155233534000047" lon="-17.30606380899991">
+                <ele>989.8790000000008</ele>
+            </trkpt>
+            <trkpt lat="28.15527540800008" lon="-17.306035280999936">
+                <ele>987.523000000001</ele>
+            </trkpt>
+            <trkpt lat="28.155330793000076" lon="-17.30602111199994">
+                <ele>986.1319999999978</ele>
+            </trkpt>
+            <trkpt lat="28.15542906400009" lon="-17.306018767999944">
+                <ele>982.7880000000005</ele>
+            </trkpt>
+            <trkpt lat="28.155482583000037" lon="-17.306052680999926">
+                <ele>981.2569999999978</ele>
+            </trkpt>
+            <trkpt lat="28.15551637300007" lon="-17.306108755999958">
+                <ele>979.5350000000035</ele>
+            </trkpt>
+            <trkpt lat="28.15556561300008" lon="-17.30610959799992">
+                <ele>978.1429999999964</ele>
+            </trkpt>
+            <trkpt lat="28.155582278000054" lon="-17.306031469999937">
+                <ele>976.9679999999935</ele>
+            </trkpt>
+            <trkpt lat="28.15555908300007" lon="-17.30597294699993">
+                <ele>976.2480000000069</ele>
+            </trkpt>
+            <trkpt lat="28.155504737000058" lon="-17.305942153999922">
+                <ele>977.2320000000036</ele>
+            </trkpt>
+            <trkpt lat="28.155333126000073" lon="-17.305915571999947">
+                <ele>982.648000000001</ele>
+            </trkpt>
+            <trkpt lat="28.155164739000043" lon="-17.30580944199994">
+                <ele>982.4890000000014</ele>
+            </trkpt>
+            <trkpt lat="28.155106638000063" lon="-17.305803515999912">
+                <ele>983.6380000000063</ele>
+            </trkpt>
+            <trkpt lat="28.155033264000053" lon="-17.305724162999923">
+                <ele>984.7369999999937</ele>
+            </trkpt>
+            <trkpt lat="28.154971040000078" lon="-17.305695337999907">
+                <ele>986.6380000000063</ele>
+            </trkpt>
+            <trkpt lat="28.154945126000086" lon="-17.305647953999937">
+                <ele>987.5599999999977</ele>
+            </trkpt>
+            <trkpt lat="28.15480293300004" lon="-17.30549738299993">
+                <ele>990.349000000002</ele>
+            </trkpt>
+            <trkpt lat="28.15477019900004" lon="-17.305534043999955">
+                <ele>992.195000000007</ele>
+            </trkpt>
+            <trkpt lat="28.154739961000075" lon="-17.305534416999933">
+                <ele>992.195000000007</ele>
+            </trkpt>
+            <trkpt lat="28.15469285900008" lon="-17.305507449999936">
+                <ele>993.0739999999932</ele>
+            </trkpt>
+            <trkpt lat="28.154667259000064" lon="-17.305447457999946">
+                <ele>993.6959999999963</ele>
+            </trkpt>
+            <trkpt lat="28.15451160100008" lon="-17.305362358999957">
+                <ele>995.051999999996</ele>
+            </trkpt>
+            <trkpt lat="28.15442809700005" lon="-17.30526790999994">
+                <ele>995.5149999999994</ele>
+            </trkpt>
+            <trkpt lat="28.154322240000056" lon="-17.305199685999924">
+                <ele>996.7449999999953</ele>
+            </trkpt>
+            <trkpt lat="28.154085492000036" lon="-17.305150431999948">
+                <ele>997.7960000000021</ele>
+            </trkpt>
+            <trkpt lat="28.15384638900008" lon="-17.305134017999933">
+                <ele>998.9119999999966</ele>
+            </trkpt>
+            <trkpt lat="28.153648649000047" lon="-17.30520072099995">
+                <ele>999.4220000000059</ele>
+            </trkpt>
+            <trkpt lat="28.153482677000056" lon="-17.305213968999908">
+                <ele>999.8010000000068</ele>
+            </trkpt>
+            <trkpt lat="28.153426296000077" lon="-17.305250831999956">
+                <ele>999.6640000000043</ele>
+            </trkpt>
+            <trkpt lat="28.15332231000008" lon="-17.305263666999906">
+                <ele>999.7820000000065</ele>
+            </trkpt>
+            <trkpt lat="28.15315652000004" lon="-17.30525665899995">
+                <ele>1000.2419999999984</ele>
+            </trkpt>
+            <trkpt lat="28.15280397500004" lon="-17.30533944499996">
+                <ele>998.8249999999971</ele>
+            </trkpt>
+            <trkpt lat="28.152717752000058" lon="-17.305318211999918">
+                <ele>999.0810000000056</ele>
+            </trkpt>
+            <trkpt lat="28.15245126500008" lon="-17.305140304999952">
+                <ele>999.2540000000008</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>

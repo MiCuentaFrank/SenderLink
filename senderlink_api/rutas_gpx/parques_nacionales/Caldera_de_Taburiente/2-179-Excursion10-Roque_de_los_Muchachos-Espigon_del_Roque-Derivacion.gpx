@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Instituto Geográfico Nacional - https://www.ign.es" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+        <name>Roque de los Muchachos-Espigón del Roque - Derivación</name>
+		<bounds minlat="28.75395764700005" minlon="-17.885039862999918" maxlat="28.754351092000036" maxlon="-17.88465074699991"/>
+	</metadata>
+	<trk>
+        <name>Roque de los Muchachos-Espigón del Roque - Derivación</name>
+        <trkseg>
+            <trkpt lat="28.754351092000036" lon="-17.885039862999918">
+                <ele>2421.871100000004</ele>
+            </trkpt>
+            <trkpt lat="28.754335521000087" lon="-17.885008726999956">
+                <ele>2422.5148999999947</ele>
+            </trkpt>
+            <trkpt lat="28.75432838100005" lon="-17.884878535999917">
+                <ele>2423.876999999993</ele>
+            </trkpt>
+            <trkpt lat="28.754304740000066" lon="-17.884845130999906">
+                <ele>2424.4839000000065</ele>
+            </trkpt>
+            <trkpt lat="28.754250099000046" lon="-17.884827249999944">
+                <ele>2423.3589000000065</ele>
+            </trkpt>
+            <trkpt lat="28.754019276000065" lon="-17.88465405799991">
+                <ele>2416.961899999995</ele>
+            </trkpt>
+            <trkpt lat="28.753973344000087" lon="-17.88465074699991">
+                <ele>2416.7100000000064</ele>
+            </trkpt>
+            <trkpt lat="28.75395764700005" lon="-17.88466771599991">
+                <ele>2417.729999999996</ele>
+            </trkpt>
+            <trkpt lat="28.753973344000087" lon="-17.88465074699991">
+                <ele>2416.7100000000064</ele>
+            </trkpt>
+            <trkpt lat="28.754019276000065" lon="-17.88465405799991">
+                <ele>2416.961899999995</ele>
+            </trkpt>
+            <trkpt lat="28.754250099000046" lon="-17.884827249999944">
+                <ele>2423.3589000000065</ele>
+            </trkpt>
+            <trkpt lat="28.754304740000066" lon="-17.884845130999906">
+                <ele>2424.4839000000065</ele>
+            </trkpt>
+            <trkpt lat="28.75432838100005" lon="-17.884878535999917">
+                <ele>2423.876999999993</ele>
+            </trkpt>
+            <trkpt lat="28.754335521000087" lon="-17.885008726999956">
+                <ele>2422.5148999999947</ele>
+            </trkpt>
+            <trkpt lat="28.754351092000036" lon="-17.885039862999918">
+                <ele>2421.871100000004</ele>
+            </trkpt>
+        </trkseg>
+	</trk>
+</gpx>
