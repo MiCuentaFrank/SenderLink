@@ -239,12 +239,12 @@ class RouteDetailFragment : Fragment() {
 
             // Coordenadas de inicio
             route.startPoint?.let { point ->
-                append("🚩 Inicio: ${formatCoordinates(point.lat, point.lng)}\n")
+                append("🚩 Inicio: ${formatCoordinates(point.getLat(), point.getLng())}\n")
             }
 
             // Coordenadas de fin
             route.endPoint?.let { point ->
-                append("🏁 Final: ${formatCoordinates(point.lat, point.lng)}")
+                append("🏁 Final: ${formatCoordinates(point.getLat(), point.getLng())}")
             }
         }
 

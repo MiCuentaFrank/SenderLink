@@ -1,66 +1,64 @@
 const mongoose = require("mongoose");
 
-const PointSchema = new mongoose.Schema(
+// GeoJSON Point schema
+const GeoPointSchema = new mongoose.Schema(
   {
-    lat: { type: Number, required: true },
-    lng: { type: Number, required: true }
+    type: {
+      type: String,
+      enum: ["Point"],
+      default: "Point",
+      required: true
+    },
+    coordinates: {
+      type: [Number], // [lng, lat]
+      required: true,
+      validate: {
+        validator: function (v) {
+          return Array.isArray(v) && v.length === 2;
+        },
+        message: "coordinates debe ser [lng, lat]"
+      }
+    }
   },
   { _id: false }
 );
 
 const RouteSchema = new mongoose.Schema(
   {
-    // 🔑 Identificación
-    externalId: {
+    //  Autor (solo para USER_ROUTE; en otras puede ir vacío)
+    uid: {
       type: String,
       index: true,
-      unique: false
+      default: null
     },
 
-    code: {
-      type: String
-    },
+    //  Identificación
+    externalId: { type: String, index: true, unique: false },
+    code: { type: String },
 
-    // 🏷️ Clasificación
+    // Clasificación
     type: {
       type: String,
-      enum: ["PR", "GR", "SL", "VIA_VERDE", "PARQUE_NACIONAL", "GPX_LIBRE","USER_ROUTE"],
+      enum: ["PR", "GR", "SL", "VIA_VERDE", "PARQUE_NACIONAL", "GPX_LIBRE", "USER_ROUTE"],
       required: true
     },
-
     source: {
       type: String,
-      enum: ["FEDME", "PARQUES_NACIONALES", "USER","PROPIO"],
+      enum: ["FEDME", "PARQUES_NACIONALES", "USER", "PROPIO"],
       required: true
     },
 
-    // 📛 Información visible
-    name: {
-      type: String,
-      required: true,
-      trim: true
-    },
+    //  Info visible
+    name: { type: String, required: true, trim: true },
+    description: { type: String, required: true },
 
-    description: {
-      type: String,
-      required: true
-    },
-
-    // 🖼️ Imágenes
-    coverImage: {
-      type: String,
-      required: true
-    },
-
+    //  Imágenes
+    coverImage: { type: String, required: true },
     images: {
       type: [String],
       validate: {
         validator: function (v) {
-          // ⭐ Featured → 3 a 5
-          if (this.featured) {
-            return v.length >= 3 && v.length <= 5;
-          }
-          // 🟡 No featured → solo 1
+          if (this.featured) return v.length >= 3 && v.length <= 5;
           return v.length === 1;
         },
         message: "Las rutas destacadas requieren 3–5 imágenes; las demás solo 1"
@@ -68,83 +66,52 @@ const RouteSchema = new mongoose.Schema(
       required: true
     },
 
-
-    // 📏 Datos técnicos
-    distanceKm: {
-      type: Number,
-      required: true,
-      min: 0
-    },
-
-    durationMin: {
-      type: Number,
-      min: 0
-    },
-
+    //  Datos técnicos
+    distanceKm: { type: Number, required: true, min: 0 },
+    durationMin: { type: Number, min: 0 },
     difficulty: {
       type: String,
       enum: ["FACIL", "MODERADA", "DIFICIL"],
       required: true
     },
 
-    // 🗺️ Geografía
+    //  Geometría de la ruta (GeoJSON)
     geometry: {
       type: Object,
       required: true
     },
 
-    startPoint: {
-      type: PointSchema,
-      required: true
-    },
+    //  GeoJSON Points (para $nearSphere)
+    startPoint: { type: GeoPointSchema, required: true },
+    endPoint: { type: GeoPointSchema, required: true },
 
-    endPoint: {
-      type: PointSchema,
-      required: true
-    },
+    //  Localización
+    startLocality: { type: String, required: true },
+    comunidad: { type: String, required: true },
+    provincia: { type: String },
 
-    startLocality: {
-      type: String,
-      required: true
-    },
+    //  (Para /parques si quieres mantenerlo)
+    parqueNacional: { type: String, default: null, index: true },
 
-    comunidad: {
-      type: String,
-      required: true
-    },
+    // Destacadas
+    featured: { type: Boolean, default: false, index: true },
 
-    provincia: {
-      type: String
-    },
-
-    // ⭐ DESTACADAS (CLAVE PARA DEMO 2)
-    featured: {
-      type: Boolean,
-      default: false,
-      index: true
-    },
-
-    // 🧩 Metadatos
-    fechaEdicion: {
-      type: Date
-    },
-
-    extraInfo: {
-      type: Object,
-      default: {}
-    }
+    //  Metadatos
+    fechaEdicion: { type: Date },
+    extraInfo: { type: Object, default: {} }
   },
-  {
-    timestamps: true
-  }
+  { timestamps: true }
 );
 
-// 🔍 Índices
+// Índices
 RouteSchema.index({ provincia: 1 });
 RouteSchema.index({ comunidad: 1 });
 RouteSchema.index({ difficulty: 1 });
 RouteSchema.index({ type: 1 });
 RouteSchema.index({ distanceKm: 1 });
+
+// Geo indices
 RouteSchema.index({ geometry: "2dsphere" });
+RouteSchema.index({ startPoint: "2dsphere" });
 
 module.exports = mongoose.model("Route", RouteSchema);

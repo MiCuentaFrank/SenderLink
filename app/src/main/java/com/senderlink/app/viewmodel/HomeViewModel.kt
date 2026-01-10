@@ -7,94 +7,75 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.senderlink.app.model.Route
-import com.senderlink.app.network.RetrofitClient
-import com.senderlink.app.network.RouteResponse
-import com.senderlink.app.network.RouteService
+import com.senderlink.app.repository.RouteRepository
+import com.senderlink.app.utils.HomeDataStore
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import org.json.JSONArray
+import org.json.JSONObject
 
+/**
+ * 🏠 HomeViewModel
+ *
+ * Maneja:
+ * - Rutas destacadas (del servidor)
+ * - Rutas recientes (guardadas localmente)
+ */
 class HomeViewModel : ViewModel() {
 
-    private val routeService = RetrofitClient.instance
-        .create(RouteService::class.java)
+    private val repository = RouteRepository()
 
+    // LiveData públicos
     private val _routes = MutableLiveData<List<Route>>(emptyList())
     val routes: LiveData<List<Route>> = _routes
 
     private val _featuredRoutes = MutableLiveData<List<Route>>(emptyList())
     val featuredRoutes: LiveData<List<Route>> = _featuredRoutes
 
-    // ========== DESTACADAS ==========
-    private var currentFeaturedPage = 0
-    private val pageSize = 20
-    private var isLoadingFeatured = false
-    private var hasMoreFeatured = true
-    private val allFeaturedRoutes = mutableListOf<Route>()
-    private var shuffledFeaturedRoutes: List<Route>? = null
+    private val _isLoading = MutableLiveData(false)
+    val isLoading: LiveData<Boolean> = _isLoading
 
+    private val _error = MutableLiveData<String?>(null)
+    val error: LiveData<String?> = _error
+
+    // Control de carga
+    private var isLoadingFeatured = false
+
+    /**
+     * ⭐ Carga rutas destacadas desde el servidor
+     */
     fun loadFeaturedRoutes(reset: Boolean = false) {
         if (isLoadingFeatured) return
-        if (!hasMoreFeatured && !reset) return
-
-        if (reset) {
-            currentFeaturedPage = 0
-            allFeaturedRoutes.clear()
-            hasMoreFeatured = true
-            shuffledFeaturedRoutes = null
-            Log.d("HOME_VM", "Reset completo: limpiando rutas destacadas")
-        }
 
         isLoadingFeatured = true
-        val limit = (currentFeaturedPage + 1) * pageSize + 20
+        _isLoading.value = true
+        _error.value = null
 
-        routeService.getAllRoutes(limit)
-            .enqueue(object : Callback<RouteResponse> {
+        viewModelScope.launch {
+            try {
+                // Usa el endpoint específico /api/routes/featured
+                val response = repository.getFeaturedRoutes(limit = 50)
 
-                override fun onResponse(
-                    call: Call<RouteResponse>,
-                    response: Response<RouteResponse>
-                ) {
-                    isLoadingFeatured = false
-
-                    if (response.isSuccessful) {
-                        val allRoutes = response.body()?.routes ?: emptyList()
-                        val featuredOnly = allRoutes.filter { it.featured }
-
-                        if (shuffledFeaturedRoutes == null) {
-                            shuffledFeaturedRoutes = featuredOnly.shuffled()
-                            Log.d("HOME_VM", "Rutas destacadas aleatorizadas: ${shuffledFeaturedRoutes?.size}")
-                        }
-
-                        val featuredToShow = shuffledFeaturedRoutes ?: featuredOnly
-                        val startIndex = currentFeaturedPage * pageSize
-                        val endIndex = minOf(startIndex + pageSize, featuredToShow.size)
-
-                        if (startIndex < featuredToShow.size) {
-                            val newRoutes = featuredToShow.subList(startIndex, endIndex)
-                            allFeaturedRoutes.addAll(newRoutes)
-                            _featuredRoutes.value = allFeaturedRoutes.toList()
-
-                            currentFeaturedPage++
-                            hasMoreFeatured = endIndex < featuredToShow.size
-                        } else {
-                            hasMoreFeatured = false
-                        }
-                    } else {
-                        Log.e("HOME_VM", "Respuesta no exitosa")
-                    }
+                if (response.ok) {
+                    val shuffled = response.routes.shuffled()
+                    _featuredRoutes.value = shuffled
+                    Log.d("HOME_VM", "✅ Rutas destacadas: ${response.count}")
+                } else {
+                    _error.value = "Error al cargar destacadas"
                 }
 
-                override fun onFailure(call: Call<RouteResponse>, t: Throwable) {
-                    isLoadingFeatured = false
-                    Log.e("HOME_VM", "Error: ${t.message}")
-                }
-            })
+            } catch (e: Exception) {
+                _error.value = "Error de conexión: ${e.message}"
+                Log.e("HOME_VM", "❌ Error: ${e.message}", e)
+            } finally {
+                isLoadingFeatured = false
+                _isLoading.value = false
+            }
+        }
     }
 
-    // ========== RECIENTES (persistentes) ==========
+    // ==========================================
+    // 🕐 RUTAS RECIENTES
+    // ==========================================
 
     data class RecentRouteLite(
         val id: String,
@@ -106,7 +87,6 @@ class HomeViewModel : ViewModel() {
 
     fun markRouteAsRecent(context: Context, route: Route, maxItems: Int = 20) {
         val current = (_routes.value ?: emptyList()).toMutableList()
-
         current.removeAll { it.id == route.id }
         current.add(0, route)
 
@@ -116,92 +96,74 @@ class HomeViewModel : ViewModel() {
 
         _routes.value = current
 
-        // Persistir (guardar “lite”)
-        val liteList = current.map { toLite(it) }
-
         viewModelScope.launch {
-            val json = liteListToJson(liteList)
-            Log.d("RECENTS", "Guardando JSON: $json")
-            com.senderlink.app.utils.HomeDataStore.saveRecentsJson(context, json)
+            val json = liteListToJson(current.map { toLite(it) })
+            HomeDataStore.saveRecentsJson(context, json)
         }
     }
 
     fun loadRecentsFromStorage(context: Context) {
         viewModelScope.launch {
-            val json = com.senderlink.app.utils.HomeDataStore.loadRecentsJson(context)
-            Log.d("RECENTS", "JSON cargado: $json")
-
-            val liteList = jsonToLiteList(json)
-            Log.d("RECENTS", "Recientes cargadas: ${liteList.size}")
-
-            _routes.value = liteList.map { liteToRoute(it) }
+            try {
+                val json = HomeDataStore.loadRecentsJson(context)
+                val liteList = jsonToLiteList(json)
+                _routes.value = liteList.map { liteToRoute(it) }
+                Log.d("HOME_VM", "Recientes cargadas: ${liteList.size}")
+            } catch (e: Exception) {
+                Log.e("HOME_VM", "Error cargando recientes: ${e.message}")
+            }
         }
     }
 
-    private fun toLite(route: Route): RecentRouteLite {
-        return RecentRouteLite(
-            id = route.id,
-            name = route.name,
-            coverImage = route.coverImage,
-            difficulty = route.difficulty,
-            distanceKm = route.distanceKm
-        )
-    }
+    // Helpers de conversión
+    private fun toLite(route: Route) = RecentRouteLite(
+        id = route.id,
+        name = route.name,
+        coverImage = route.coverImage,
+        difficulty = route.difficulty,
+        distanceKm = route.distanceKm
+    )
 
     private fun liteListToJson(list: List<RecentRouteLite>): String {
-        val arr = org.json.JSONArray()
+        val arr = JSONArray()
         list.forEach { r ->
-            val obj = org.json.JSONObject()
-            obj.put("id", r.id)
-            obj.put("name", r.name)
-            obj.put("coverImage", r.coverImage)
-            obj.put("difficulty", r.difficulty)
-            obj.put("distanceKm", r.distanceKm)
-            arr.put(obj)
+            arr.put(JSONObject().apply {
+                put("id", r.id)
+                put("name", r.name)
+                put("coverImage", r.coverImage ?: JSONObject.NULL)
+                put("difficulty", r.difficulty ?: JSONObject.NULL)
+                put("distanceKm", r.distanceKm ?: JSONObject.NULL)
+            })
         }
         return arr.toString()
     }
 
     private fun jsonToLiteList(json: String): List<RecentRouteLite> {
-        val arr = JSONArray(json)
-        val out = mutableListOf<RecentRouteLite>()
+        if (json.isBlank() || json == "[]") return emptyList()
 
-        for (i in 0 until arr.length()) {
+        val arr = JSONArray(json)
+        return (0 until arr.length()).map { i ->
             val obj = arr.getJSONObject(i)
-            out.add(
-                RecentRouteLite(
-                    id = obj.getString("id"),
-                    name = obj.getString("name"),
-                    coverImage = obj.optString("coverImage", null),
-                    difficulty = obj.optString("difficulty", null),
-                    distanceKm = if (obj.isNull("distanceKm")) null else obj.getDouble("distanceKm")
-                )
+            RecentRouteLite(
+                id = obj.getString("id"),
+                name = obj.getString("name"),
+                coverImage = if (obj.isNull("coverImage")) null else obj.getString("coverImage"),
+                difficulty = if (obj.isNull("difficulty")) null else obj.getString("difficulty"),
+                distanceKm = if (obj.isNull("distanceKm")) null else obj.getDouble("distanceKm")
             )
         }
-        return out
     }
 
-    /**
-     * 🔧 Creamos un Route “mínimo válido” con defaults,
-     * porque tu Route real tiene muchos campos obligatorios.
-     */
-    private fun liteToRoute(lite: RecentRouteLite): Route {
-        return Route(
-            id = lite.id,
-
-            // obligatorios:
-            type = "recent",                 // valor por defecto
-            source = "local",                // valor por defecto
-            name = lite.name,
-            description = "",                // no lo tenemos guardado
-            coverImage = lite.coverImage ?: "",
-
-            images = emptyList(),            // no lo tenemos guardado
-            distanceKm = lite.distanceKm ?: 0.0,
-            difficulty = lite.difficulty ?: "",
-
-            // opcionales / con default:
-            featured = false
-        )
-    }
+    private fun liteToRoute(lite: RecentRouteLite) = Route(
+        id = lite.id,
+        type = "recent",
+        source = "local",
+        name = lite.name,
+        description = "",
+        coverImage = lite.coverImage ?: "",
+        images = emptyList(),
+        distanceKm = lite.distanceKm ?: 0.0,
+        difficulty = lite.difficulty ?: "",
+        featured = false
+    )
 }

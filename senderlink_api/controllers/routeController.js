@@ -19,87 +19,68 @@ async function createRoute(req, res) {
       startLocality
     } = req.body;
 
-    // 🔒 Validaciones mínimas
     if (!uid || !name || !points || points.length < 2) {
-      return res.status(400).json({
-        ok: false,
-        message: "Datos insuficientes para crear la ruta"
-      });
+      return res.status(400).json({ ok: false, message: "Datos insuficientes para crear la ruta" });
     }
 
     const user = await User.findOne({ uid });
     if (!user) {
-      return res.status(404).json({
-        ok: false,
-        message: "Usuario no encontrado"
-      });
+      return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
     }
 
-    // 📍 Puntos inicio / fin
+    // GeoJSON start/end
     const startPoint = {
-      lat: points[0].lat,
-      lng: points[0].lng
+      type: "Point",
+      coordinates: [points[0].lng, points[0].lat]
     };
 
     const endPoint = {
-      lat: points[points.length - 1].lat,
-      lng: points[points.length - 1].lng
+      type: "Point",
+      coordinates: [points[points.length - 1].lng, points[points.length - 1].lat]
     };
 
-    // 🗺️ Geometría (simple, válida)
+    // GeoJSON LineString
     const geometry = {
       type: "LineString",
       coordinates: points.map(p => [p.lng, p.lat])
     };
 
-    // 🖼 Imagen genérica outdoor (NO descriptiva)
     const coverImage =
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80";
 
     const newRoute = await Route.create({
-      // Identificación
+      uid,
+
       type: "USER_ROUTE",
       source: "USER",
 
-      // Info visible
       name,
       description:
         "Ruta creada por un usuario. La imagen es genérica y no representa necesariamente la localización exacta.",
 
-      // Imágenes (NO featured → 1 sola)
       coverImage,
       images: [coverImage],
 
-      // Datos técnicos
       distanceKm,
       difficulty,
 
-      // Geografía
       geometry,
       startPoint,
       endPoint,
 
-      // Localización
       startLocality,
       comunidad,
       provincia,
 
-      // Flags
       featured: false
     });
 
-    res.status(201).json({
-      ok: true,
-      route: newRoute
-    });
-
+    res.status(201).json({ ok: true, route: newRoute });
   } catch (err) {
-    res.status(500).json({
-      ok: false,
-      message: err.message
-    });
+    res.status(500).json({ ok: false, message: err.message });
   }
 }
+
 
 
 
@@ -110,27 +91,47 @@ async function createRoute(req, res) {
 async function getRoutes(req, res) {
   try {
     const {
-      parque,
+      parqueNacional,
       provincia,
-      localidad,
-      dificultad,
+      startLocality,
+      localidad,     // compat
+      difficulty,
+      dificultad,    // compat
+      type,
+      featured,
       page = 1,
       limit = 20
     } = req.query;
 
     const filtro = {};
 
-    if (parque) {
-      filtro.parqueNacional = { $regex: parque, $options: "i" };
+    // Parque nacional (si lo usas)
+    if (parqueNacional) {
+      filtro.parqueNacional = { $regex: parqueNacional, $options: "i" };
     }
+
     if (provincia) {
       filtro.provincia = { $regex: provincia, $options: "i" };
     }
-    if (localidad) {
-      filtro.localidad = { $regex: localidad, $options: "i" };
+
+    // Localidad real: startLocality (pero aceptamos "localidad" por compat)
+    const loc = startLocality || localidad;
+    if (loc) {
+      filtro.startLocality = { $regex: loc, $options: "i" };
     }
-    if (dificultad) {
-      filtro.dificultad = dificultad;
+
+    // Dificultad real: difficulty (pero aceptamos "dificultad")
+    const diff = difficulty || dificultad;
+    if (diff) {
+      filtro.difficulty = diff;
+    }
+
+    if (type) filtro.type = type;
+
+    if (featured !== undefined) {
+      // featured="true"/"false"
+      if (featured === "true") filtro.featured = true;
+      if (featured === "false") filtro.featured = false;
     }
 
     const pageFinal = parseInt(page, 10);
@@ -138,7 +139,7 @@ async function getRoutes(req, res) {
     const skip = (pageFinal - 1) * limitFinal;
 
     const routes = await Route.find(filtro)
-      .sort({ featured: -1, createdAt: -1 }) // ⭐ featured primero
+      .sort({ featured: -1, createdAt: -1 })
       .skip(skip)
       .limit(limitFinal);
 
@@ -152,11 +153,11 @@ async function getRoutes(req, res) {
       pages: Math.ceil(total / limitFinal),
       routes
     });
-
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });
   }
 }
+
 // ==========================================
 // 2.b Obtener rutas destacadas (FEATURED)
 // ==========================================

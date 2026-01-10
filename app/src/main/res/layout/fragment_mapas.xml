@@ -2,145 +2,228 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
 
-    <!-- Contenedor del mapa -->
+    <!-- 🟩 APP BAR FIJA -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/sl_primary"
+        android:fitsSystemWindows="true"
+        app:elevation="4dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbarHome"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:popupTheme="@style/ThemeOverlay.Material3.Light"
+            app:title="SenderLink"
+            app:titleTextColor="@color/text_on_dark" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- MAPA: contenedor -->
     <FrameLayout
         android:id="@+id/mapContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
-    <!-- Card con información de distancia y tiempo (MÁS ABAJO) -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardRouteInfo"
+    <!-- OVERLAY TOP: Search + Chips -->
+    <LinearLayout
+        android:id="@+id/topOverlay"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:layout_marginTop="80dp"
-        android:layout_gravity="top"
-        app:cardCornerRadius="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
+        android:orientation="vertical"
+        android:layout_marginTop="?attr/actionBarSize">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilSearch"
+                style="@style/Widget.Material3.TextInputLayout.FilledBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:startIconDrawable="@android:drawable/ic_menu_search"
+                app:startIconTint="@color/sl_primary"
+                app:boxCornerRadiusTopStart="28dp"
+                app:boxCornerRadiusTopEnd="28dp"
+                app:boxCornerRadiusBottomStart="28dp"
+                app:boxCornerRadiusBottomEnd="28dp"
+                app:boxBackgroundColor="@android:color/transparent"
+                app:hintTextColor="@color/text_secondary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etSearch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Buscar..."
+                    android:singleLine="true"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_secondary"/>
+            </com.google.android.material.textfield.TextInputLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupFilters"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:singleSelection="true"
+            app:selectionRequired="false"
+            app:chipSpacingHorizontal="8dp">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipNearby"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cerca"
+                android:textColor="@color/text_primary"
+                app:chipBackgroundColor="@color/white"
+                app:chipStrokeWidth="0dp"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipEasy"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fácil"
+                android:textColor="@color/text_primary"
+                app:chipBackgroundColor="@color/white"
+                app:chipStrokeWidth="0dp"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipModerate"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Media"
+                android:textColor="@color/text_primary"
+                app:chipBackgroundColor="@color/white"
+                app:chipStrokeWidth="0dp"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipHard"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Difícil"
+                android:textColor="@color/text_primary"
+                app:chipBackgroundColor="@color/white"
+                app:chipStrokeWidth="0dp"/>
+        </com.google.android.material.chip.ChipGroup>
+    </LinearLayout>
+
+    <!-- BOTONES DERECHA: zoom + ubicación + encajar -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="16dp"
+        android:orientation="vertical">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnZoomIn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:fabSize="mini"
+            app:srcCompat="@android:drawable/ic_input_add"
+            app:backgroundTint="@color/white"
+            app:tint="@color/sl_primary"
+            app:elevation="4dp"
+            android:contentDescription="Zoom in"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnZoomOut"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:fabSize="mini"
+            app:srcCompat="@android:drawable/ic_delete"
+            app:backgroundTint="@color/white"
+            app:tint="@color/sl_primary"
+            app:elevation="4dp"
+            android:contentDescription="Zoom out"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabMyLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:src="@android:drawable/ic_menu_mylocation"
+            app:backgroundTint="@color/sl_primary"
+            app:tint="@color/text_on_dark"
+            app:elevation="6dp"
+            android:contentDescription="Mi ubicación"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabFitRoute"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:src="@android:drawable/ic_menu_view"
+            app:backgroundTint="@color/white"
+            app:tint="@color/sl_primary"
+            app:elevation="4dp"
+            android:contentDescription="Ver ruta completa"
+            android:visibility="gone"/>
+    </LinearLayout>
+
+    <!-- BOTTOM SHEET -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/bottomSheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_margin="12dp"
+        app:cardCornerRadius="28dp"
         app:cardElevation="8dp"
-        android:visibility="gone">
+        app:cardBackgroundColor="@color/white"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="20dp">
 
-            <TextView
-                android:id="@+id/tvRouteInfoTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🚗 Cómo llegar al inicio"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginBottom="8dp"/>
+            <!-- Handle -->
+            <View
+                android:layout_width="40dp"
+                android:layout_height="4dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="16dp"
+                android:background="@color/text_secondary"
+                android:alpha="0.4"/>
 
-            <LinearLayout
+            <!-- Botón navegación -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/fabStartNavigation"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="📏 Distancia"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary"/>
-
-                    <TextView
-                        android:id="@+id/tvDistanceToStart"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Calculando..."
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/sl_primary"/>
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="⏱️ Tiempo"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary"/>
-
-                    <TextView
-                        android:id="@+id/tvTimeToStart"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Calculando..."
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/sl_primary"/>
-
-                </LinearLayout>
-
-            </LinearLayout>
-
+                android:layout_height="56dp"
+                android:text="Ir al inicio"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                app:cornerRadius="28dp"
+                app:icon="@android:drawable/ic_menu_directions"
+                app:iconTint="@color/text_on_dark"
+                android:textColor="@color/text_on_dark"
+                app:backgroundTint="@color/sl_primary"/>
         </LinearLayout>
-
     </com.google.android.material.card.MaterialCardView>
-
-    <!-- FAB: Mi ubicación (TOP RIGHT, MÁS ABAJO) -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabMyLocation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:layout_margin="16dp"
-        android:layout_marginTop="200dp"
-        android:src="@android:drawable/ic_menu_mylocation"
-        app:backgroundTint="@color/white"
-        app:tint="@color/sl_primary"
-        app:elevation="6dp"
-        android:contentDescription="Mi ubicación"/>
-
-    <!-- FAB: Ajustar vista a la ruta -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabFitRoute"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:layout_margin="16dp"
-        android:layout_marginTop="276dp"
-        android:src="@android:drawable/ic_menu_view"
-        app:backgroundTint="@color/white"
-        app:tint="@color/sl_primary"
-        app:elevation="6dp"
-        android:contentDescription="Ver ruta completa"
-        android:visibility="gone"/>
-
-    <!-- FAB: Iniciar navegación (ABAJO, CON MARGIN DEL BOTTOM NAV) -->
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-        android:id="@+id/fabStartNavigation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="80dp"
-        android:text="🚗 Ir al inicio"
-        android:textStyle="bold"
-        app:icon="@android:drawable/ic_menu_directions"
-        app:backgroundTint="@color/sl_primary"
-        android:textColor="@color/white"
-        app:iconTint="@color/white"
-        app:elevation="8dp"
-        android:visibility="gone"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

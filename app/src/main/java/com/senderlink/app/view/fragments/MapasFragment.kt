@@ -22,8 +22,8 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 import com.senderlink.app.R
 import com.senderlink.app.databinding.FragmentMapasBinding
 import okhttp3.*
@@ -38,8 +38,10 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val httpClient = OkHttpClient()
 
-    // API Key de Google (REEMPLAZA CON TU API KEY)
+    // ⚠️ Mejor luego: BuildConfig / local.properties
     private val GOOGLE_API_KEY = "TU_API_KEY_AQUI"
+
+    private lateinit var sheetBehavior: BottomSheetBehavior<View>
 
     // Datos de la ruta
     private var routeName: String? = null
@@ -51,43 +53,27 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
     private var distanceKm: Double = 0.0
     private var difficulty: String? = null
 
-    // Ubicación del usuario
     private var userLocation: Location? = null
 
-    // Referencias a elementos del mapa
     private var currentPolyline: Polyline? = null
     private var navigationPolyline: Polyline? = null
     private var startMarker: Marker? = null
     private var endMarker: Marker? = null
 
-    // Solicitud de permisos de ubicación
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         when {
-            permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true -> {
+            permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                    permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true -> {
                 enableMyLocation()
                 calculateRealDistanceToStart()
             }
-            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true -> {
-                enableMyLocation()
-                calculateRealDistanceToStart()
-            }
-            else -> {
-                Toast.makeText(
-                    requireContext(),
-                    "Permiso de ubicación denegado",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
+            else -> Toast.makeText(requireContext(), "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentMapasBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -98,13 +84,39 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         getArgumentsData()
 
+        setupBottomSheet()
+        setupActionButtons()
+        setupTopUi()
+
         val mapFragment = SupportMapFragment.newInstance()
         childFragmentManager.beginTransaction()
             .replace(R.id.mapContainer, mapFragment)
             .commit()
 
         mapFragment.getMapAsync(this)
-        setupActionButtons()
+    }
+
+    private fun setupBottomSheet() {
+        sheetBehavior = BottomSheetBehavior.from(binding.bottomSheet)
+        sheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        sheetBehavior.isHideable = false
+        sheetBehavior.peekHeight = resources.getDimensionPixelSize(R.dimen.sheet_peek_height)
+    }
+
+    private fun setupTopUi() {
+        // Si quieres: mostrar el nombre de la ruta como "hint"
+        binding.etSearch.setText(routeName ?: "")
+
+        binding.chipGroupFilters.setOnCheckedStateChangeListener { _, checkedIds ->
+            // Por ahora solo UI. Luego lo hacemos funcional si quieres.
+            val id = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
+            when (id) {
+                R.id.chipEasy -> Log.d("MAPAS_FRAGMENT", "Filtro: fácil")
+                R.id.chipModerate -> Log.d("MAPAS_FRAGMENT", "Filtro: media")
+                R.id.chipHard -> Log.d("MAPAS_FRAGMENT", "Filtro: difícil")
+                R.id.chipNearby -> Log.d("MAPAS_FRAGMENT", "Filtro: cerca")
+            }
+        }
     }
 
     private fun getArgumentsData() {
@@ -130,26 +142,23 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun setupActionButtons() {
-        binding.fabMyLocation.setOnClickListener {
-            checkLocationPermissionAndShow()
-        }
+        binding.fabMyLocation.setOnClickListener { checkLocationPermissionAndShow() }
+        binding.fabFitRoute.setOnClickListener { fitRouteInView() }
 
-        binding.fabFitRoute.setOnClickListener {
-            fitRouteInView()
-        }
+        binding.btnZoomIn.setOnClickListener { googleMap?.animateCamera(CameraUpdateFactory.zoomIn()) }
+        binding.btnZoomOut.setOnClickListener { googleMap?.animateCamera(CameraUpdateFactory.zoomOut()) }
 
-        binding.fabStartNavigation.setOnClickListener {
-            navigateToStart()
-        }
+        binding.fabStartNavigation.setOnClickListener { navigateToStart() }
     }
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
 
         googleMap?.apply {
-            uiSettings.isZoomControlsEnabled = true
+            uiSettings.isZoomControlsEnabled = false
             uiSettings.isCompassEnabled = true
             uiSettings.isMyLocationButtonEnabled = false
+            uiSettings.isMapToolbarEnabled = false
             mapType = GoogleMap.MAP_TYPE_TERRAIN
         }
 
@@ -179,23 +188,18 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
 
     private fun checkLocationPermissionAndShow() {
         when {
-            hasLocationPermission() -> {
-                centerOnCurrentLocation()
-            }
-            else -> {
-                locationPermissionRequest.launch(
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                    )
+            hasLocationPermission() -> centerOnCurrentLocation()
+            else -> locationPermissionRequest.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
                 )
-            }
+            )
         }
     }
 
     private fun enableMyLocation() {
         if (!hasLocationPermission()) return
-
         try {
             googleMap?.isMyLocationEnabled = true
         } catch (e: SecurityException) {
@@ -208,60 +212,35 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
             checkLocationPermissionAndShow()
             return
         }
-
         try {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 location?.let {
                     userLocation = it
                     val currentLatLng = LatLng(it.latitude, it.longitude)
-
-                    googleMap?.animateCamera(
-                        CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f)
-                    )
-
-                    if (startLat != 0.0 && startLng != 0.0) {
-                        calculateRealDistanceToStart()
-                    }
-                } ?: run {
-                    Toast.makeText(
-                        requireContext(),
-                        "No se pudo obtener la ubicación",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+                    googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
+                    if (startLat != 0.0 && startLng != 0.0) calculateRealDistanceToStart()
+                    sheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+                } ?: Toast.makeText(requireContext(), "No se pudo obtener la ubicación", Toast.LENGTH_SHORT).show()
             }
         } catch (e: SecurityException) {
             Log.e("MAPAS_FRAGMENT", "Error obteniendo ubicación: ${e.message}")
         }
     }
 
-    /**
-     * 🚗 Calcula distancia REAL usando Google Directions API
-     */
     private fun calculateRealDistanceToStart() {
         if (!hasLocationPermission()) return
         if (startLat == 0.0 || startLng == 0.0) return
 
         try {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 location?.let { userLoc ->
                     userLocation = userLoc
 
-                    // Mostrar card mientras se calcula
-                    binding.cardRouteInfo.visibility = View.VISIBLE
-                    binding.tvDistanceToStart.text = "Calculando..."
-                    binding.tvTimeToStart.text = "Calculando..."
-
-                    // Llamar a Google Directions API
-                    getDirectionsFromGoogle(
-                        userLoc.latitude,
-                        userLoc.longitude,
-                        startLat,
-                        startLng
-                    )
-
-                    // Dibujar línea de navegación
+                    // Ya no mostramos distancia/tiempo en el UI
+                    // Solo dibujamos la línea de navegación
                     drawNavigationLine(userLoc.latitude, userLoc.longitude)
+
+                    sheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
                 }
             }
         } catch (e: SecurityException) {
@@ -269,75 +248,6 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    /**
-     * 🌐 Llama a Google Directions API para obtener distancia y tiempo reales
-     */
-    private fun getDirectionsFromGoogle(
-        originLat: Double,
-        originLng: Double,
-        destLat: Double,
-        destLng: Double
-    ) {
-        val url = "https://maps.googleapis.com/maps/api/directions/json?" +
-                "origin=$originLat,$originLng" +
-                "&destination=$destLat,$destLng" +
-                "&mode=driving" +
-                "&key=$GOOGLE_API_KEY"
-
-        val request = Request.Builder()
-            .url(url)
-            .build()
-
-        httpClient.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                activity?.runOnUiThread {
-                    Log.e("MAPAS_FRAGMENT", "Error API Directions: ${e.message}")
-                    binding.tvDistanceToStart.text = "Error"
-                    binding.tvTimeToStart.text = "Error"
-                }
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                response.body?.string()?.let { jsonString ->
-                    try {
-                        val directionsResponse = Gson().fromJson(
-                            jsonString,
-                            DirectionsResponse::class.java
-                        )
-
-                        if (directionsResponse.status == "OK" &&
-                            directionsResponse.routes.isNotEmpty()) {
-
-                            val route = directionsResponse.routes[0]
-                            val leg = route.legs[0]
-
-                            val distanceText = leg.distance.text
-                            val durationText = leg.duration.text
-
-                            activity?.runOnUiThread {
-                                binding.tvDistanceToStart.text = distanceText
-                                binding.tvTimeToStart.text = durationText
-
-                                Log.d("MAPAS_FRAGMENT", "Distancia: $distanceText, Tiempo: $durationText")
-                            }
-                        } else {
-                            activity?.runOnUiThread {
-                                binding.tvDistanceToStart.text = "N/A"
-                                binding.tvTimeToStart.text = "N/A"
-                                Log.e("MAPAS_FRAGMENT", "API Status: ${directionsResponse.status}")
-                            }
-                        }
-                    } catch (e: Exception) {
-                        Log.e("MAPAS_FRAGMENT", "Error parseando JSON: ${e.message}")
-                    }
-                }
-            }
-        })
-    }
-
-    /**
-     * 📍 Dibuja línea desde ubicación actual al inicio
-     */
     private fun drawNavigationLine(currentLat: Double, currentLng: Double) {
         navigationPolyline?.remove()
 
@@ -388,28 +298,21 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
 
     private fun showSinglePoint() {
         val punto = LatLng(startLat, startLng)
-        googleMap?.addMarker(
-            MarkerOptions()
-                .position(punto)
-                .title(routeName ?: "Ubicación de la ruta")
-        )
+        googleMap?.addMarker(MarkerOptions().position(punto).title(routeName ?: "Ubicación de la ruta"))
         googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(punto, 14f))
     }
 
     private fun showDefaultLocation() {
         val defaultLocation = LatLng(40.4168, -3.7038)
         googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 6f))
-
-        if (hasLocationPermission()) {
-            centerOnCurrentLocation()
-        }
+        if (hasLocationPermission()) centerOnCurrentLocation()
     }
 
     private fun getDifficultyColor(): Int {
-        return when (difficulty) {
-            "FACIL" -> Color.parseColor("#4CAF50")
-            "MODERADA" -> Color.parseColor("#FF9800")
-            "DIFICIL" -> Color.parseColor("#F44336")
+        return when (difficulty?.uppercase()) {
+            "FACIL", "FÁCIL" -> Color.parseColor("#4CAF50")
+            "MODERADA", "MEDIA" -> Color.parseColor("#FF9800")
+            "DIFICIL", "DIFÍCIL" -> Color.parseColor("#F44336")
             else -> Color.parseColor("#2196F3")
         }
     }
@@ -417,19 +320,16 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
     private fun fitRouteInView() {
         routePoints?.let { points ->
             if (points.isEmpty()) return
-
             val builder = LatLngBounds.Builder()
             points.forEach { builder.include(it) }
-
-            userLocation?.let {
-                builder.include(LatLng(it.latitude, it.longitude))
-            }
+            userLocation?.let { builder.include(LatLng(it.latitude, it.longitude)) }
 
             val bounds = builder.build()
             val padding = 150
 
             try {
                 googleMap?.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding))
+                sheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
             } catch (e: Exception) {
                 Log.e("MAPAS_FRAGMENT", "Error ajustando cámara: ${e.message}")
             }
@@ -438,18 +338,13 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
 
     private fun navigateToStart() {
         if (startLat == 0.0 || startLng == 0.0) {
-            Toast.makeText(
-                requireContext(),
-                "No hay punto de inicio disponible",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(requireContext(), "No hay punto de inicio disponible", Toast.LENGTH_SHORT).show()
             return
         }
 
         try {
             val uri = Uri.parse("google.navigation:q=$startLat,$startLng&mode=d")
-            val intent = Intent(Intent.ACTION_VIEW, uri)
-            intent.setPackage("com.google.android.apps.maps")
+            val intent = Intent(Intent.ACTION_VIEW, uri).setPackage("com.google.android.apps.maps")
 
             if (intent.resolveActivity(requireActivity().packageManager) != null) {
                 startActivity(intent)
@@ -459,11 +354,7 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
             }
         } catch (e: Exception) {
             Log.e("MAPAS_FRAGMENT", "Error abriendo navegación: ${e.message}")
-            Toast.makeText(
-                requireContext(),
-                "Error al abrir la navegación",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(requireContext(), "Error al abrir la navegación", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -478,16 +369,13 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         _binding = null
     }
 
-    // ==========================================
-    // DATA CLASSES PARA GOOGLE DIRECTIONS API
-    // ==========================================
-
+    // ✅ Renombradas para no chocar con tu modelo Route real
     data class DirectionsResponse(
-        val routes: List<Route>,
+        val routes: List<DirectionsRoute>,
         val status: String
     )
 
-    data class Route(
+    data class DirectionsRoute(
         val legs: List<Leg>
     )
 
@@ -496,13 +384,6 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         val duration: Duration
     )
 
-    data class Distance(
-        val text: String,
-        val value: Int
-    )
-
-    data class Duration(
-        val text: String,
-        val value: Int
-    )
+    data class Distance(val text: String, val value: Int)
+    data class Duration(val text: String, val value: Int)
 }
