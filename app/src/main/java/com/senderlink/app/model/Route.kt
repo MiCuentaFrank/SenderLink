@@ -1,15 +1,17 @@
 package com.senderlink.app.model
 
 import com.google.gson.annotations.SerializedName
+import com.senderlink.app.utils.DifficultyMapper
 
 /**
  * 🗺️ Route - Modelo principal
  *
- * Soporta el formato de tu backend que incluye AMBOS:
- * - lat/lng (campos legacy)
- * - coordinates (formato GeoJSON)
+ * Soporta el backend de SenderLink que puede incluir:
+ * - Coordenadas legacy (lat / lng)
+ * - Coordenadas GeoJSON (coordinates)
  */
 data class Route(
+
     @SerializedName("_id")
     val id: String,
 
@@ -28,6 +30,7 @@ data class Route(
     @SerializedName("durationMin")
     val durationMin: Int? = null,
 
+    // ⚠️ Valor crudo del backend (se normaliza en Android)
     val difficulty: String,
 
     // Ubicación textual
@@ -54,56 +57,78 @@ data class Route(
     val createdAt: String? = null,
     val updatedAt: String? = null,
 
-    val extraInfo: Map<String, Any>? = null,
+    // Información extra variable (evita errores de deserialización)
+    val extraInfo: Any? = null,
 
     @SerializedName("__v")
-    val version: Int? = null
+    val version: Int? = null,
+
+    // Distancia en metros desde la ubicación del usuario (endpoint /cerca)
+    val distance: Double? = null
 ) {
-    // Helpers para acceder a coordenadas fácilmente
+
+    /* =======================
+     * Helpers de coordenadas
+     * ======================= */
+
     fun getStartLat(): Double = startPoint?.getLat() ?: 0.0
     fun getStartLng(): Double = startPoint?.getLng() ?: 0.0
     fun getEndLat(): Double = endPoint?.getLat() ?: 0.0
     fun getEndLng(): Double = endPoint?.getLng() ?: 0.0
 
     fun hasValidGPS(): Boolean = startPoint?.isValid() == true
+
+    /* =======================
+     * Helpers de negocio
+     * ======================= */
+
+    // Dificultad normalizada para toda la app (FACIL / MODERADA / DIFICIL)
+    fun getNormalizedDifficulty(): String =
+        DifficultyMapper.normalize(difficulty)
+
+    // Distancia en km desde el usuario
+    fun getDistanceKmFromUser(): Double? =
+        distance?.let { it / 1000.0 }
+
+    // Distancia formateada para UI
+    fun getFormattedDistance(): String {
+        return distance?.let {
+            when {
+                it < 1000 -> "${it.toInt()} m"
+                else -> String.format("%.1f km", it / 1000.0)
+            }
+        } ?: ""
+    }
 }
 
 /**
- * 📍 GeoPoint - Punto geográfico
+ * 📍 GeoPoint
  *
- * Tu backend envía AMBOS formatos:
- * {
- *   "lat": 43.38,
- *   "lng": -2.98,
- *   "coordinates": [-2.98, 43.38],
- *   "type": "Point"
- * }
+ * Soporta:
+ * - GeoJSON: coordinates [lng, lat]
+ * - Legacy: lat / lng
  */
 data class GeoPoint(
-    // Formato GeoJSON
+
+    // GeoJSON
     val type: String? = null,
     val coordinates: List<Double>? = null,
 
-    // Formato legacy
+    // Legacy
     val lat: Double? = null,
     val lng: Double? = null
 ) {
-    /**
-     * Obtiene latitud (prioriza coordinates, fallback a lat)
-     */
+
     fun getLat(): Double {
-        // GeoJSON: coordinates[1] es lat
+        // GeoJSON → coordinates[1]
         if (coordinates != null && coordinates.size >= 2) {
             return coordinates[1]
         }
         return lat ?: 0.0
     }
 
-    /**
-     * Obtiene longitud (prioriza coordinates, fallback a lng)
-     */
     fun getLng(): Double {
-        // GeoJSON: coordinates[0] es lng
+        // GeoJSON → coordinates[0]
         if (coordinates != null && coordinates.size >= 2) {
             return coordinates[0]
         }
@@ -119,7 +144,7 @@ data class GeoPoint(
 }
 
 /**
- * 📏 GeoLineString - Línea de la ruta
+ * 📍 GeoLineString - Línea de la ruta (GeoJSON)
  */
 data class GeoLineString(
     val type: String? = null,

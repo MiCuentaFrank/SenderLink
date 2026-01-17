@@ -120,7 +120,7 @@ class HomeViewModel : ViewModel() {
         id = route.id,
         name = route.name,
         coverImage = route.coverImage,
-        difficulty = route.difficulty,
+        difficulty = route.getNormalizedDifficulty(),
         distanceKm = route.distanceKm
     )
 
@@ -153,6 +153,26 @@ class HomeViewModel : ViewModel() {
             )
         }
     }
+
+    fun applyDifficultyFilter(difficulties: Set<String>) {
+        val current = _routes.value ?: return
+
+        if (difficulties.isEmpty()) {
+            _routes.value = current
+            return
+        }
+
+        _routes.value = current.filter { route ->
+            route.getNormalizedDifficulty() in difficulties
+        }
+    }
+
+    fun clearDifficultyFilter() {
+        // Recarga las recientes sin filtro
+        _routes.value = _routes.value
+    }
+
+
 
     private fun liteToRoute(lite: RecentRouteLite) = Route(
         id = lite.id,

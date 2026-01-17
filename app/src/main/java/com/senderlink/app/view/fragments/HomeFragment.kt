@@ -1,11 +1,9 @@
 package com.senderlink.app.view.fragments
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -39,25 +37,46 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView()
+        setupCategoryCards()
         observeViewModel()
+
         viewModel.loadRecentsFromStorage(requireContext())
-
-
-        // Cargar datos iniciales
         viewModel.loadFeaturedRoutes(reset = true)
-
     }
 
+    // =====================================
+    // 🎯 ACCESOS DIRECTOS (FILTRO REAL)
+    // =====================================
+    private fun setupCategoryCards() {
+
+        binding.cardTodas.setOnClickListener {
+            viewModel.clearDifficultyFilter()
+        }
+
+        binding.cardModeradas.setOnClickListener {
+            viewModel.applyDifficultyFilter(setOf("MODERADA"))
+        }
+
+        binding.cardDificiles.setOnClickListener {
+            viewModel.applyDifficultyFilter(setOf("DIFICIL"))
+        }
+
+        binding.cardCercanas.setOnClickListener {
+            // Esto sí navega al mapa, está bien así
+            navigateToMapWithFilter("NEARBY")
+        }
+    }
+
+    // =====================================
+    // 🗂️ RECYCLERS
+    // =====================================
     private fun setupRecyclerView() {
-        // Adapter de rutas destacadas con navegación
+
         featuredAdapter = FeaturedRouteAdapter { route ->
             viewModel.markRouteAsRecent(requireContext(), route)
             navigateToDetail(route.id)
         }
 
-
-
-        // Layout manager para el carrusel horizontal
         val featuredLayoutManager = LinearLayoutManager(
             requireContext(),
             LinearLayoutManager.HORIZONTAL,
@@ -69,30 +88,25 @@ class HomeFragment : Fragment() {
             adapter = featuredAdapter
             setHasFixedSize(true)
 
-            // Detectar cuando llega al final para cargar más
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                    super.onScrolled(recyclerView, dx, dy)
-
-                    val lastVisiblePosition = featuredLayoutManager.findLastVisibleItemPosition()
-                    val totalItems = featuredLayoutManager.itemCount
-
-                    // Cargar más cuando esté a 3 items del final
-                    if (lastVisiblePosition >= totalItems - 3) {
-                        Log.d("HOME_FRAGMENT", "Cargando más rutas destacadas...")
+                override fun onScrolled(
+                    recyclerView: RecyclerView,
+                    dx: Int,
+                    dy: Int
+                ) {
+                    val lastVisible =
+                        featuredLayoutManager.findLastVisibleItemPosition()
+                    if (lastVisible >= featuredLayoutManager.itemCount - 3) {
                         viewModel.loadFeaturedRoutes()
                     }
                 }
             })
         }
 
-        // Adapter de rutas recientes con navegación
         routesAdapter = RouteAdapter { route ->
             viewModel.markRouteAsRecent(requireContext(), route)
             navigateToDetail(route.id)
         }
-
-
 
         binding.rvRoutes.apply {
             layoutManager = GridLayoutManager(requireContext(), 2)
@@ -102,35 +116,29 @@ class HomeFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        // Rutas destacadas
-        viewModel.featuredRoutes.observe(viewLifecycleOwner) { routes ->
-            Log.d("HOME_FRAGMENT", "Rutas destacadas actualizadas: ${routes.size}")
-            featuredAdapter.submitList(routes)
+        viewModel.featuredRoutes.observe(viewLifecycleOwner) {
+            featuredAdapter.submitList(it)
         }
 
-        // Rutas recientes
-        viewModel.routes.observe(viewLifecycleOwner) { routes ->
-            Log.d("HOME_FRAGMENT", "Rutas recientes recibidas: ${routes.size}")
-            routesAdapter.submitList(routes)
+        viewModel.routes.observe(viewLifecycleOwner) {
+            routesAdapter.submitList(it)
         }
     }
 
+    // =====================================
+    // 🧭 NAVEGACIÓN
+    // =====================================
+    private fun navigateToMapWithFilter(filterType: String) {
+        val action =
+            HomeFragmentDirections.actionHomeFragmentToMapasFragment(filterType)
+        findNavController().navigate(action)
+    }
 
     private fun navigateToDetail(routeId: String?) {
-        try {
-            if (routeId.isNullOrBlank()) {
-                Log.e("HOME_FRAGMENT", "Error: routeId es null o vacío")
-                Toast.makeText(requireContext(), "Error: ID de ruta inválido", Toast.LENGTH_SHORT).show()
-                return
-            }
-
-            Log.d("HOME_FRAGMENT", "Navegando a ruta con ID: $routeId")
-            val action = HomeFragmentDirections.actionHomeFragmentToRouteDetailFragment(routeId)
-            findNavController().navigate(action)
-        } catch (e: Exception) {
-            Log.e("HOME_FRAGMENT", "Error al navegar: ${e.message}", e)
-            Toast.makeText(requireContext(), "Error al abrir la ruta", Toast.LENGTH_SHORT).show()
-        }
+        if (routeId.isNullOrBlank()) return
+        val action =
+            HomeFragmentDirections.actionHomeFragmentToRouteDetailFragment(routeId)
+        findNavController().navigate(action)
     }
 
     override fun onDestroyView() {

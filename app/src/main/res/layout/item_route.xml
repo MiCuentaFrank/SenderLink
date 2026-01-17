@@ -2,97 +2,113 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="6dp"
+    android:layout_marginBottom="16dp"
     app:cardCornerRadius="16dp"
-    app:cardElevation="4dp">
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/white">
 
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="220dp">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <!-- Imagen de fondo -->
-        <ImageView
-            android:id="@+id/imgRoute"
+        <!-- Imagen de la ruta -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"/>
+            android:layout_height="220dp">
 
-        <!-- Overlay oscuro para legibilidad -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/gradient_overlay"/>
+            <ImageView
+                android:id="@+id/imgRoute"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                tools:src="@tools:sample/backgrounds/scenic"/>
 
-        <!-- Contenido sobre la imagen -->
+            <!-- Badge de dificultad (arriba izquierda) -->
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipDifficultyBadge"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start|top"
+                android:layout_margin="12dp"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                tools:text="Difícil"
+                app:chipBackgroundColor="@color/sl_primary"/>
+
+            <!-- Distancia (abajo izquierda) -->
+            <TextView
+                android:id="@+id/tvDistanceOverlay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start|bottom"
+                android:layout_margin="12dp"
+                android:background="@drawable/rounded_white_bg"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                tools:text="14.5 km"/>
+        </FrameLayout>
+
+        <!-- Información de la ruta -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
             android:orientation="vertical"
-            android:padding="12dp">
-
-            <!-- Badge opcional -->
-            <TextView
-                android:id="@+id/tvBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="3dp"
-                android:text="DESTACADA"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_on_dark"
-                android:background="@drawable/bg_badge"
-                android:visibility="gone"
-                android:layout_marginBottom="8dp"/>
+            android:padding="16dp">
 
             <!-- Nombre de la ruta -->
             <TextView
                 android:id="@+id/tvRouteName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="15sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
                 android:maxLines="2"
-                android:ellipsize="end"/>
+                android:ellipsize="end"
+                android:layout_marginBottom="8dp"
+                tools:text="Lagunas de Ruidera - circular en el Parque Natural"/>
 
-            <!-- Dificultad y distancia -->
+            <!-- Dificultad y distancia en texto -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginTop="4dp">
+                android:gravity="center_vertical">
 
                 <TextView
                     android:id="@+id/tvDificultadRuta"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:textColor="@android:color/white"
-                    android:alpha="0.9"/>
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    tools:text="Difícil"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text=" • "
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp"/>
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"/>
 
                 <TextView
                     android:id="@+id/tvDistanciaRuta"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:textColor="@android:color/white"
-                    android:alpha="0.9"/>
-
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    tools:text="14.5 km"/>
             </LinearLayout>
-
         </LinearLayout>
-
-    </FrameLayout>
-
+    </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

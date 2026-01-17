@@ -17,7 +17,16 @@
             app:enterAnim="@android:anim/slide_in_left"
             app:exitAnim="@android:anim/slide_out_right"
             app:popEnterAnim="@android:anim/slide_in_left"
-            app:popExitAnim="@android:anim/slide_out_right"/>
+            app:popExitAnim="@android:anim/slide_out_right" />
+
+        <action
+            android:id="@+id/action_homeFragment_to_mapasFragment"
+            app:destination="@id/nav_maps"
+            app:enterAnim="@android:anim/slide_in_left"
+            app:exitAnim="@android:anim/slide_out_right"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
+
     </fragment>
 
     <fragment
@@ -26,7 +35,6 @@
         android:label="Detalle Ruta"
         tools:layout="@layout/fragment_route_detail">
 
-        <!-- Argumento para recibir el ID de la ruta -->
         <argument
             android:name="routeId"
             app:argType="string" />
@@ -41,18 +49,79 @@
         android:id="@+id/nav_comunidad"
         android:name="com.senderlink.app.view.fragments.ComunidadFragment"
         android:label="Comunidad"
-        tools:layout="@layout/fragment_comunidad"/>
+        tools:layout="@layout/fragment_comunidad" />
 
     <fragment
         android:id="@+id/nav_maps"
         android:name="com.senderlink.app.view.fragments.MapasFragment"
         android:label="Mapas"
-        tools:layout="@layout/fragment_mapas"/>
+        tools:layout="@layout/fragment_mapas">
+
+        <!-- Argumentos para filtros desde Home -->
+        <argument
+            android:name="filterType"
+            app:argType="string"
+            android:defaultValue="ALL"
+            app:nullable="true" />
+
+        <!-- Argumentos para cuando vienes de RouteDetail -->
+        <argument
+            android:name="routeName"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+
+        <argument
+            android:name="startLat"
+            app:argType="float"
+            android:defaultValue="0.0" />
+
+        <argument
+            android:name="startLng"
+            app:argType="float"
+            android:defaultValue="0.0" />
+
+        <argument
+            android:name="endLat"
+            app:argType="float"
+            android:defaultValue="0.0" />
+
+        <argument
+            android:name="endLng"
+            app:argType="float"
+            android:defaultValue="0.0" />
+
+        <argument
+            android:name="distanceKm"
+            app:argType="float"
+            android:defaultValue="0.0" />
+
+        <argument
+            android:name="difficulty"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+
+        <argument
+            android:name="routePoints"
+            app:argType="float[]"
+            app:nullable="true"
+            android:defaultValue="@null" />
+
+        <action
+            android:id="@+id/action_nav_maps_to_routeDetailFragment"
+            app:destination="@id/routeDetailFragment"
+            app:enterAnim="@android:anim/slide_in_left"
+            app:exitAnim="@android:anim/slide_out_right"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
+
+    </fragment>
 
     <fragment
         android:id="@+id/nav_perfil"
         android:name="com.senderlink.app.view.fragments.PerfilFragment"
         android:label="Perfil"
-        tools:layout="@layout/fragment_perfil"/>
+        tools:layout="@layout/fragment_perfil" />
 
 </navigation>

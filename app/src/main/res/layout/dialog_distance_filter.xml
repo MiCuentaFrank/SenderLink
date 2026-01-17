@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Filtrar por distancia"
+        android:textStyle="bold"
+        android:textSize="20sp"
+        android:textColor="@color/text_primary"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Selecciona el radio máximo de búsqueda"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"
+        android:layout_marginBottom="24dp"/>
+
+    <!-- Radio seleccionado -->
+    <TextView
+        android:id="@+id/tvSelectedDistance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="50 km"
+        android:textStyle="bold"
+        android:textSize="32sp"
+        android:textColor="@color/sl_primary"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Slider -->
+    <com.google.android.material.slider.Slider
+        android:id="@+id/sliderDistance"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:valueFrom="5"
+        android:valueTo="200"
+        android:stepSize="5"
+        android:value="50"
+        app:thumbColor="@color/sl_primary"
+        app:trackColorActive="@color/sl_primary"
+        app:trackColorInactive="@color/text_secondary"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- Indicadores de rango -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="5 km"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:gravity="start"/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="200 km"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:gravity="end"/>
+    </LinearLayout>
+
+    <!-- Chips de acceso rápido -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Accesos rápidos"
+        android:textSize="12sp"
+        android:textColor="@color/text_secondary"
+        android:layout_marginBottom="8dp"/>
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/chipGroupQuickDistance"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:singleSelection="false"
+        app:chipSpacingHorizontal="8dp"
+        android:layout_marginBottom="16dp">
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip10km"
+            style="@style/Widget.Material3.Chip.Suggestion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="10 km"
+            app:chipBackgroundColor="@color/bg_app"/>
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip25km"
+            style="@style/Widget.Material3.Chip.Suggestion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="25 km"
+            app:chipBackgroundColor="@color/bg_app"/>
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip50km"
+            style="@style/Widget.Material3.Chip.Suggestion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="50 km"
+            app:chipBackgroundColor="@color/bg_app"/>
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip100km"
+            style="@style/Widget.Material3.Chip.Suggestion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="100 km"
+            app:chipBackgroundColor="@color/bg_app"/>
+    </com.google.android.material.chip.ChipGroup>
+
+    <!-- Botones -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancel"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancelar"
+            android:textColor="@color/text_secondary"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnApply"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Aplicar"
+            android:layout_marginStart="8dp"
+            app:backgroundTint="@color/sl_primary"/>
+    </LinearLayout>
+
+</LinearLayout>

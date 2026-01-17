@@ -72,63 +72,58 @@
                     android:layout_height="wrap_content"
                     android:hint="Buscar..."
                     android:singleLine="true"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_secondary"/>
+
             </com.google.android.material.textfield.TextInputLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chipGroupFilters"
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            app:singleSelection="true"
-            app:selectionRequired="false"
-            app:chipSpacingHorizontal="8dp">
+            android:scrollbars="none">
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipNearby"
-                style="@style/Widget.Material3.Chip.Filter"
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupFilters"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cerca"
-                android:textColor="@color/text_primary"
-                app:chipBackgroundColor="@color/white"
-                app:chipStrokeWidth="0dp"/>
+                app:singleSelection="false"
+                app:chipSpacingHorizontal="8dp">
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipEasy"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Fácil"
-                android:textColor="@color/text_primary"
-                app:chipBackgroundColor="@color/white"
-                app:chipStrokeWidth="0dp"/>
+                <!-- ✅ CHIP DE CERCANÍA: siempre activo, muestra el radio -->
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipNearby"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cerca 50km"
+                    android:textColor="@color/white"
+                    android:checked="true"
+                    app:chipBackgroundColor="@color/sl_primary"
+                    app:chipIconTint="@color/white"
+                    app:chipIcon="@android:drawable/ic_menu_mylocation"
+                    app:chipStrokeWidth="0dp"
+                    app:checkedIconVisible="false"/>
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipModerate"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Media"
-                android:textColor="@color/text_primary"
-                app:chipBackgroundColor="@color/white"
-                app:chipStrokeWidth="0dp"/>
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFilters"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Filtros"
+                    android:textColor="@color/text_primary"
+                    app:chipBackgroundColor="@color/white"
+                    app:chipStrokeWidth="0dp"/>
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipHard"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Difícil"
-                android:textColor="@color/text_primary"
-                app:chipBackgroundColor="@color/white"
-                app:chipStrokeWidth="0dp"/>
-        </com.google.android.material.chip.ChipGroup>
+            </com.google.android.material.chip.ChipGroup>
+
+        </HorizontalScrollView>
     </LinearLayout>
 
-    <!-- BOTONES DERECHA: zoom + ubicación + encajar -->
+    <!-- BOTONES DERECHA: zoom + ubicación -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -169,37 +164,25 @@
             app:tint="@color/text_on_dark"
             app:elevation="6dp"
             android:contentDescription="Mi ubicación"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabFitRoute"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:src="@android:drawable/ic_menu_view"
-            app:backgroundTint="@color/white"
-            app:tint="@color/sl_primary"
-            app:elevation="4dp"
-            android:contentDescription="Ver ruta completa"
-            android:visibility="gone"/>
     </LinearLayout>
 
-    <!-- BOTTOM SHEET -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/bottomSheet"
+    <!-- BOTTOM SHEET CON RUTAS -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/bottomSheetRoutes"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_margin="12dp"
-        app:cardCornerRadius="28dp"
-        app:cardElevation="8dp"
-        app:cardBackgroundColor="@color/white"
+        android:layout_height="match_parent"
+        android:background="@color/white"
+        android:clipToPadding="false"
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingTop="20dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="80dp">
 
             <!-- Handle -->
             <View
@@ -210,20 +193,36 @@
                 android:background="@color/text_secondary"
                 android:alpha="0.4"/>
 
-            <!-- Botón navegación -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/fabStartNavigation"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:text="Ir al inicio"
+            <!-- Header: Cantidad de rutas -->
+            <TextView
+                android:id="@+id/tvRoutesCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 Rutas"
                 android:textStyle="bold"
-                android:textSize="16sp"
-                app:cornerRadius="28dp"
-                app:icon="@android:drawable/ic_menu_directions"
-                app:iconTint="@color/text_on_dark"
-                android:textColor="@color/text_on_dark"
-                app:backgroundTint="@color/sl_primary"/>
+                android:textSize="20sp"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- RecyclerView de rutas -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvRoutes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                tools:itemCount="5"
+                tools:listitem="@layout/item_route"/>
+
+            <ProgressBar
+                android:id="@+id/progressBarLoadMore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone"/>
+
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

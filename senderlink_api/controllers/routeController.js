@@ -2,7 +2,6 @@ const Route = require("../models/Route");
 const User = require("../models/User");
 const axios = require("axios");
 
-
 // ==========================================
 // 1. Crear ruta (USER_ROUTE)
 // ==========================================
@@ -19,8 +18,11 @@ async function createRoute(req, res) {
       startLocality
     } = req.body;
 
-    if (!uid || !name || !points || points.length < 2) {
-      return res.status(400).json({ ok: false, message: "Datos insuficientes para crear la ruta" });
+    if (!uid || !name || !Array.isArray(points) || points.length < 2) {
+      return res.status(400).json({
+        ok: false,
+        message: "Datos insuficientes para crear la ruta"
+      });
     }
 
     const user = await User.findOne({ uid });
@@ -28,21 +30,34 @@ async function createRoute(req, res) {
       return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
     }
 
-    // GeoJSON start/end
-    const startPoint = {
+    // ✅ GeoJSON start/end para el esquema nuevo
+    const startPointGeo = {
       type: "Point",
-      coordinates: [points[0].lng, points[0].lat]
+      coordinates: [Number(points[0].lng), Number(points[0].lat)]
     };
 
-    const endPoint = {
+    const last = points[points.length - 1];
+    const endPointGeo = {
       type: "Point",
-      coordinates: [points[points.length - 1].lng, points[points.length - 1].lat]
+      coordinates: [Number(last.lng), Number(last.lat)]
     };
+
+    // Validación básica numérica (evita NaN silenciosos)
+    const bad =
+      startPointGeo.coordinates.some((n) => Number.isNaN(n)) ||
+      endPointGeo.coordinates.some((n) => Number.isNaN(n));
+
+    if (bad) {
+      return res.status(400).json({
+        ok: false,
+        message: "Coordenadas inválidas en points (lat/lng deben ser números)"
+      });
+    }
 
     // GeoJSON LineString
     const geometry = {
       type: "LineString",
-      coordinates: points.map(p => [p.lng, p.lat])
+      coordinates: points.map((p) => [Number(p.lng), Number(p.lat)])
     };
 
     const coverImage =
@@ -50,28 +65,24 @@ async function createRoute(req, res) {
 
     const newRoute = await Route.create({
       uid,
-
       type: "USER_ROUTE",
       source: "USER",
-
       name,
       description:
         "Ruta creada por un usuario. La imagen es genérica y no representa necesariamente la localización exacta.",
-
       coverImage,
       images: [coverImage],
-
       distanceKm,
       difficulty,
-
       geometry,
-      startPoint,
-      endPoint,
+
+      // ✅ IMPORTANTÍSIMO
+      startPointGeo,
+      endPointGeo,
 
       startLocality,
       comunidad,
       provincia,
-
       featured: false
     });
 
@@ -80,10 +91,6 @@ async function createRoute(req, res) {
     res.status(500).json({ ok: false, message: err.message });
   }
 }
-
-
-
-
 
 // ==========================================
 // 2. Obtener rutas (con filtros + featured + paginación)
@@ -94,9 +101,9 @@ async function getRoutes(req, res) {
       parqueNacional,
       provincia,
       startLocality,
-      localidad,     // compat
+      localidad,
       difficulty,
-      dificultad,    // compat
+      dificultad,
       type,
       featured,
       page = 1,
@@ -105,7 +112,6 @@ async function getRoutes(req, res) {
 
     const filtro = {};
 
-    // Parque nacional (si lo usas)
     if (parqueNacional) {
       filtro.parqueNacional = { $regex: parqueNacional, $options: "i" };
     }
@@ -114,13 +120,11 @@ async function getRoutes(req, res) {
       filtro.provincia = { $regex: provincia, $options: "i" };
     }
 
-    // Localidad real: startLocality (pero aceptamos "localidad" por compat)
     const loc = startLocality || localidad;
     if (loc) {
       filtro.startLocality = { $regex: loc, $options: "i" };
     }
 
-    // Dificultad real: difficulty (pero aceptamos "dificultad")
     const diff = difficulty || dificultad;
     if (diff) {
       filtro.difficulty = diff;
@@ -129,7 +133,6 @@ async function getRoutes(req, res) {
     if (type) filtro.type = type;
 
     if (featured !== undefined) {
-      // featured="true"/"false"
       if (featured === "true") filtro.featured = true;
       if (featured === "false") filtro.featured = false;
     }
@@ -174,7 +177,6 @@ async function getFeaturedRoutes(req, res) {
       count: routes.length,
       routes
     });
-
   } catch (err) {
     res.status(500).json({
       ok: false,
@@ -183,7 +185,39 @@ async function getFeaturedRoutes(req, res) {
   }
 }
 
+// ==========================================
+// 2.c Obtener TODAS las rutas para el mapa (sin filtro featured)
+// ==========================================
+async function getAllRoutesForMap(req, res) {
+  try {
+    const { difficulty, page = 1, limit = 100 } = req.query;
 
+    const filtro = {};
+    if (difficulty) filtro.difficulty = difficulty;
+
+    const pageFinal = parseInt(page, 10);
+    const limitFinal = parseInt(limit, 10);
+    const skip = (pageFinal - 1) * limitFinal;
+
+    const routes = await Route.find(filtro)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitFinal);
+
+    const total = await Route.countDocuments(filtro);
+
+    res.json({
+      ok: true,
+      page: pageFinal,
+      limit: limitFinal,
+      total,
+      pages: Math.ceil(total / limitFinal),
+      routes
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
+  }
+}
 
 // ==========================================
 // 3. Obtener ruta por ID
@@ -207,9 +241,7 @@ async function getRouteById(req, res) {
 // ==========================================
 async function getRoutesByUser(req, res) {
   try {
-    const routes = await Route.find({ uid: req.params.uid })
-      .sort({ createdAt: -1 });
-
+    const routes = await Route.find({ uid: req.params.uid }).sort({ createdAt: -1 });
     res.json({ ok: true, count: routes.length, routes });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });
@@ -217,39 +249,88 @@ async function getRoutesByUser(req, res) {
 }
 
 // ==========================================
-// 5. Buscar rutas cercanas
+// 5. Rutas cercanas (GEO 2dsphere)
+// - Busca por startPointGeo (DB)
+// - Responde con startPoint/endPoint (Android)
+// - NO envía geometry (evita crash Gson + reduce payload)
 // ==========================================
 async function getRoutesNearMe(req, res) {
   try {
-    const { lat, lng, radio = 50000, limit } = req.query;
+    const { lat, lng, radio = 50000, limit = 100 } = req.query;
 
-    if (!lat || !lng) {
+    // 1) Validación básica
+    if (lat == null || lng == null) {
       return res.status(400).json({
         ok: false,
         message: "lat y lng son obligatorios"
       });
     }
 
-    const limitFinal = parseInt(limit, 10) || 20;
+    const latNum = Number(lat);
+    const lngNum = Number(lng);
+    const radioFinal = parseInt(radio, 10);
+    const limitFinal = parseInt(limit, 10) || 100;
 
-    const routes = await Route.find({
-      startPoint: {
-        $nearSphere: {
+    if (!Number.isFinite(latNum) || !Number.isFinite(lngNum) || !Number.isFinite(radioFinal)) {
+      return res.status(400).json({
+        ok: false,
+        message: "lat/lng/radio inválidos (deben ser números)"
+      });
+    }
+
+    console.log(
+      `\n📍 Buscando rutas cercanas (startPointGeo): [${lngNum}, ${latNum}], radio=${radioFinal}m, limit=${limitFinal}`
+    );
+
+    // 2) Query GEO (usamos el campo indexado startPointGeo)
+    const nearbyRoutes = await Route.find({
+      startPointGeo: {
+        $near: {
           $geometry: {
             type: "Point",
-            coordinates: [Number(lng), Number(lat)]
+            coordinates: [lngNum, latNum] // [lng, lat]
           },
-          $maxDistance: Number(radio)
+          $maxDistance: radioFinal
         }
       }
-    }).limit(limitFinal);
+    })
+      // ✅ NO mandamos geometry. Solo lo necesario para mapa/lista.
+      .select(
+        "_id type source name description coverImage images distanceKm durationMin difficulty startLocality comunidad provincia parqueNacional featured startPointGeo endPointGeo code externalId uid createdAt updatedAt"
+      )
+      .limit(limitFinal)
+      .lean(); // ✅ para poder transformar objetos sin doc mongoose
 
-    res.json({ ok: true, count: routes.length, routes });
+    // 3) Transformación para Android: startPoint/endPoint (y eliminamos startPointGeo/endPointGeo)
+    const routesForClient = nearbyRoutes.map((r) => {
+      const out = { ...r };
 
+      // Android espera startPoint/endPoint
+      out.startPoint = out.startPointGeo || null;
+      out.endPoint = out.endPointGeo || null;
+
+      // No enviamos los campos nuevos al cliente
+      delete out.startPointGeo;
+      delete out.endPointGeo;
+
+      return out;
+    });
+
+    console.log(`✅ Encontradas: ${routesForClient.length} rutas`);
+
+    // 4) Respuesta
+    return res.json({
+      ok: true,
+      count: routesForClient.length,
+      routes: routesForClient
+    });
   } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
+    console.error("❌ Error en getRoutesNearMe:", err);
+    return res.status(500).json({ ok: false, message: err.message });
   }
 }
+
+
 
 // ==========================================
 // 6. Obtener parques nacionales (DISTINCT)
@@ -258,9 +339,8 @@ async function getParques(req, res) {
   try {
     const parques = await Route.distinct("parqueNacional");
 
-    // Limpieza: quitar null/"" y ordenar
     const parquesLimpios = parques
-      .filter(p => typeof p === "string" && p.trim().length > 0)
+      .filter((p) => typeof p === "string" && p.trim().length > 0)
       .sort((a, b) => a.localeCompare(b, "es"));
 
     res.json({
@@ -280,5 +360,6 @@ module.exports = {
   getRoutesByUser,
   getRoutesNearMe,
   getParques,
-  getFeaturedRoutes
+  getFeaturedRoutes,
+  getAllRoutesForMap
 };

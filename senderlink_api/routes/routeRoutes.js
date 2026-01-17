@@ -5,6 +5,7 @@ const {
   createRoute,
   getRoutes,
   getFeaturedRoutes,
+  getAllRoutesForMap,
   getRouteById,
   getRoutesByUser,
   getRoutesNearMe,
@@ -22,6 +23,9 @@ router.post("/", createRoute);
 
 // ⭐ Rutas destacadas
 router.get("/featured", getFeaturedRoutes);
+
+// 🗺️ Todas las rutas para el mapa (SIN filtro featured)
+router.get("/map", getAllRoutesForMap);
 
 // 🌲 Parques nacionales
 router.get("/parques", getParques);

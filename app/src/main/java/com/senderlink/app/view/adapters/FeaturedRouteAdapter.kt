@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.senderlink.app.databinding.ItemFeaturedRouteBinding
 import com.senderlink.app.model.Route
+import com.senderlink.app.utils.DifficultyMapper
 
 class FeaturedRouteAdapter(
     private val onClick: (Route) -> Unit
@@ -18,10 +19,7 @@ class FeaturedRouteAdapter(
         val binding: ItemFeaturedRouteBinding
     ) : RecyclerView.ViewHolder(binding.root)
 
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): FeaturedRouteViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FeaturedRouteViewHolder {
         val binding = ItemFeaturedRouteBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
@@ -30,17 +28,15 @@ class FeaturedRouteAdapter(
         return FeaturedRouteViewHolder(binding)
     }
 
-    override fun onBindViewHolder(
-        holder: FeaturedRouteViewHolder,
-        position: Int
-    ) {
+    override fun onBindViewHolder(holder: FeaturedRouteViewHolder, position: Int) {
         val route = routes[position]
 
-        holder.binding.txtRouteName.text = route.name
-        holder.binding.txtRouteInfo.text =
-            "${route.distanceKm} km · ${route.difficulty}"
+        val normalized = route.getNormalizedDifficulty()
+        val difficultyUi = normalizedToUi(normalized)
 
-        // ⭐ Mostrar badge de destacada
+        holder.binding.txtRouteName.text = route.name
+        holder.binding.txtRouteInfo.text = "${route.distanceKm} km · $difficultyUi"
+
         holder.binding.tvBadge?.visibility = View.VISIBLE
         holder.binding.tvBadge?.text = "DESTACADA"
 
@@ -49,9 +45,7 @@ class FeaturedRouteAdapter(
             .centerCrop()
             .into(holder.binding.imgRoute)
 
-        holder.itemView.setOnClickListener {
-            onClick(route)
-        }
+        holder.itemView.setOnClickListener { onClick(route) }
     }
 
     override fun getItemCount(): Int = routes.size
@@ -59,5 +53,14 @@ class FeaturedRouteAdapter(
     fun submitList(newList: List<Route>) {
         routes = newList
         notifyDataSetChanged()
+    }
+
+    private fun normalizedToUi(normalized: String): String {
+        return when (normalized) {
+            DifficultyMapper.FACIL -> "Fácil"
+            DifficultyMapper.MODERADA -> "Media"
+            DifficultyMapper.DIFICIL -> "Difícil"
+            else -> "Media"
+        }
     }
 }

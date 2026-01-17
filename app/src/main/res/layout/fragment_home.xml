@@ -50,7 +50,6 @@
                 android:paddingStart="4dp"
                 android:paddingEnd="4dp"/>
 
-
             <!-- 🧩 Categorías Populares -->
             <TextView
                 android:layout_width="wrap_content"
@@ -70,10 +69,13 @@
 
                 <!-- 🟢 Cercanas -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardCercanas"
                     android:layout_width="0dp"
                     android:layout_height="100dp"
                     android:layout_weight="1"
                     android:layout_margin="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
                     app:cardCornerRadius="14dp"
                     app:cardElevation="4dp">
 
@@ -102,15 +104,17 @@
                             android:layout_gravity="bottom|center_horizontal"
                             android:layout_marginBottom="8dp"/>
                     </FrameLayout>
-
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- 🟡 Moderadas -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardModeradas"
                     android:layout_width="0dp"
                     android:layout_height="100dp"
                     android:layout_weight="1"
                     android:layout_margin="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
                     app:cardCornerRadius="14dp"
                     app:cardElevation="4dp">
 
@@ -139,15 +143,17 @@
                             android:layout_gravity="bottom|center_horizontal"
                             android:layout_marginBottom="8dp"/>
                     </FrameLayout>
-
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- 🔴 Difíciles -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardDificiles"
                     android:layout_width="0dp"
                     android:layout_height="100dp"
                     android:layout_weight="1"
                     android:layout_margin="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
                     app:cardCornerRadius="14dp"
                     app:cardElevation="4dp">
 
@@ -176,15 +182,17 @@
                             android:layout_gravity="bottom|center_horizontal"
                             android:layout_marginBottom="8dp"/>
                     </FrameLayout>
-
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- 🔵 Nuevas -->
+                <!-- 🔵 Todas -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardTodas"
                     android:layout_width="0dp"
                     android:layout_height="100dp"
                     android:layout_weight="1"
                     android:layout_margin="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
                     app:cardCornerRadius="14dp"
                     app:cardElevation="4dp">
 
@@ -206,14 +214,13 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Nuevas"
+                            android:text="Todas"
                             android:textColor="@color/text_on_dark"
                             android:textStyle="bold"
                             android:textSize="13sp"
                             android:layout_gravity="bottom|center_horizontal"
                             android:layout_marginBottom="8dp"/>
                     </FrameLayout>
-
                 </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>

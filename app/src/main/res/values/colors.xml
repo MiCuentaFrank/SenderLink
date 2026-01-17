@@ -36,5 +36,9 @@
     <!-- 🌿 Imagen preview -->
     <color name="green_forest_light">#E8F5E9</color>
 
+    <color name="difficulty_easy">#4CAF50</color>
+    <color name="difficulty_moderate">#FF9800</color>
+    <color name="difficulty_hard">#F44336</color>
+
 
 </resources>

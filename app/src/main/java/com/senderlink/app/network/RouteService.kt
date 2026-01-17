@@ -5,12 +5,6 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-/**
- * 🔌 RouteService - Interface de Retrofit
- *
- * IMPORTANTE: Todas las rutas empiezan con "api/" porque
- * el backend usa: app.use("/api/routes", routeRoutes)
- */
 interface RouteService {
 
     /**
@@ -21,6 +15,17 @@ interface RouteService {
     fun getAllRoutes(
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 20
+    ): Call<RouteResponse>
+
+    /**
+     * 🗺️ Obtener TODAS las rutas para el mapa (sin filtro featured)
+     * GET /api/routes/map?page=1&limit=100&difficulty=FACIL
+     */
+    @GET("api/routes/map")
+    fun getAllRoutesForMap(
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 100,
+        @Query("difficulty") difficulty: String? = null
     ): Call<RouteResponse>
 
     /**
@@ -53,14 +58,14 @@ interface RouteService {
 
     /**
      * 📍 Obtener rutas cercanas
-     * GET /api/routes/cerca?lat=40.41&lng=-3.70&radio=50000&limit=20
+     * GET /api/routes/cerca?lat=40.41&lng=-3.70&radio=50000&limit=100
      */
     @GET("api/routes/cerca")
     fun getRoutesNearMe(
         @Query("lat") lat: Double,
         @Query("lng") lng: Double,
-        @Query("radio") radio: Int = 50000,
-        @Query("limit") limit: Int = 20
+        @Query("radio") radio: Int = 50000,  // 50km por defecto
+        @Query("limit") limit: Int = 100
     ): Call<RoutesNearResponse>
 
     /**
