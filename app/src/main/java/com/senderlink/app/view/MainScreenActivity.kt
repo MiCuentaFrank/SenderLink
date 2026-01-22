@@ -7,7 +7,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import com.senderlink.app.R
 import com.senderlink.app.databinding.ActivityMainScreenBinding
-import androidx.navigation.ui.NavigationUI
+
 
 class MainScreenActivity : AppCompatActivity() {
 

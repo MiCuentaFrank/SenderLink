@@ -128,6 +128,81 @@ async function updateUser(req, res) {
     });
   }
 }
+// ACTUALIZAR PERFIL (solo campos editables por el usuario)
+async function updateUserProfile(req, res) {
+  try {
+    const { uid } = req.params;
+
+    // ✅ Solo permitimos estos campos (whitelist)
+    const allowedFields = [
+      "nombre",
+      "foto",
+      "bio",
+      "comunidad",
+      "provincia",
+      "preferencias"
+      // Si luego añades privacidad: "privacy"
+    ];
+
+    // Construimos un objeto seguro con solo lo permitido
+    const safeBody = {};
+    for (const key of allowedFields) {
+      if (req.body[key] !== undefined) safeBody[key] = req.body[key];
+    }
+
+    // 🔥 Calcula el % de perfil completado
+    // (regla simple, puedes ajustarla)
+    const completion = calculateProfileCompletion(safeBody);
+    safeBody.profileCompletion = completion;
+
+    const user = await User.findOneAndUpdate(
+      { uid },
+      { $set: safeBody },
+      { new: true, runValidators: true }
+    ).select("-__v");
+
+    if (!user) {
+      return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
+    }
+
+    res.json({
+      ok: true,
+      message: "Perfil actualizado correctamente",
+      user
+    });
+
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
+  }
+}
+
+// Helper: calcula el % de perfil completado
+function calculateProfileCompletion(data) {
+  let score = 0;
+
+  const nombre = (data.nombre || "").trim();
+  const foto = (data.foto || "").trim();
+  const bio = (data.bio || "").trim();
+  const comunidad = (data.comunidad || "").trim();
+  const provincia = (data.provincia || "").trim();
+
+  // preferencias puede venir como objeto
+  const preferencias = data.preferencias || {};
+  const prefNivel = (preferencias.nivel || "").trim();
+  const prefTipos = Array.isArray(preferencias.tipos) ? preferencias.tipos : [];
+  const prefDist = Number(preferencias.distanciaKm || 0);
+
+  if (nombre) score += 25;
+  if (foto) score += 15;
+  if (bio) score += 20;
+  if (comunidad || provincia) score += 20;
+
+  // Preferencias cuenta si hay algo
+  if (prefNivel || prefTipos.length > 0 || prefDist > 0) score += 20;
+
+  return Math.min(score, 100);
+}
+
 // ELIMINAR USUARIO
 async function deleteUser(req, res) {
   try {
@@ -162,5 +237,6 @@ module.exports = {
   getUsers,
   getUserByUid,
   updateUser,
+  updateUserProfile,
   deleteUser
 };

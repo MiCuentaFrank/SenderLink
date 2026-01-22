@@ -12,11 +12,17 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.firebase.auth.FirebaseAuth
 import com.senderlink.app.R
+import com.senderlink.app.databinding.DialogCreateEventBinding
 import com.senderlink.app.databinding.FragmentRouteDetailBinding
+import com.senderlink.app.model.EventoGrupal
 import com.senderlink.app.model.Route
+import com.senderlink.app.view.adapters.EventoAdapter
 import com.senderlink.app.view.adapters.ImageGalleryAdapter
 import com.senderlink.app.viewmodel.RouteDetailViewModel
+import com.senderlink.app.viewmodel.RutasGrupalesViewModel
 
 class RouteDetailFragment : Fragment() {
 
@@ -24,8 +30,17 @@ class RouteDetailFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val args: RouteDetailFragmentArgs by navArgs()
+
+    // ✅ ViewModel de detalle ruta (solo ruta)
     private val viewModel: RouteDetailViewModel by viewModels()
+
+    // ✅ ViewModel de eventos
+    private val eventosViewModel: RutasGrupalesViewModel by viewModels()
+
     private lateinit var galleryAdapter: ImageGalleryAdapter
+    private lateinit var eventosAdapter: EventoAdapter
+
+    private var eventosCache: List<EventoGrupal> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -44,9 +59,30 @@ class RouteDetailFragment : Fragment() {
 
         setupToolbar()
         setupGallery()
-        observeViewModel()
+        setupEventosRecycler()
 
+        observeRouteViewModel()
+        observeEventosViewModel()
+        observeEventosList()
+
+        // ✅ Botón crear evento (está en la card de eventos)
+        binding.btnCrearEvento.setOnClickListener {
+            showCreateEventoBottomSheet(routeId)
+        }
+        binding.btnVerEventosRuta.setOnClickListener {
+            val bundle = Bundle().apply { putString("routeId", args.routeId) }
+            findNavController().navigate(
+                R.id.action_routeDetailFragment_to_rutasGrupalesFragment,
+                bundle
+            )
+        }
+
+
+        // ✅ Cargar detalle de ruta
         viewModel.loadRouteById(routeId)
+
+        // ✅ Cargar eventos CON flags (isParticipant/isOrganizer)
+        loadEventosDeRutaConFlags(routeId)
     }
 
     private fun setupToolbar() {
@@ -61,17 +97,106 @@ class RouteDetailFragment : Fragment() {
         }
 
         binding.rvGallery.apply {
-            layoutManager = LinearLayoutManager(
-                requireContext(),
-                LinearLayoutManager.HORIZONTAL,
-                false
-            )
+            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = galleryAdapter
             setHasFixedSize(true)
         }
     }
 
-    private fun observeViewModel() {
+    // ===========================
+    // ✅ EVENTOS UI
+    // ===========================
+    private fun setupEventosRecycler() {
+        eventosAdapter = EventoAdapter(
+            onEventoClick = { evento ->
+                // click en card -> lo dejo neutral por ahora
+                Log.d("ROUTE_DETAIL", "Click evento: ${evento.id}")
+            },
+            onJoinClick = { evento ->
+                eventosViewModel.joinEvento(evento)
+            },
+            onLeaveClick = { evento ->
+                eventosViewModel.leaveEvento(evento)
+            },
+            onChatClick = {
+                goToRutasGrupales(args.routeId)
+            }
+
+        )
+
+        binding.rvEventos.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = eventosAdapter
+            setHasFixedSize(false)
+        }
+
+        // Estado inicial
+        binding.progressEventos.visibility = View.GONE
+        binding.rvEventos.visibility = View.GONE
+        binding.tvEventosEmpty.visibility = View.GONE
+    }
+
+    private fun loadEventosDeRutaConFlags(routeId: String) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid.isNullOrBlank()) {
+            eventosCache = emptyList()
+            renderEventosUI()
+            return
+        }
+
+        // mini-loading de eventos
+        binding.progressEventos.visibility = View.VISIBLE
+        binding.rvEventos.visibility = View.GONE
+        binding.tvEventosEmpty.visibility = View.GONE
+
+        // ✅ Usamos el VM (no repo directo)
+        eventosViewModel.loadEventosPorRutaForUser(routeId)
+    }
+    private fun goToRutasGrupales(routeId: String) {
+        val bundle = Bundle().apply { putString("routeId", routeId) }
+        findNavController().navigate(
+            R.id.action_routeDetailFragment_to_rutasGrupalesFragment,
+            bundle
+        )
+    }
+
+
+    private fun observeEventosList() {
+        eventosViewModel.eventos.observe(viewLifecycleOwner) { list ->
+            binding.progressEventos.visibility = View.GONE
+
+            eventosCache = list ?: emptyList()
+
+            // Debug rápido
+            eventosCache.take(5).forEachIndexed { i, ev ->
+                Log.d(
+                    "ROUTE_DETAIL",
+                    "Evento[$i] id=${ev.id} isParticipant=${ev.isParticipant} isOrganizer=${ev.isOrganizer} chatId=${ev.chatId}"
+                )
+            }
+
+            renderEventosUI()
+        }
+    }
+
+    private fun renderEventosUI() {
+        if (eventosCache.isEmpty()) {
+            binding.rvEventos.visibility = View.GONE
+            binding.tvEventosEmpty.visibility = View.VISIBLE
+        } else {
+            binding.tvEventosEmpty.visibility = View.GONE
+            binding.rvEventos.visibility = View.VISIBLE
+            eventosAdapter.submitList(eventosCache)
+        }
+    }
+
+
+
+
+    // ===========================
+    // OBSERVERS
+    // ===========================
+    private fun observeRouteViewModel() {
         viewModel.route.observe(viewLifecycleOwner) { route ->
             route?.let { displayRouteDetails(it) }
         }
@@ -88,15 +213,37 @@ class RouteDetailFragment : Fragment() {
         }
     }
 
+    private fun observeEventosViewModel() {
+        eventosViewModel.error.observe(viewLifecycleOwner) { err ->
+            err?.let {
+                Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
+                eventosViewModel.clearMessages()
+
+                // Si hubo error, recargar para mantener UI coherente
+                loadEventosDeRutaConFlags(args.routeId)
+            }
+        }
+
+        eventosViewModel.successMessage.observe(viewLifecycleOwner) { msg ->
+            msg?.let {
+                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                eventosViewModel.clearMessages()
+
+                // ✅ tras create/join/leave -> recargar lista de esta ruta con flags
+                loadEventosDeRutaConFlags(args.routeId)
+            }
+        }
+    }
+
+    // ===========================
+    // UI RUTA
+    // ===========================
     private fun displayRouteDetails(route: Route) {
         binding.apply {
-            // Título
             collapsingToolbar.title = route.name
 
-            // Imagen de portada
             loadImageInCover(route.coverImage, 0)
 
-            // ===== GALERÍA (PRIMERO, CERCA DE LA IMAGEN) =====
             if (route.images.size > 1) {
                 rvGallery.visibility = View.VISIBLE
                 tvGalleryTitle.visibility = View.VISIBLE
@@ -107,7 +254,6 @@ class RouteDetailFragment : Fragment() {
                 tvGalleryTitle.visibility = View.GONE
             }
 
-            // Badge destacada
             if (route.featured) {
                 tvBadge.visibility = View.VISIBLE
                 tvBadge.text = "⭐ DESTACADA"
@@ -115,32 +261,21 @@ class RouteDetailFragment : Fragment() {
                 tvBadge.visibility = View.GONE
             }
 
-            // Tipo de ruta
             tvRouteType.visibility = View.VISIBLE
             tvRouteType.text = formatRouteType(route.type, route.source)
 
-            // Nombre
             tvRouteName.text = route.name
 
-            // ===== DATOS TÉCNICOS =====
             tvDistance.text = String.format("%.1f km", route.distanceKm)
             displayDuration(route.durationMin)
             tvDifficulty.text = formatDifficulty(route.difficulty)
             tvDifficulty.setTextColor(getDifficultyColor(route.difficulty))
 
-            // ===== UBICACIÓN =====
             displayLocation(route)
-
-            // ===== DESCRIPCIÓN =====
             tvDescription.text = route.description
-
-            // ===== INFORMACIÓN GPS =====
             displayGPSInfo(route)
 
-            // ===== BOTÓN VER EN MAPA =====
-            btnViewOnMap.setOnClickListener {
-                navigateToMap(route)
-            }
+            btnViewOnMap.setOnClickListener { navigateToMap(route) }
         }
     }
 
@@ -153,11 +288,7 @@ class RouteDetailFragment : Fragment() {
             .into(binding.imgRouteCover)
 
         if (position > 0) {
-            Toast.makeText(
-                requireContext(),
-                "📸 Foto ${position + 1}",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(requireContext(), "📸 Foto ${position + 1}", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -188,61 +319,41 @@ class RouteDetailFragment : Fragment() {
         if (durationMin != null && durationMin > 0) {
             val hours = durationMin / 60
             val minutes = durationMin % 60
-
             binding.tvDuration.text = when {
                 hours > 0 && minutes > 0 -> "${hours}h ${minutes}min"
                 hours > 0 -> "${hours}h"
                 else -> "${minutes}min"
             }
-        } else {
-            binding.tvDuration.text = "N/A"
-        }
+        } else binding.tvDuration.text = "N/A"
     }
 
     private fun displayLocation(route: Route) {
-        // Municipio
         if (!route.startLocality.isNullOrEmpty()) {
             binding.layoutMunicipio.visibility = View.VISIBLE
             binding.tvMunicipio.text = route.startLocality
-        } else {
-            binding.layoutMunicipio.visibility = View.GONE
-        }
+        } else binding.layoutMunicipio.visibility = View.GONE
 
-        // Provincia
         if (!route.provincia.isNullOrEmpty()) {
             binding.layoutProvincia.visibility = View.VISIBLE
             binding.tvProvincia.text = route.provincia
-        } else {
-            binding.layoutProvincia.visibility = View.GONE
-        }
+        } else binding.layoutProvincia.visibility = View.GONE
 
-        // Comunidad
         if (!route.comunidad.isNullOrEmpty()) {
             binding.layoutComunidad.visibility = View.VISIBLE
             binding.tvComunidad.text = route.comunidad
-        } else {
-            binding.layoutComunidad.visibility = View.GONE
-        }
+        } else binding.layoutComunidad.visibility = View.GONE
     }
 
-    /**
-     * 📍 Muestra información GPS disponible
-     */
     private fun displayGPSInfo(route: Route) {
         val info = buildString {
-            // Número de puntos GPS
             route.geometry?.coordinates?.let { coords ->
-                if (coords.isNotEmpty()) {
-                    append("🗺️ ${coords.size} puntos GPS registrados\n")
-                }
+                if (coords.isNotEmpty()) append("🗺️ ${coords.size} puntos GPS registrados\n")
             }
 
-            // Coordenadas de inicio
             route.startPoint?.let { point ->
                 append("🚩 Inicio: ${formatCoordinates(point.getLat(), point.getLng())}\n")
             }
 
-            // Coordenadas de fin
             route.endPoint?.let { point ->
                 append("🏁 Final: ${formatCoordinates(point.getLat(), point.getLng())}")
             }
@@ -262,64 +373,40 @@ class RouteDetailFragment : Fragment() {
         return "${String.format("%.4f", lat)}, ${String.format("%.4f", lng)}"
     }
 
-    /**
-     * 🗺️ Navega al MapFragment con los datos de la ruta
-     */
     private fun navigateToMap(route: Route) {
-        // Verificar que tengamos datos GPS
         if (route.startPoint == null) {
-            Toast.makeText(
-                requireContext(),
-                "⚠️ Esta ruta no tiene datos GPS disponibles",
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(requireContext(), "⚠️ Esta ruta no tiene datos GPS disponibles", Toast.LENGTH_LONG).show()
             return
         }
 
         try {
-            // Preparar los puntos de la ruta
             val routePointsArray = route.geometry?.coordinates?.let { coords ->
-                DoubleArray(coords.size * 2).apply {
+                FloatArray(coords.size * 2).apply {
                     coords.forEachIndexed { index, coord ->
-                        // coord[0] = lng, coord[1] = lat
-                        this[index * 2] = coord[1]     // lat
-                        this[index * 2 + 1] = coord[0] // lng
+                        this[index * 2] = coord[1].toFloat()
+                        this[index * 2 + 1] = coord[0].toFloat()
                     }
                 }
             }
 
-            // Crear bundle con todos los datos
             val bundle = Bundle().apply {
                 putString("routeName", route.name)
-                putDouble("startLat", route.startPoint?.lat ?: 0.0)
-                putDouble("startLng", route.startPoint?.lng ?: 0.0)
-                putDouble("endLat", route.endPoint?.lat ?: 0.0)
-                putDouble("endLng", route.endPoint?.lng ?: 0.0)
-                putDouble("distanceKm", route.distanceKm)
+                putFloat("startLat", route.startPoint?.lat?.toFloat() ?: 0.0f)
+                putFloat("startLng", route.startPoint?.lng?.toFloat() ?: 0.0f)
+                putFloat("endLat", route.endPoint?.lat?.toFloat() ?: 0.0f)
+                putFloat("endLng", route.endPoint?.lng?.toFloat() ?: 0.0f)
+                putFloat("distanceKm", route.distanceKm.toFloat())
                 putString("difficulty", route.difficulty)
-                routePointsArray?.let { putDoubleArray("routePoints", it) }
+                routePointsArray?.let { putFloatArray("routePoints", it) }
             }
 
-            // Navegar al tab de Mapas con los argumentos
             findNavController().navigate(R.id.nav_maps, bundle)
 
-            Toast.makeText(
-                requireContext(),
-                "📍 Cargando ruta en el mapa...",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            Log.d("ROUTE_DETAIL", "Navegando al mapa con:")
-            Log.d("ROUTE_DETAIL", "- Ruta: ${route.name}")
-            Log.d("ROUTE_DETAIL", "- Puntos GPS: ${route.geometry?.coordinates?.size}")
+            Toast.makeText(requireContext(), "📍 Cargando ruta en el mapa...", Toast.LENGTH_SHORT).show()
 
         } catch (e: Exception) {
             Log.e("ROUTE_DETAIL", "Error al navegar al mapa: ${e.message}", e)
-            Toast.makeText(
-                requireContext(),
-                "Error al abrir el mapa",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(requireContext(), "Error al abrir el mapa", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -339,6 +426,43 @@ class RouteDetailFragment : Fragment() {
             "DIFICIL" -> resources.getColor(android.R.color.holo_red_dark, null)
             else -> resources.getColor(android.R.color.darker_gray, null)
         }
+    }
+
+    // ===========================
+    // ✅ CREAR EVENTO DESDE DETALLE
+    // ===========================
+    private fun showCreateEventoBottomSheet(routeId: String) {
+        val dialog = BottomSheetDialog(requireContext())
+        val dialogBinding = DialogCreateEventBinding.inflate(layoutInflater)
+        dialog.setContentView(dialogBinding.root)
+
+        dialogBinding.btnCancelar.setOnClickListener { dialog.dismiss() }
+
+        dialogBinding.btnCrear.setOnClickListener {
+            val fechaSimple = dialogBinding.etFecha.text?.toString()?.trim().orEmpty()
+            val hora = dialogBinding.etHora.text?.toString()?.trim().orEmpty()
+            val max = dialogBinding.etMaxParticipantes.text?.toString()?.trim()?.toIntOrNull() ?: 10
+            val descripcion = dialogBinding.etDescripcion.text?.toString()?.trim()?.takeIf { it.isNotBlank() }
+
+            if (fechaSimple.isBlank() || hora.isBlank()) {
+                Toast.makeText(requireContext(), "Faltan datos: fecha/hora", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val fechaIso = "${fechaSimple}T${hora}:00.000Z"
+
+            eventosViewModel.createEvento(
+                routeId = routeId,
+                fecha = fechaIso,
+                maxParticipantes = max,
+                descripcion = descripcion,
+                horaEncuentro = hora
+            )
+
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     override fun onDestroyView() {

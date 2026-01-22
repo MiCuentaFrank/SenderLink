@@ -15,6 +15,14 @@ import com.senderlink.app.view.adapters.FeaturedRouteAdapter
 import com.senderlink.app.view.adapters.RouteAdapter
 import com.senderlink.app.viewmodel.HomeViewModel
 
+/**
+ * 🏠 HomeFragment - OPTIMIZADO CON PAGINACIÓN
+ *
+ * MEJORAS:
+ * - ⚡ Carga paralela con loadAllData()
+ * - 💾 Usa caché de destacadas
+ * - 🔄 Paginación infinita en destacadas
+ */
 class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
@@ -37,34 +45,10 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView()
-        setupCategoryCards()
         observeViewModel()
 
-        viewModel.loadRecentsFromStorage(requireContext())
-        viewModel.loadFeaturedRoutes(reset = true)
-    }
-
-    // =====================================
-    // 🎯 ACCESOS DIRECTOS (FILTRO REAL)
-    // =====================================
-    private fun setupCategoryCards() {
-
-        binding.cardTodas.setOnClickListener {
-            viewModel.clearDifficultyFilter()
-        }
-
-        binding.cardModeradas.setOnClickListener {
-            viewModel.applyDifficultyFilter(setOf("MODERADA"))
-        }
-
-        binding.cardDificiles.setOnClickListener {
-            viewModel.applyDifficultyFilter(setOf("DIFICIL"))
-        }
-
-        binding.cardCercanas.setOnClickListener {
-            // Esto sí navega al mapa, está bien así
-            navigateToMapWithFilter("NEARBY")
-        }
+        // ⚡ CARGA PARALELA - Una sola llamada carga TODO
+        viewModel.loadAllData(requireContext())
     }
 
     // =====================================
@@ -88,16 +72,17 @@ class HomeFragment : Fragment() {
             adapter = featuredAdapter
             setHasFixedSize(true)
 
+            // 🔄 SCROLL LISTENER - Cargar más al llegar al final
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                override fun onScrolled(
-                    recyclerView: RecyclerView,
-                    dx: Int,
-                    dy: Int
-                ) {
-                    val lastVisible =
-                        featuredLayoutManager.findLastVisibleItemPosition()
-                    if (lastVisible >= featuredLayoutManager.itemCount - 3) {
-                        viewModel.loadFeaturedRoutes()
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+
+                    val lastVisible = featuredLayoutManager.findLastVisibleItemPosition()
+                    val totalItems = featuredLayoutManager.itemCount
+
+                    // Cuando faltan 3 items para el final, cargar más
+                    if (lastVisible >= totalItems - 3) {
+                        viewModel.loadMoreFeaturedRoutes()
                     }
                 }
             })
@@ -116,12 +101,27 @@ class HomeFragment : Fragment() {
     }
 
     private fun observeViewModel() {
+        // Observar destacadas
         viewModel.featuredRoutes.observe(viewLifecycleOwner) {
             featuredAdapter.submitList(it)
         }
 
+        // Observar recientes
         viewModel.routes.observe(viewLifecycleOwner) {
             routesAdapter.submitList(it)
+        }
+
+        // Observar loading (opcional - puedes mostrar un ProgressBar)
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            // Aquí podrías mostrar/ocultar un ProgressBar
+            // binding.progressBar?.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
+
+        // Observar errores (opcional - puedes mostrar un Toast)
+        viewModel.error.observe(viewLifecycleOwner) { error ->
+            error?.let {
+                // Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

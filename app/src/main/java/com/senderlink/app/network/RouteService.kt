@@ -28,13 +28,18 @@ interface RouteService {
         @Query("difficulty") difficulty: String? = null
     ): Call<RouteResponse>
 
+    // ==========================================
+// ACTUALIZAR en RouteService.kt
+// ==========================================
+
     /**
-     * ⭐ Obtener rutas destacadas
-     * GET /api/routes/featured?limit=10
+     * ⭐ Obtener rutas destacadas CON PAGINACIÓN
+     * GET /api/routes/featured?page=1&limit=20
      */
     @GET("api/routes/featured")
     fun getFeaturedRoutes(
-        @Query("limit") limit: Int = 10
+        @Query("page") page: Int = 1,      // ✅ NUEVO
+        @Query("limit") limit: Int = 20
     ): Call<FeaturedResponse>
 
     /**

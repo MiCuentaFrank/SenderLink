@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_app"
+    android:fitsSystemWindows="true"
+    tools:context=".view.fragments.EditProfileFragment">
+
+    <!-- TOOLBAR -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/sl_primary"
+        android:fitsSystemWindows="true">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbarEditProfile"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/transparent"
+            app:title="Editar perfil"
+            app:titleTextColor="@color/text_on_dark"
+            app:navigationIcon="@drawable/ic_back"
+            app:navigationIconTint="@color/text_on_dark" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- CARD: DATOS BÁSICOS -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@color/card_background">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Datos del perfil"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- NOMBRE -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Nombre o nick"
+                        app:boxBackgroundMode="outline"
+                        app:boxStrokeColor="@color/sl_primary"
+                        app:hintTextColor="@color/sl_primary">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etNombre"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPersonName"
+                            android:imeOptions="actionNext" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- BIO -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="Bio (opcional)"
+                        app:boxBackgroundMode="outline"
+                        app:boxStrokeColor="@color/sl_primary"
+                        app:hintTextColor="@color/sl_primary"
+                        app:counterEnabled="true"
+                        app:counterMaxLength="150">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etBio"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minLines="2"
+                            android:maxLines="4"
+                            android:maxLength="150"
+                            android:inputType="textMultiLine"
+                            android:imeOptions="actionNext" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- COMUNIDAD -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="Comunidad (opcional)"
+                        app:boxBackgroundMode="outline"
+                        app:boxStrokeColor="@color/sl_primary"
+                        app:hintTextColor="@color/sl_primary">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etComunidad"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textCapWords"
+                            android:imeOptions="actionNext" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- PROVINCIA -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="Provincia (opcional)"
+                        app:boxBackgroundMode="outline"
+                        app:boxStrokeColor="@color/sl_primary"
+                        app:hintTextColor="@color/sl_primary">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etProvincia"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textCapWords"
+                            android:imeOptions="actionNext" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- CARD: PREFERENCIAS -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@color/card_background">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Preferencias de rutas"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- NIVEL PREFERIDO -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nivel preferido"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- CHIPS DE NIVEL -->
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipGroupNivel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:singleSelection="true"
+                        app:checkedChip="@id/chipBeginner">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipBeginner"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Principiante"
+                            app:chipBackgroundColor="@color/chip_nivel_selector"
+                            app:chipStrokeColor="@color/sl_primary"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipIntermediate"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Intermedio"
+                            app:chipBackgroundColor="@color/chip_nivel_selector"
+                            app:chipStrokeColor="@color/sl_primary"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipAdvanced"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Avanzado"
+                            app:chipBackgroundColor="@color/chip_nivel_selector"
+                            app:chipStrokeColor="@color/sl_primary"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipExpert"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Experto"
+                            app:chipBackgroundColor="@color/chip_nivel_selector"
+                            app:chipStrokeColor="@color/sl_primary"
+                            app:chipStrokeWidth="1dp" />
+
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <!-- TIPOS DE RUTAS -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tipos de rutas favoritas"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Selecciona uno o varios"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- CHIPS DE TIPOS -->
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipGroupTipos"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:singleSelection="false">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMontana"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🏔️ Montaña"
+                            app:chipBackgroundColor="@color/chip_tipo_selector"
+                            app:chipStrokeColor="@color/sl_primary"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipBosque"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🌲 Bosque"
+                            app:chipBackgroundColor="@color/chip_tipo_selector"
+                            app:chipStrokeColor="@color/sl_primary"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipCosta"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🏖️ Costa"
+                            app:chipBackgroundColor="@color/chip_tipo_selector"
+                            app:chipStrokeColor="@color/sl_primary"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipUrbano"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🏙️ Urbano"
+                            app:chipBackgroundColor="@color/chip_tipo_selector"
+                            app:chipStrokeColor="@color/sl_primary"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipRural"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🌾 Rural"
+                            app:chipBackgroundColor="@color/chip_tipo_selector"
+                            app:chipStrokeColor="@color/sl_primary"
+                            app:chipStrokeWidth="1dp" />
+
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <!-- DISTANCIA -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Distancia típica que recorres"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Kilómetros"
+                        app:boxBackgroundMode="outline"
+                        app:boxStrokeColor="@color/sl_primary"
+                        app:hintTextColor="@color/sl_primary"
+                        app:suffixText="km">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etDistancia"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="numberDecimal"
+                            android:imeOptions="actionDone" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- BOTÓN GUARDAR -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGuardar"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="24dp"
+                android:text="Guardar cambios"
+                android:textColor="@color/text_on_dark"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/sl_primary"
+                app:cornerRadius="16dp" />
+
+            <!-- ESPACIADO -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="40dp" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

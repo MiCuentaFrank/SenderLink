@@ -5,6 +5,9 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/nav_home">
 
+    <!-- ========================= -->
+    <!-- HOME -->
+    <!-- ========================= -->
     <fragment
         android:id="@+id/nav_home"
         android:name="com.senderlink.app.view.fragments.HomeFragment"
@@ -26,9 +29,11 @@
             app:exitAnim="@android:anim/slide_out_right"
             app:popEnterAnim="@android:anim/slide_in_left"
             app:popExitAnim="@android:anim/slide_out_right" />
-
     </fragment>
 
+    <!-- ========================= -->
+    <!-- DETALLE RUTA -->
+    <!-- ========================= -->
     <fragment
         android:id="@+id/routeDetailFragment"
         android:name="com.senderlink.app.view.fragments.RouteDetailFragment"
@@ -43,14 +48,27 @@
             android:id="@+id/action_routeDetailFragment_to_nav_maps"
             app:destination="@id/nav_maps" />
 
+
+        <action
+            android:id="@+id/action_routeDetailFragment_to_rutasGrupalesFragment"
+            app:destination="@id/rutasGrupalesFragment" />
+
+
     </fragment>
 
+
+    <!-- ========================= -->
+    <!-- COMUNIDAD -->
+    <!-- ========================= -->
     <fragment
         android:id="@+id/nav_comunidad"
-        android:name="com.senderlink.app.view.fragments.ComunidadFragment"
+        android:name="com.senderlink.app.view.fragments.SocialFragment"
         android:label="Comunidad"
-        tools:layout="@layout/fragment_comunidad" />
+        tools:layout="@layout/fragment_social" />
 
+    <!-- ========================= -->
+    <!-- MAPAS -->
+    <!-- ========================= -->
     <fragment
         android:id="@+id/nav_maps"
         android:name="com.senderlink.app.view.fragments.MapasFragment"
@@ -115,13 +133,66 @@
             app:exitAnim="@android:anim/slide_out_right"
             app:popEnterAnim="@android:anim/slide_in_left"
             app:popExitAnim="@android:anim/slide_out_right" />
-
     </fragment>
 
+    <!-- ========================= -->
+    <!-- PERFIL -->
+    <!-- ========================= -->
     <fragment
         android:id="@+id/nav_perfil"
         android:name="com.senderlink.app.view.fragments.PerfilFragment"
         android:label="Perfil"
-        tools:layout="@layout/fragment_perfil" />
+        tools:layout="@layout/fragment_perfil">
+
+        <action
+            android:id="@+id/action_perfilFragment_to_editProfileFragment"
+            app:destination="@id/editProfileFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/editProfileFragment"
+        android:name="com.senderlink.app.view.fragments.EditProfileFragment"
+        android:label="Editar perfil"
+        tools:layout="@layout/fragment_edit_profile" />
+
+    <!-- ========================= -->
+    <!-- EVENTOS GRUPALES -->
+    <!-- ========================= -->
+    <fragment
+        android:id="@+id/rutasGrupalesFragment"
+        android:name="com.senderlink.app.view.fragments.RutasGrupalesFragment"
+        android:label="Eventos"
+        tools:layout="@layout/fragment_rutas_grupales">
+
+        <!-- ✅ NUEVO: si vienes desde RouteDetail -->
+        <argument
+            android:name="routeId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+
+        <action
+            android:id="@+id/action_rutasGrupalesFragment_to_groupChatFragment"
+            app:destination="@id/groupChatFragment" />
+    </fragment>
+
+
+    <!-- ========================= -->
+    <!-- CHAT GRUPAL -->
+    <!-- ========================= -->
+    <fragment
+        android:id="@+id/groupChatFragment"
+        android:name="com.senderlink.app.view.fragments.GroupChatFragment"
+        android:label="Chat del evento"
+        tools:layout="@layout/fragment_group_chat">
+
+        <argument
+            android:name="chatId"
+            app:argType="string" />
+
+        <argument
+            android:name="eventName"
+            app:argType="string" />
+    </fragment>
 
 </navigation>

@@ -6,6 +6,7 @@ const {
   getUsers,
   getUserByUid,
   updateUser,
+  updateUserProfile,
   deleteUser
 } = require("../controllers/userController");
 
@@ -20,6 +21,9 @@ router.get("/:uid", getUserByUid);
 
 // Actualizar usuario
 router.put("/:uid", updateUser);
+
+// Actualizar SOLO perfil
+router.put("/:uid/profile", updateUserProfile);
 
 // Eliminar usuario
 router.delete("/:uid", deleteUser);

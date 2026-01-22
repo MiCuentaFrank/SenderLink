@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Selector de color para chips de NIVEL y TIPOS
+    Ubicación: res/color/chip_nivel_selector.xml
+    Ubicación: res/color/chip_tipo_selector.xml
+
+    Usa el verde SenderLink (#2E7D32) cuando está seleccionado
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Cuando el chip está seleccionado: Verde SenderLink -->
+    <item android:color="#2E7D32" android:state_checked="true"/>
+
+    <!-- Cuando el chip NO está seleccionado: Blanco -->
+    <item android:color="#FFFFFF"/>
+</selector>

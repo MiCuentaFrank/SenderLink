@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="12dp"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="6dp"
+    app:cardBackgroundColor="@color/bg_card">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <!-- Cabecera post -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/imgAvatar"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/bg_avatar_circle"
+                android:contentDescription="avatar" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="10dp">
+
+                <TextView
+                    android:id="@+id/tvUser"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:text="Pedro S." />
+
+                <TextView
+                    android:id="@+id/tvMeta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary"
+                    android:text="Hace 2 horas · Ruta del Rey" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Imagen post -->
+        <ImageView
+            android:id="@+id/imgPost"
+            android:layout_width="match_parent"
+            android:layout_height="170dp"
+            android:layout_marginTop="12dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="post"
+            android:background="@drawable/bg_card"
+            android:visibility="gone"/>
+
+
+        <!-- Texto -->
+        <TextView
+            android:id="@+id/tvText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Maravillosas vistas..."
+            android:textColor="@color/text_primary" />
+
+        <!-- Acciones -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/btnLike"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Me gusta"
+                android:textColor="@color/sl_primary"
+                android:padding="8dp" />
+
+            <TextView
+                android:id="@+id/tvCommentsCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:text="12 comentarios"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

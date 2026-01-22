@@ -22,9 +22,17 @@ class RouteRepository(
         return service.getAllRoutesForMap(page, limit, difficulty).await()
     }
 
-    suspend fun getFeaturedRoutes(limit: Int = 10): FeaturedResponse {
-        return service.getFeaturedRoutes(limit).await()
+    /**
+     * ⭐ Obtener rutas destacadas CON PAGINACIÓN
+     */
+
+    suspend fun getFeaturedRoutes(
+        page: Int = 1,        // ✅ NUEVO
+        limit: Int = 20
+    ): FeaturedResponse {
+        return service.getFeaturedRoutes(page, limit).await()
     }
+
 
     suspend fun getRoutesByPark(park: String, limit: Int = 20): RouteResponse {
         return service.getRoutesByPark(park, limit).await()

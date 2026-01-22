@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Crear ruta grupal"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:paddingBottom="12dp"
+            android:textColor="@color/text_primary" />
+
+
+
+        <!-- FECHA -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:hint="Fecha (YYYY-MM-DD)"
+            app:boxBackgroundMode="filled">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etFecha"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- HORA -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:hint="Hora encuentro (HH:mm)"
+            app:boxBackgroundMode="filled">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etHora"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="09:00"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- MAX PARTICIPANTES -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:hint="Máx. participantes"
+            app:boxBackgroundMode="filled">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etMaxParticipantes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="10"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- DESCRIPCIÓN -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:hint="Descripción (opcional)"
+            app:boxBackgroundMode="filled">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etDescripcion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:maxLines="4" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- BOTONES -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="14dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancelar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Cancelar"
+                app:cornerRadius="10dp"
+                app:backgroundTint="@color/bg_divider" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCrear"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:text="Crear"
+                app:cornerRadius="10dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

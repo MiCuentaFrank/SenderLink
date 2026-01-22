@@ -3,4 +3,60 @@
     <string name="calculando">Calculando...</string>
     <string name="error">Error</string>
     <string name="na">N/A</string>
+    <string name="compartir">Compartir</string>
+    <string name="publicar_button">publicar</string>
+    <string name="comunidad_subtitle">comunidad</string>
+    <string name="comunidad_title">comunidad_titulo</string>
+    <string name="comunidad_header_image_desc">comunidad_heder_image_desc</string>
+
+        <!--
+        ====================================================================
+        STRINGS PARA RUTAS GRUPALES
+        ====================================================================
+        -->
+
+        <!-- Títulos -->
+    <string name="rutas_grupales">Rutas Grupales</string>
+    <string name="rutas_grupales_subtitle">Únete a eventos de senderismo en grupo</string>
+
+        <!-- Botones -->
+    <string name="crear_evento">Crear Evento</string>
+    <string name="unirse">Unirse</string>
+    <string name="completo">Completo</string>
+    <string name="salir">Salir</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="actualizar">Actualizar</string>
+
+        <!-- Tabs -->
+    <string name="tab_disponibles">Disponibles</string><string name="tab_mis_eventos">Mis Eventos</string>
+    <string name="tab_participo">Participo</string>
+
+        <!-- Estados -->
+    <string name="estado_abierto">Abierto</string>
+    <string name="estado_completo">Completo</string>
+    <string name="estado_finalizado">Finalizado</string>
+    <string name="estado_cancelado">Cancelado</string>
+
+        <!-- Empty States -->
+    <string name="empty_disponibles">No hay eventos disponibles en este momento</string>
+    <string name="empty_mis_eventos">Aún no has organizado ningún evento</string>
+    <string name="empty_participo">No estás participando en ningún evento</string>
+    <string name="sin_eventos">Sin eventos</string>
+
+        <!-- Content Descriptions -->
+    <string name="foto_organizador">Foto del organizador</string>
+    <string name="actualizar_lista">Actualizar lista</string>
+
+        <!-- Formato -->
+    <string name="participantes_formato">%1$d/%2$d participantes</string>
+
+        <!-- Mensajes -->
+    <string name="funcionalidad_proximamente">Funcionalidad próximamente</string>
+    <string name="error_crear_evento">Error al crear evento</string>
+    <string name="error_unirse_evento">Error al unirse al evento</string>
+    <string name="exito_unido">Te has unido al evento</string>
+    <string name="exito_salido">Has salido del evento</string>
+
+
+
 </resources>

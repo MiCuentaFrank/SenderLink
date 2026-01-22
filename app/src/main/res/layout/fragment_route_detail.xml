@@ -6,10 +6,6 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-    <!-- ============================================ -->
-    <!-- HEADER CON IMAGEN COLAPSABLE -->
-    <!-- ============================================ -->
-
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
@@ -53,17 +49,12 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Progress Bar -->
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:visibility="gone"/>
-
-    <!-- ============================================ -->
-    <!-- CONTENIDO SCROLLABLE -->
-    <!-- ============================================ -->
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -75,10 +66,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp">
-
-            <!-- ============================================ -->
-            <!-- SECCIÓN 1: GALERÍA (JUSTO DEBAJO DE LA IMAGEN) -->
-            <!-- ============================================ -->
 
             <TextView
                 android:id="@+id/tvGalleryTitle"
@@ -101,11 +88,6 @@
                 android:visibility="gone"
                 android:layout_marginBottom="20dp"/>
 
-            <!-- ============================================ -->
-            <!-- SECCIÓN 2: HEADER (Badge + Tipo + Nombre) -->
-            <!-- ============================================ -->
-
-            <!-- Badge Destacada -->
             <TextView
                 android:id="@+id/tvBadge"
                 android:layout_width="wrap_content"
@@ -120,7 +102,6 @@
                 android:visibility="gone"
                 android:layout_marginBottom="8dp"/>
 
-            <!-- Tipo de Ruta -->
             <TextView
                 android:id="@+id/tvRouteType"
                 android:layout_width="wrap_content"
@@ -130,7 +111,6 @@
                 android:textColor="@color/text_secondary"
                 android:layout_marginBottom="4dp"/>
 
-            <!-- Nombre de la ruta -->
             <TextView
                 android:id="@+id/tvRouteName"
                 android:layout_width="match_parent"
@@ -140,10 +120,6 @@
                 android:textStyle="bold"
                 android:textColor="@color/text_primary"
                 android:layout_marginBottom="20dp"/>
-
-            <!-- ============================================ -->
-            <!-- SECCIÓN 3: DATOS TÉCNICOS (Card) -->
-            <!-- ============================================ -->
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -159,7 +135,6 @@
                     android:orientation="horizontal"
                     android:padding="20dp">
 
-                    <!-- Distancia -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -186,14 +161,12 @@
 
                     </LinearLayout>
 
-                    <!-- Divisor -->
                     <View
                         android:layout_width="1dp"
                         android:layout_height="match_parent"
                         android:background="@color/card_border"
                         android:layout_marginHorizontal="12dp"/>
 
-                    <!-- Duración -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -220,14 +193,12 @@
 
                     </LinearLayout>
 
-                    <!-- Divisor -->
                     <View
                         android:layout_width="1dp"
                         android:layout_height="match_parent"
                         android:background="@color/card_border"
                         android:layout_marginHorizontal="12dp"/>
 
-                    <!-- Dificultad -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -258,10 +229,6 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- ============================================ -->
-            <!-- SECCIÓN 4: UBICACIÓN (Card) -->
-            <!-- ============================================ -->
-
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -285,7 +252,6 @@
                         android:textColor="@color/text_primary"
                         android:layout_marginBottom="16dp"/>
 
-                    <!-- Municipio -->
                     <LinearLayout
                         android:id="@+id/layoutMunicipio"
                         android:layout_width="match_parent"
@@ -313,7 +279,6 @@
 
                     </LinearLayout>
 
-                    <!-- Provincia -->
                     <LinearLayout
                         android:id="@+id/layoutProvincia"
                         android:layout_width="match_parent"
@@ -341,7 +306,6 @@
 
                     </LinearLayout>
 
-                    <!-- Comunidad -->
                     <LinearLayout
                         android:id="@+id/layoutComunidad"
                         android:layout_width="match_parent"
@@ -372,10 +336,6 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- ============================================ -->
-            <!-- SECCIÓN 5: DESCRIPCIÓN -->
-            <!-- ============================================ -->
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -394,10 +354,6 @@
                 android:textColor="@color/text_secondary"
                 android:lineSpacingMultiplier="1.4"
                 android:layout_marginBottom="24dp"/>
-
-            <!-- ============================================ -->
-            <!-- SECCIÓN 6: INFORMACIÓN ÚTIL (Opcional) -->
-            <!-- ============================================ -->
 
             <TextView
                 android:id="@+id/tvAdditionalInfoTitle"
@@ -422,10 +378,6 @@
                 android:visibility="gone"
                 android:fontFamily="monospace"/>
 
-            <!-- ============================================ -->
-            <!-- SECCIÓN 7: BOTÓN VER EN MAPA -->
-            <!-- ============================================ -->
-
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnViewOnMap"
                 android:layout_width="match_parent"
@@ -439,7 +391,110 @@
                 app:elevation="6dp"
                 app:icon="@android:drawable/ic_dialog_map"
                 app:iconGravity="textStart"
-                app:iconTint="@color/text_on_dark"/>
+                app:iconTint="@color/text_on_dark"
+                android:layout_marginBottom="18dp"/>
+
+            <!-- ========================================= -->
+            <!-- ✅ NUEVO: SECCIÓN RUTAS GRUPALES PRÓXIMAS -->
+            <!-- ========================================= -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardEventos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:id="@+id/tvEventosTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="👥 Rutas grupales próximas"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"/>
+
+                    <TextView
+                        android:id="@+id/tvEventosSubtitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Quedadas organizadas para esta ruta. Únete y desbloquea el chat."
+                        android:textSize="13sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="12dp"/>
+
+                    <!-- Mini loading de eventos -->
+                    <ProgressBar
+                        android:id="@+id/progressEventos"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:visibility="gone"
+                        android:layout_marginBottom="10dp"/>
+
+                    <!-- Estado vacío -->
+                    <TextView
+                        android:id="@+id/tvEventosEmpty"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Aún no hay rutas grupales para esta ruta. ¿Creas la primera?"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_secondary"
+                        android:visibility="gone"
+                        android:layout_marginBottom="12dp"/>
+
+                    <!-- Lista eventos -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvEventos"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"
+                        android:visibility="gone"
+                        android:layout_marginBottom="12dp"/>
+
+                    <!-- Botón dentro de la sección (más lógico) -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCrearEvento"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:text="➕ Crear ruta grupal"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="28dp"
+                        app:backgroundTint="@color/success"
+                        android:textColor="@color/text_on_dark"
+                        app:elevation="4dp"
+                        app:icon="@android:drawable/ic_input_add"
+                        app:iconGravity="textStart"
+                        app:iconTint="@color/text_on_dark"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnVerEventosRuta"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:layout_marginTop="12dp"
+                        android:text="👥 Ver rutas grupales"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="30dp"
+                        app:backgroundTint="@color/sl_primary"
+                        android:textColor="@color/text_on_dark"
+                        app:elevation="6dp"
+                        app:icon="@android:drawable/ic_menu_agenda"
+                        app:iconGravity="textStart"
+                        app:iconTint="@color/text_on_dark"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 

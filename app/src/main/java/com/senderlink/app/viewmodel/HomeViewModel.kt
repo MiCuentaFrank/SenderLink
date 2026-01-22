@@ -9,16 +9,19 @@ import androidx.lifecycle.viewModelScope
 import com.senderlink.app.model.Route
 import com.senderlink.app.repository.RouteRepository
 import com.senderlink.app.utils.HomeDataStore
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * 🏠 HomeViewModel
+ * 🏠 HomeViewModel - OPTIMIZADO CON PAGINACIÓN REAL
  *
- * Maneja:
- * - Rutas destacadas (del servidor)
- * - Rutas recientes (guardadas localmente)
+ * MEJORAS:
+ * - ⚡ Carga paralela de recientes + destacadas
+ * - 💾 Caché de rutas destacadas
+ * - 🔄 Paginación infinita real (página 1, 2, 3...)
+ * - ⏱️ Timestamp para invalidar caché
  */
 class HomeViewModel : ViewModel() {
 
@@ -37,45 +40,191 @@ class HomeViewModel : ViewModel() {
     private val _error = MutableLiveData<String?>(null)
     val error: LiveData<String?> = _error
 
-    // Control de carga
-    private var isLoadingFeatured = false
+    // Control de paginación
+    private var currentPage = 1
+    private var isLoadingMore = false
+    private var hasMorePages = true
+
+    // Control de caché
+    private var lastFeaturedLoadTime = 0L
+    private val CACHE_DURATION_MS = 5 * 60 * 1000L // 5 minutos
 
     /**
-     * ⭐ Carga rutas destacadas desde el servidor
+     * ⚡ CARGA PARALELA - Recientes + Destacadas (primera página)
      */
-    fun loadFeaturedRoutes(reset: Boolean = false) {
-        if (isLoadingFeatured) return
-
-        isLoadingFeatured = true
-        _isLoading.value = true
-        _error.value = null
-
+    fun loadAllData(context: Context, forceRefresh: Boolean = false) {
         viewModelScope.launch {
-            try {
-                // Usa el endpoint específico /api/routes/featured
-                val response = repository.getFeaturedRoutes(limit = 50)
+            _isLoading.value = true
+            _error.value = null
 
-                if (response.ok) {
-                    val shuffled = response.routes.shuffled()
-                    _featuredRoutes.value = shuffled
-                    Log.d("HOME_VM", "✅ Rutas destacadas: ${response.count}")
-                } else {
-                    _error.value = "Error al cargar destacadas"
+            try {
+                // Resetear paginación si es refresh
+                if (forceRefresh) {
+                    resetPagination()
                 }
 
+                // ⚡ Lanzar ambas cargas EN PARALELO
+                val recentsDeferred = async { loadRecentsFromStorageInternal(context) }
+                val featuredDeferred = async { loadFeaturedRoutesInternal(context, forceRefresh) }
+
+                recentsDeferred.await()
+                featuredDeferred.await()
+
+                Log.d("HOME_VM", "✅ Carga paralela completada")
             } catch (e: Exception) {
-                _error.value = "Error de conexión: ${e.message}"
-                Log.e("HOME_VM", "❌ Error: ${e.message}", e)
+                _error.value = "Error al cargar datos: ${e.message}"
+                Log.e("HOME_VM", "❌ Error en carga paralela", e)
             } finally {
-                isLoadingFeatured = false
                 _isLoading.value = false
             }
         }
     }
 
+    /**
+     * ⭐ Carga rutas destacadas - PRIMERA PÁGINA
+     */
+    private suspend fun loadFeaturedRoutesInternal(context: Context, forceRefresh: Boolean) {
+        try {
+            // 1. Verificar caché
+            val now = System.currentTimeMillis()
+            val cacheValid = (now - lastFeaturedLoadTime) < CACHE_DURATION_MS
+
+            if (!forceRefresh && cacheValid && !_featuredRoutes.value.isNullOrEmpty()) {
+                Log.d("HOME_VM", "💾 Usando caché (${_featuredRoutes.value?.size} rutas)")
+                return
+            }
+
+            // 2. Intentar cargar desde storage local
+            if (!forceRefresh) {
+                val cached = loadFeaturedFromStorage(context)
+                if (cached.isNotEmpty()) {
+                    _featuredRoutes.value = cached
+                    Log.d("HOME_VM", "💾 Del storage: ${cached.size} rutas")
+                }
+            }
+
+            // 3. Cargar PÁGINA 1 desde servidor
+            val response = repository.getFeaturedRoutes(page = 1, limit = 20)
+
+            if (response.ok) {
+                _featuredRoutes.value = response.routes
+                lastFeaturedLoadTime = now
+                // 🔁 Estado real de paginación
+                currentPage = response.page
+                hasMorePages = currentPage < response.pages
+
+
+                Log.d(
+                    "HOME_VM",
+                    "📌 Featured: page=${response.page}, pages=${response.pages}, total=${response.total}"
+                )
+
+
+                // Guardar en storage
+                saveFeaturedToStorage(context, response.routes)
+
+                Log.d("HOME_VM", "✅ Página 1: ${response.count} rutas (total: ${response.total})")
+            } else {
+                _error.value = "Error al cargar destacadas"
+            }
+
+        } catch (e: Exception) {
+            Log.e("HOME_VM", "❌ Error cargando página 1: ${e.message}", e)
+            if (_featuredRoutes.value.isNullOrEmpty()) {
+                _error.value = "Error de conexión"
+            }
+        }
+    }
+
+    /**
+     * 🔄 CARGAR MÁS RUTAS (paginación infinita)
+     * Llamado al hacer scroll
+     */
+    fun loadMoreFeaturedRoutes() {
+        if (isLoadingMore || !hasMorePages) {
+            Log.d("HOME_VM", "⏸️ No cargar más (loading=$isLoadingMore, hasMore=$hasMorePages)")
+            return
+        }
+
+        isLoadingMore = true
+        val nextPage = currentPage + 1
+
+        Log.d("HOME_VM", "📄 Cargando página $nextPage...")
+
+        viewModelScope.launch {
+            try {
+                val response = repository.getFeaturedRoutes(page = nextPage, limit = 20)
+
+                if (!response.ok) {
+                    Log.d("HOME_VM", "❌ Response ok=false en página $nextPage")
+                    // Si falla, no avanzamos página y permitimos reintentar
+                    return@launch
+                }
+
+                // ✅ Actualizamos página real desde backend
+                currentPage = response.page
+
+                // ✅ Añadimos rutas si vienen
+                if (response.routes.isNotEmpty()) {
+                    val current = _featuredRoutes.value?.toMutableList() ?: mutableListOf()
+                    current.addAll(response.routes)
+                    _featuredRoutes.value = current
+
+                    Log.d(
+                        "HOME_VM",
+                        "✅ Página ${response.page}/${response.pages} cargada (+${response.count}), total=${current.size}"
+                    )
+                } else {
+                    Log.d("HOME_VM", "📭 Página ${response.page} sin rutas (count=${response.count})")
+                }
+
+                // ✅ Decisión de si hay más páginas (regla REAL)
+                hasMorePages = currentPage < response.pages
+
+                Log.d("HOME_VM", "🧭 currentPage=$currentPage, pages=${response.pages}, hasMore=$hasMorePages")
+
+            } catch (e: Exception) {
+                Log.e("HOME_VM", "❌ Error cargando página $nextPage: ${e.message}", e)
+                // Si hay error, NO marques hasMorePages=false (permite reintentar)
+            } finally {
+                isLoadingMore = false
+            }
+        }
+    }
+
+
+
+    /**
+     * 🔄 Reset paginación
+     */
+    private fun resetPagination() {
+        currentPage = 1
+        hasMorePages = true
+        isLoadingMore = false
+    }
+
+    /**
+     * 🔄 Refresh manual
+     */
+    fun refresh(context: Context) {
+        loadAllData(context, forceRefresh = true)
+    }
+
     // ==========================================
     // 🕐 RUTAS RECIENTES
     // ==========================================
+
+    private suspend fun loadRecentsFromStorageInternal(context: Context) {
+        try {
+            val json = HomeDataStore.loadRecentsJson(context)
+            val liteList = jsonToLiteList(json)
+            _routes.value = liteList.map { liteToRoute(it) }
+            Log.d("HOME_VM", "📱 Recientes: ${liteList.size}")
+        } catch (e: Exception) {
+            Log.e("HOME_VM", "❌ Error recientes: ${e.message}")
+            _routes.value = emptyList()
+        }
+    }
 
     data class RecentRouteLite(
         val id: String,
@@ -102,20 +251,68 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun loadRecentsFromStorage(context: Context) {
-        viewModelScope.launch {
-            try {
-                val json = HomeDataStore.loadRecentsJson(context)
-                val liteList = jsonToLiteList(json)
-                _routes.value = liteList.map { liteToRoute(it) }
-                Log.d("HOME_VM", "Recientes cargadas: ${liteList.size}")
-            } catch (e: Exception) {
-                Log.e("HOME_VM", "Error cargando recientes: ${e.message}")
-            }
+    // ==========================================
+    // 💾 CACHÉ DE DESTACADAS
+    // ==========================================
+
+    private suspend fun saveFeaturedToStorage(context: Context, routes: List<Route>) {
+        try {
+            val json = featuredRoutesToJson(routes)
+            HomeDataStore.saveFeaturedJson(context, json)
+        } catch (e: Exception) {
+            Log.e("HOME_VM", "Error guardando destacadas: ${e.message}")
         }
     }
 
-    // Helpers de conversión
+    private suspend fun loadFeaturedFromStorage(context: Context): List<Route> {
+        return try {
+            val json = HomeDataStore.loadFeaturedJson(context)
+            jsonToFeaturedRoutes(json)
+        } catch (e: Exception) {
+            Log.e("HOME_VM", "Error leyendo destacadas: ${e.message}")
+            emptyList()
+        }
+    }
+
+    private fun featuredRoutesToJson(routes: List<Route>): String {
+        val arr = JSONArray()
+        routes.forEach { r ->
+            arr.put(JSONObject().apply {
+                put("id", r.id)
+                put("name", r.name)
+                put("coverImage", r.coverImage ?: JSONObject.NULL)
+                put("difficulty", r.getNormalizedDifficulty())
+                put("distanceKm", r.distanceKm)
+            })
+        }
+        return arr.toString()
+    }
+
+    private fun jsonToFeaturedRoutes(json: String): List<Route> {
+        if (json.isBlank() || json == "[]") return emptyList()
+
+        val arr = JSONArray(json)
+        return (0 until arr.length()).map { i ->
+            val obj = arr.getJSONObject(i)
+            Route(
+                id = obj.optString("id", ""),
+                type = "featured",
+                source = "cache",
+                name = obj.optString("name", "Sin nombre"),
+                description = "",
+                coverImage = obj.optString("coverImage", null),
+                images = emptyList(),
+                distanceKm = obj.optDouble("distanceKm", 0.0),
+                difficulty = obj.optString("difficulty", "MODERADA"),
+                featured = true
+            )
+        }
+    }
+
+    // ==========================================
+    // 🔧 HELPERS
+    // ==========================================
+
     private fun toLite(route: Route) = RecentRouteLite(
         id = route.id,
         name = route.name,
@@ -145,34 +342,14 @@ class HomeViewModel : ViewModel() {
         return (0 until arr.length()).map { i ->
             val obj = arr.getJSONObject(i)
             RecentRouteLite(
-                id = obj.getString("id"),
-                name = obj.getString("name"),
-                coverImage = if (obj.isNull("coverImage")) null else obj.getString("coverImage"),
-                difficulty = if (obj.isNull("difficulty")) null else obj.getString("difficulty"),
-                distanceKm = if (obj.isNull("distanceKm")) null else obj.getDouble("distanceKm")
+                id = obj.optString("id", ""),
+                name = obj.optString("name", "Sin nombre"),
+                coverImage = obj.optString("coverImage", null),
+                difficulty = obj.optString("difficulty", null),
+                distanceKm = if (obj.isNull("distanceKm")) null else obj.optDouble("distanceKm", 0.0)
             )
         }
     }
-
-    fun applyDifficultyFilter(difficulties: Set<String>) {
-        val current = _routes.value ?: return
-
-        if (difficulties.isEmpty()) {
-            _routes.value = current
-            return
-        }
-
-        _routes.value = current.filter { route ->
-            route.getNormalizedDifficulty() in difficulties
-        }
-    }
-
-    fun clearDifficultyFilter() {
-        // Recarga las recientes sin filtro
-        _routes.value = _routes.value
-    }
-
-
 
     private fun liteToRoute(lite: RecentRouteLite) = Route(
         id = lite.id,

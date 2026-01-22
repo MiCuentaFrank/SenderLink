@@ -1,14 +1,20 @@
 package com.senderlink.app.view.fragments
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.location.Address
+import android.location.Geocoder
 import android.location.Location
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -21,6 +27,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -35,18 +42,14 @@ import com.senderlink.app.R
 import com.senderlink.app.databinding.DialogDistanceFilterBinding
 import com.senderlink.app.databinding.FragmentMapasBinding
 import com.senderlink.app.model.Route
+import com.senderlink.app.utils.DifficultyMapper
 import com.senderlink.app.view.adapters.RouteAdapter
 import com.senderlink.app.viewmodel.MapasViewModel
-import java.text.Normalizer
-import android.location.Address
-import android.location.Geocoder
-import android.os.Build
-import android.view.inputmethod.EditorInfo
-import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import java.text.Normalizer
 import kotlin.coroutines.resume
 
 class MapasFragment : Fragment(), OnMapReadyCallback {
@@ -60,6 +63,10 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         const val KEY_SELECTED_DIFFS = "KEY_SELECTED_DIFFS"
         const val KEY_ONLY_NATIONAL_PARKS = "KEY_ONLY_NATIONAL_PARKS"
         const val KEY_HAS_ADJUSTED_CAMERA = "KEY_HAS_ADJUSTED_CAMERA"
+
+        // 🆕 Guardar centro actual del mapa
+        const val KEY_CENTER_LAT = "KEY_CENTER_LAT"
+        const val KEY_CENTER_LNG = "KEY_CENTER_LNG"
 
         // ✅ Paginación local
         const val PAGE_SIZE = 20
@@ -116,6 +123,9 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
     private var startMarker: Marker? = null
     private var endMarker: Marker? = null
 
+    // 🆕 Saber si hemos restaurado desde estado previo (volver atrás / rotación)
+    private var restoredFromState: Boolean = false
+
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -170,22 +180,33 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         val cached = viewModel.allRoutes.value.orEmpty()
 
         if (!comingFromDetail) {
-            Log.d(TAG, "Modo cerca activo -> cargando rutas a <= ${maxDistanceKm.toInt()} km")
+            Log.d(TAG, "onViewCreated -> modo mapa general, restoredFromState=$restoredFromState, cached=${cached.size}")
 
             if (cached.isNotEmpty()) {
                 allRoutes = cached
             }
 
             updateChipStates()
-            filterRoutesByDistance()
-        } else {
+
             if (cached.isNotEmpty()) {
-                Log.d(TAG, "Usando cache del ViewModel: ${cached.size} rutas")
+                // 🧠 Ya teníamos rutas: venimos de atrás o de otra vista
+                // 👉 No recargamos por distancia, solo aplicamos filtros SIN mover cámara
+                applyActiveFilters(adjustCamera = !hasAdjustedCameraOnce && !restoredFromState)
+            } else {
+                // Primera vez sin datos en ViewModel
+                if (!restoredFromState) {
+                    filterRoutesByDistance()
+                }
+            }
+        } else {
+            // Modo detalle (ruta específica desde RouteDetail)
+            if (cached.isNotEmpty()) {
+                Log.d(TAG, "Usando cache del ViewModel: ${cached.size} rutas (para lista inferior)")
                 allRoutes = cached
                 applyActiveFilters(adjustCamera = false)
                 updateChipStates()
             } else {
-                Log.d(TAG, "ViewModel vacío -> cargando del servidor")
+                Log.d(TAG, "ViewModel vacío en modo detalle -> solo cargamos cercanas en background")
                 filterRoutesByDistance()
             }
         }
@@ -203,10 +224,18 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         outState.putBoolean(KEY_ONLY_NATIONAL_PARKS, onlyNationalParks)
 
         outState.putBoolean(KEY_HAS_ADJUSTED_CAMERA, hasAdjustedCameraOnce)
+
+        // 🆕 Guardar centro actual del mapa
+        currentCenterLatLng?.let {
+            outState.putDouble(KEY_CENTER_LAT, it.latitude)
+            outState.putDouble(KEY_CENTER_LNG, it.longitude)
+        }
     }
 
     private fun restoreState(savedInstanceState: Bundle?) {
         savedInstanceState ?: return
+
+        restoredFromState = true
 
         maxDistanceKm = savedInstanceState.getFloat(KEY_MAX_DISTANCE, 50f)
         onlyNationalParks = savedInstanceState.getBoolean(KEY_ONLY_NATIONAL_PARKS, false)
@@ -218,6 +247,13 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         selectedDifficulties.addAll(savedInstanceState.getStringArray(KEY_SELECTED_DIFFS).orEmpty())
         hasTriggeredInitialNearby = savedInstanceState.getBoolean(KEY_HAS_TRIGGERED_INITIAL_NEARBY, false)
         hasAdjustedCameraOnce = savedInstanceState.getBoolean(KEY_HAS_ADJUSTED_CAMERA, false)
+
+        // 🆕 Recuperar centro del mapa
+        val lat = savedInstanceState.getDouble(KEY_CENTER_LAT, Double.NaN)
+        val lng = savedInstanceState.getDouble(KEY_CENTER_LNG, Double.NaN)
+        if (!lat.isNaN() && !lng.isNaN()) {
+            currentCenterLatLng = LatLng(lat, lng)
+        }
     }
 
     // =========================================================
@@ -240,6 +276,15 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
                     markersByRouteId.clear()
                     lastWantedIds = emptySet()
                 }
+                return@observe
+            }
+
+            // ✅ No tocar marcadores ni cámara si hay ruta específica activa
+            val hasSpecificRoute = (routePoints != null && routePoints!!.isNotEmpty()) ||
+                    (startLat != 0.0 && startLng != 0.0)
+
+            if (hasSpecificRoute) {
+                Log.d(TAG, "⚠️ Observer: Ruta específica activa, NO actualizando marcadores de rutas cercanas")
                 return@observe
             }
 
@@ -429,8 +474,9 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
     private fun showFiltersDialog() {
         val ctx = requireContext()
 
-        val diffLabels = listOf("Fácil", "Media", "Difícil")
-        val diffKeys = listOf("FACIL", "MEDIA", "DIFICIL")
+        // ✅ IMPORTANTE: estándar único (FACIL / MODERADA / DIFICIL)
+        val diffLabels = listOf("Fácil", "Moderada", "Difícil")
+        val diffKeys = listOf("FACIL", "MODERADA", "DIFICIL")
 
         val typeLabels = listOf("GR", "PR", "SL", "Vía Verde")
         val typeKeys = listOf("GR", "PR", "SL", "VIA_VERDE")
@@ -513,19 +559,42 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
     // =========================================================
     // FILTRADO por cercanía
     // =========================================================
+    // =========================================================
+// FILTRADO por cercanía - SIEMPRE usa el centro seleccionado
+// =========================================================
     private fun filterRoutesByDistance() {
-        userLocation?.let { location ->
+        // 1) Centro de referencia para los filtros:
+        //    - Primero: el punto seleccionado en el mapa (currentCenterLatLng)
+        //    - Si no hay: tu ubicación (userLocation)
+        val center: LatLng? = currentCenterLatLng ?: userLocation?.let {
+            LatLng(it.latitude, it.longitude)
+        }
+
+        if (center != null) {
+            Log.d(
+                TAG,
+                "🔎 filterRoutesByDistance -> centro=(${center.latitude}, ${center.longitude}) radio=${maxDistanceKm}km"
+            )
+
+            // 2) Llamamos al ViewModel usando SIEMPRE ese centro
             viewModel.loadNearbyRoutes(
-                lat = location.latitude,
-                lng = location.longitude,
+                lat = center.latitude,
+                lng = center.longitude,
                 radiusKm = maxDistanceKm
             )
-        } ?: run {
-            Toast.makeText(requireContext(), "Obteniendo tu ubicación...", Toast.LENGTH_SHORT).show()
-            getUserLocation()
+        } else {
+            // 3) No tenemos ni currentCenterLatLng ni userLocation todavía
+            Toast.makeText(
+                requireContext(),
+                "Obteniendo tu ubicación...",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            getUserLocation()  // esto rellenará userLocation y, si hace falta, currentCenterLatLng
 
             binding.root.postDelayed({
                 if (userLocation != null) {
+                    // Reintentamos, ahora ya debería haber centro
                     filterRoutesByDistance()
                 } else {
                     Toast.makeText(
@@ -537,6 +606,7 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
             }, 1200)
         }
     }
+
 
     private fun applyActiveFilters(adjustCamera: Boolean) {
         Log.d(TAG, "🔍 applyActiveFilters: allRoutes.size=${allRoutes.size}")
@@ -554,8 +624,7 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         if (selectedDifficulties.isNotEmpty()) {
             Log.d(TAG, "🔍 Dificultades seleccionadas: $selectedDifficulties")
             list = list.filter { route ->
-                val key = normalizeDifficulty(route.difficulty)
-                selectedDifficulties.contains(key)
+                selectedDifficulties.contains(route.getNormalizedDifficulty())
             }
             Log.d(TAG, "🔍 Después de filtro dificultad: ${list.size}")
         }
@@ -634,9 +703,10 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
             if (markersByRouteId.containsKey(routeId)) return@forEach
 
             val position = LatLng(route.getStartLat(), route.getStartLng())
-            val markerColor = when (normalizeDifficulty(route.difficulty)) {
+
+            val markerColor = when (route.getNormalizedDifficulty()) {
                 "FACIL" -> BitmapDescriptorFactory.HUE_GREEN
-                "MEDIA" -> BitmapDescriptorFactory.HUE_ORANGE
+                "MODERADA" -> BitmapDescriptorFactory.HUE_ORANGE
                 "DIFICIL" -> BitmapDescriptorFactory.HUE_RED
                 else -> BitmapDescriptorFactory.HUE_BLUE
             }
@@ -645,7 +715,7 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
                 MarkerOptions()
                     .position(position)
                     .title(route.name)
-                    .snippet("${route.distanceKm} km - ${route.difficulty}")
+                    .snippet("${route.distanceKm} km - ${route.getNormalizedDifficulty()}")
                     .icon(BitmapDescriptorFactory.defaultMarker(markerColor))
             )
             marker?.let {
@@ -690,6 +760,44 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    private fun showNavigateToStartDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("🚩 Navegar al inicio")
+            .setMessage("¿Quieres abrir Google Maps para navegar desde tu ubicación actual hasta el inicio de la ruta?")
+            .setPositiveButton("Abrir Google Maps") { _, _ ->
+                openGoogleMapsNavigation()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun openGoogleMapsNavigation() {
+        try {
+            val uri = Uri.parse("google.navigation:q=$startLat,$startLng&mode=d")
+            val intent = Intent(Intent.ACTION_VIEW, uri)
+            intent.setPackage("com.google.android.apps.maps")
+
+            if (intent.resolveActivity(requireActivity().packageManager) != null) {
+                startActivity(intent)
+                Log.d(TAG, "📍 Abriendo Google Maps para navegar a: ($startLat, $startLng)")
+            } else {
+                val browserUri = Uri.parse(
+                    "https://www.google.com/maps/dir/?api=1&destination=$startLat,$startLng&travelmode=driving"
+                )
+                val browserIntent = Intent(Intent.ACTION_VIEW, browserUri)
+                startActivity(browserIntent)
+                Log.d(TAG, "📍 Google Maps no instalado, abriendo en navegador")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error al abrir Google Maps: ${e.message}", e)
+            Toast.makeText(
+                requireContext(),
+                "No se pudo abrir la navegación",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
     private fun getArgumentsData() {
         arguments?.let { args ->
             routeName = args.getString("routeName")
@@ -703,7 +811,12 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
             if (pointsArray != null && pointsArray.size >= 2) {
                 routePoints = ArrayList()
                 for (i in pointsArray.indices step 2) {
-                    routePoints?.add(LatLng(pointsArray[i].toDouble(), pointsArray[i + 1].toDouble()))
+                    routePoints?.add(
+                        LatLng(
+                            pointsArray[i].toDouble(),
+                            pointsArray[i + 1].toDouble()
+                        )
+                    )
                 }
             }
         }
@@ -716,7 +829,7 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
     }
 
     // =========================================================
-    // ✅ onMapReady (CORREGIDO)
+    // ✅ onMapReady
     // =========================================================
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
@@ -733,12 +846,19 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
             mapType = GoogleMap.MAP_TYPE_TERRAIN
         }
 
-        if (hasLocationPermission()) {
-            enableMyLocation()
-            getUserLocation()
-        }
-
+        // Marcadores clicables
         googleMap?.setOnMarkerClickListener { marker ->
+            if (marker.tag == "START_MARKER") {
+                marker.showInfoWindow()
+                showNavigateToStartDialog()
+                return@setOnMarkerClickListener true
+            }
+
+            if (marker.tag == "END_MARKER") {
+                marker.showInfoWindow()
+                return@setOnMarkerClickListener true
+            }
+
             val routeId = marker.tag as? String
             routeId?.let { id ->
                 allRoutes.find { it.id == id }?.let { route ->
@@ -748,41 +868,85 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
             true
         }
 
-        // ✅ AQUÍ ESTÁ LA CURA:
+        // ✅ Click en mapa -> buscar cerca SIN filtrar por texto
         googleMap?.setOnMapClickListener { latLng ->
             lifecycleScope.launch {
                 val label = reverseGeocodeToLabel(latLng) ?: "${latLng.latitude}, ${latLng.longitude}"
-
-                // 🚫 NO ponemos el label en el buscador (porque filtra y deja 0)
-                // ✅ En su lugar: buscamos cerca y mostramos el label como info
                 moveCenterAndLoadNearby(latLng, label)
             }
         }
 
-        when {
-            filteredRoutes.isNotEmpty() -> {
-                Log.d(TAG, "onMapReady: Repintando ${filteredRoutes.size} rutas filtradas")
-                updateMarkersOnMap(filteredRoutes, adjustCamera = !hasAdjustedCameraOnce)
-                updateDisplayedRoutes()
-            }
-            allRoutes.isNotEmpty() -> {
-                Log.d(TAG, "onMapReady: Aplicando filtros a ${allRoutes.size} rutas")
-                applyActiveFilters(adjustCamera = !hasAdjustedCameraOnce)
-            }
-            else -> Log.d(TAG, "onMapReady: Sin rutas aún, esperando datos del servidor")
+        val hasSpecificRoute = (routePoints != null && routePoints!!.isNotEmpty()) ||
+                (startLat != 0.0 && startLng != 0.0)
+
+        // ✅ SIEMPRE mostrar mi ubicación (punto azul) si hay permisos
+        if (hasLocationPermission()) {
+            Log.d(TAG, "📍 Habilitando ubicación del usuario (hasSpecificRoute=$hasSpecificRoute)")
+            enableMyLocation()
+            getUserLocation()
         }
 
+        if (!hasSpecificRoute) {
+            when {
+                filteredRoutes.isNotEmpty() -> {
+                    Log.d(TAG, "onMapReady: Repintando ${filteredRoutes.size} rutas filtradas")
+                    updateMarkersOnMap(filteredRoutes, adjustCamera = !hasAdjustedCameraOnce && !restoredFromState)
+
+                    // 🆕 Si tenemos un centro guardado (busca previa) y venimos de atrás → respetarlo
+                    currentCenterLatLng?.let { center ->
+                        Log.d(TAG, "🧭 Restaurando centro previo del mapa: $center")
+                        googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(center, 11f))
+                    }
+
+                    updateDisplayedRoutes()
+                }
+                allRoutes.isNotEmpty() -> {
+                    Log.d(TAG, "onMapReady: Aplicando filtros a ${allRoutes.size} rutas")
+                    applyActiveFilters(adjustCamera = !hasAdjustedCameraOnce && !restoredFromState)
+
+                    currentCenterLatLng?.let { center ->
+                        Log.d(TAG, "🧭 Restaurando centro previo del mapa: $center")
+                        googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(center, 11f))
+                    }
+                }
+                else -> {
+                    Log.d(TAG, "onMapReady: Sin rutas aún, esperando datos del servidor")
+                }
+            }
+        } else {
+            Log.d(TAG, "✅ onMapReady: Ruta específica detectada, omitiendo rutas filtradas")
+        }
+
+        // Dibujar ruta específica o punto
         if (routePoints != null && routePoints!!.isNotEmpty()) {
+            Log.d(TAG, "🎨 onMapReady: Dibujando ruta con ${routePoints!!.size} puntos")
             drawRoute()
         } else if (startLat != 0.0 && startLng != 0.0) {
+            Log.d(TAG, "📍 onMapReady: Mostrando punto único")
             showSinglePoint()
+        } else if (currentCenterLatLng != null) {
+            currentCenterLatLng?.let { center ->
+                Log.d(TAG, "🧭 onMapReady: Centrado en centro previo sin ruta específica -> $center")
+                googleMap?.moveCamera(
+                    CameraUpdateFactory.newLatLngZoom(center, 11f)
+                )
+            }
         } else {
+            Log.d(TAG, "🗺️ onMapReady: Ubicación por defecto (España)")
             showDefaultLocation()
         }
+
+
     }
 
     private fun drawRoute() {
         routePoints?.let { points ->
+            Log.d(TAG, "🎨 drawRoute: Iniciando con ${points.size} puntos")
+
+            val isCircular = isCircularRoute(startLat, startLng, endLat, endLng)
+            Log.d(TAG, "🔄 Ruta circular: $isCircular")
+
+            // 1. Polilínea
             currentPolyline?.remove()
             currentPolyline = googleMap?.addPolyline(
                 PolylineOptions()
@@ -791,27 +955,131 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
                     .color(getDifficultyColor(difficultyFromArgs))
                     .geodesic(true)
             )
+            Log.d(TAG, "✅ Polilínea dibujada")
 
+            // 2. Marcador inicio / inicio+fin
             if (startLat != 0.0 && startLng != 0.0) {
                 startMarker?.remove()
-                startMarker = googleMap?.addMarker(
-                    MarkerOptions()
-                        .position(LatLng(startLat, startLng))
-                        .title("🚩 Inicio")
-                        .snippet(routeName ?: "Punto de inicio")
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-                )
+
+                if (isCircular) {
+                    startMarker = googleMap?.addMarker(
+                        MarkerOptions()
+                            .position(LatLng(startLat, startLng))
+                            .title("🔄 Inicio/Fin: ${routeName ?: "Ruta"}")
+                            .snippet("Ruta circular - Toca para navegar")
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
+                    )
+                    startMarker?.tag = "START_MARKER"
+                    Log.d(TAG, "✅ Marcador inicio/fin (circular): ($startLat, $startLng)")
+                } else {
+                    startMarker = googleMap?.addMarker(
+                        MarkerOptions()
+                            .position(LatLng(startLat, startLng))
+                            .title("🚩 Inicio: ${routeName ?: "Ruta"}")
+                            .snippet("Toca para navegar hasta aquí")
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                    )
+                    startMarker?.tag = "START_MARKER"
+                    Log.d(TAG, "✅ Marcador inicio: ($startLat, $startLng)")
+                }
             }
 
-            if (endLat != 0.0 && endLng != 0.0) {
+            // 3. Marcador fin solo si no es circular
+            if (!isCircular && endLat != 0.0 && endLng != 0.0) {
                 endMarker?.remove()
                 endMarker = googleMap?.addMarker(
                     MarkerOptions()
                         .position(LatLng(endLat, endLng))
-                        .title("🏁 Final")
-                        .snippet("Punto final")
+                        .title("🏁 Final: ${routeName ?: "Ruta"}")
+                        .snippet("Fin del recorrido")
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
                 )
+                endMarker?.tag = "END_MARKER"
+                Log.d(TAG, "✅ Marcador fin: ($endLat, $endLng)")
+            } else if (isCircular) {
+                Log.d(TAG, "ℹ️ Ruta circular: No se añade marcador de fin separado")
+            }
+
+            // 4. Ajustar cámara a la ruta
+            Log.d(TAG, "📹 Ajustando cámara a la ruta...")
+            adjustCameraToRoute(points)
+        }
+    }
+
+    private fun isCircularRoute(startLat: Double, startLng: Double, endLat: Double, endLng: Double): Boolean {
+        if (startLat == 0.0 || startLng == 0.0 || endLat == 0.0 || endLng == 0.0) {
+            return false
+        }
+
+        val distance = calculateDistance(startLat, startLng, endLat, endLng)
+        return distance < 100.0
+    }
+
+    private fun calculateDistance(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
+        val earthRadius = 6371000.0
+
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLng = Math.toRadians(lng2 - lng1)
+
+        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2)
+
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+        return earthRadius * c
+    }
+
+    /**
+     * ✅ Ajusta la cámara para mostrar toda la ruta
+     */
+    private fun adjustCameraToRoute(points: List<LatLng>) {
+        if (points.isEmpty()) {
+            Log.w(TAG, "⚠️ Lista de puntos vacía")
+            return
+        }
+
+        try {
+            Log.d(TAG, "📹 Calculando bounds para ${points.size} puntos...")
+
+            val boundsBuilder = LatLngBounds.Builder()
+            points.forEach { point ->
+                boundsBuilder.include(point)
+            }
+            val bounds = boundsBuilder.build()
+
+            Log.d(TAG, "📹 Bounds: NE=${bounds.northeast}, SW=${bounds.southwest}")
+
+            val padding = 200
+
+            googleMap?.animateCamera(
+                CameraUpdateFactory.newLatLngBounds(bounds, padding),
+                1500,
+                object : GoogleMap.CancelableCallback {
+                    override fun onFinish() {
+                        Log.d(TAG, "✅✅✅ CÁMARA AJUSTADA A LA RUTA")
+                    }
+
+                    override fun onCancel() {
+                        Log.w(TAG, "⚠️ Animación cancelada")
+                    }
+                }
+            )
+
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error al ajustar cámara: ${e.message}", e)
+
+            if (startLat != 0.0 && startLng != 0.0) {
+                Log.d(TAG, "🔄 Usando fallback: centrar en inicio")
+                try {
+                    googleMap?.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(LatLng(startLat, startLng), 13f),
+                        1500,
+                        null
+                    )
+                } catch (e2: Exception) {
+                    Log.e(TAG, "❌ Fallback también falló: ${e2.message}")
+                }
             }
         }
     }
@@ -861,26 +1129,18 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         )
     }
 
-    private fun getDifficultyColor(diff: String?) = when (normalizeDifficulty(diff ?: "")) {
-        "FACIL" -> Color.parseColor("#4CAF50")
-        "MEDIA" -> Color.parseColor("#FF9800")
-        "DIFICIL" -> Color.parseColor("#F44336")
-        else -> Color.parseColor("#2196F3")
+    private fun getDifficultyColor(diff: String?): Int {
+        return when (DifficultyMapper.normalize(diff)) {
+            DifficultyMapper.FACIL -> Color.parseColor("#4CAF50")
+            DifficultyMapper.MODERADA -> Color.parseColor("#FF9800")
+            DifficultyMapper.DIFICIL -> Color.parseColor("#F44336")
+            else -> Color.parseColor("#2196F3")
+        }
     }
 
     // =========================================================
     // UTILIDADES
     // =========================================================
-    private fun normalizeDifficulty(raw: String): String {
-        val s = normalizeText(raw).uppercase()
-        return when {
-            s.contains("FACIL") || s.contains("FÁCIL") -> "FACIL"
-            s.contains("MODERADA") || s.contains("MEDIA") -> "MEDIA"
-            s.contains("DIFICIL") || s.contains("DIFÍCIL") -> "DIFICIL"
-            else -> s
-        }
-    }
-
     private fun normalizeType(raw: String): String {
         val s = normalizeText(raw).uppercase()
         return when {
@@ -921,17 +1181,35 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         if (!hasLocationPermission()) return
         try {
             googleMap?.isMyLocationEnabled = true
-        } catch (_: SecurityException) {}
+        } catch (_: SecurityException) {
+        }
     }
 
     private fun getUserLocation() {
         if (!hasLocationPermission()) return
         try {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                userLocation = location
+                location?.let {
+                    userLocation = it
+
+                    // ✅ Si aún no hay centro, usamos tu ubicación como centro inicial
+                    if (currentCenterLatLng == null) {
+                        currentCenterLatLng = LatLng(it.latitude, it.longitude)
+                        Log.d(
+                            TAG,
+                            "📍 getUserLocation -> centro inicial fijado en tu ubicación: $currentCenterLatLng"
+                        )
+                    } else {
+                        Log.d(
+                            TAG,
+                            "📍 getUserLocation -> userLocation actualizada, pero se mantiene center=$currentCenterLatLng"
+                        )
+                    }
+                }
             }
         } catch (_: SecurityException) {}
     }
+
 
     private fun centerOnCurrentLocation() {
         val fineGranted = ActivityCompat.checkSelfPermission(
@@ -948,14 +1226,21 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             location?.let {
+                userLocation = it
                 val latLng = LatLng(it.latitude, it.longitude)
-                googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+
+                // ✅ En lugar de solo mover cámara, usamos el flujo estándar:
+                // - actualiza currentCenterLatLng
+                // - limpia buscador
+                // - carga rutas cerca de ese punto
+                moveCenterAndLoadNearby(latLng, label = "Tu ubicación")
             }
         }
     }
 
+
     // =========================================================
-    // ✅ CLAVE: mover centro y cargar cerca SIN FILTRAR POR TEXTO
+    // ✅ mover centro y cargar cerca SIN FILTRAR POR TEXTO
     // =========================================================
     private fun moveCenterAndLoadNearby(latLng: LatLng, label: String? = null) {
         currentCenterLatLng = latLng
@@ -965,7 +1250,6 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         hasAdjustedCameraOnce = false
         currentDisplayCount = PAGE_SIZE
 
-        // ✅ IMPORTANTE: limpiar el buscador para que NO filtre rutas por texto
         suppressSearchCallback = true
         binding.etSearch.setText("")
         suppressSearchCallback = false

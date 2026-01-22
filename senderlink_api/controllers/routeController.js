@@ -1,6 +1,69 @@
+// controllers/routeController.js
+
 const Route = require("../models/Route");
 const User = require("../models/User");
-const axios = require("axios");
+
+// ======================================================
+// ✅ IMÁGENES: normalizar a proxy (/api/photos/places)
+// Soporta:
+//  - "gplaces:PHOTO_REF"
+//  - "https://maps.googleapis.com/maps/api/place/photo?...photoreference=PHOTO_REF&key=..."
+//  - URLs normales (Unsplash, etc.) -> se dejan tal cual
+// ======================================================
+
+function buildBaseUrl(req) {
+  return `${req.protocol}://${req.get("host")}`;
+}
+
+function toProxyUrl(req, photoRef, maxwidth = 1200) {
+  const base = buildBaseUrl(req);
+  return `${base}/api/photos/places?ref=${encodeURIComponent(photoRef)}&maxwidth=${maxwidth}`;
+}
+
+function extractPhotoRefFromGoogleUrl(url) {
+  try {
+    // Puede venir con https://maps.googleapis.com/...
+    const u = new URL(url);
+    const ref = u.searchParams.get("photoreference");
+    return ref || null;
+  } catch {
+    return null;
+  }
+}
+
+function resolveImageUrl(req, img) {
+  if (!img || typeof img !== "string") return img;
+
+  // 1) Nuevo formato seguro: gplaces:XXXX
+  if (img.startsWith("gplaces:")) {
+    const ref = img.replace("gplaces:", "").trim();
+    if (!ref) return img;
+    return toProxyUrl(req, ref, 1200);
+  }
+
+  // 2) Formato antiguo "contaminado": URL directa Google Places Photo
+  //    (incluye API key en query normalmente)
+  if (img.includes("maps.googleapis.com/maps/api/place/photo")) {
+    const ref = extractPhotoRefFromGoogleUrl(img);
+    if (!ref) return img; // si no podemos extraer, lo dejamos
+    return toProxyUrl(req, ref, 1200);
+  }
+
+  // 3) Cualquier otra URL (Unsplash, etc.)
+  return img;
+}
+
+function resolveRouteImages(req, routeObj) {
+  if (!routeObj) return routeObj;
+
+  routeObj.coverImage = resolveImageUrl(req, routeObj.coverImage);
+
+  if (Array.isArray(routeObj.images)) {
+    routeObj.images = routeObj.images.map((img) => resolveImageUrl(req, img));
+  }
+
+  return routeObj;
+}
 
 // ==========================================
 // 1. Crear ruta (USER_ROUTE)
@@ -93,7 +156,8 @@ async function createRoute(req, res) {
 }
 
 // ==========================================
-// 2. Obtener rutas (con filtros + featured + paginación)
+// 2. Obtener rutas (con filtros + paginación)
+// ✅ Resuelve imágenes a proxy
 // ==========================================
 async function getRoutes(req, res) {
   try {
@@ -141,10 +205,14 @@ async function getRoutes(req, res) {
     const limitFinal = parseInt(limit, 10);
     const skip = (pageFinal - 1) * limitFinal;
 
-    const routes = await Route.find(filtro)
+    let routes = await Route.find(filtro)
       .sort({ featured: -1, createdAt: -1 })
       .skip(skip)
-      .limit(limitFinal);
+      .limit(limitFinal)
+      .lean();
+
+    // ✅ Resolver imágenes aquí
+    routes = routes.map((r) => resolveRouteImages(req, r));
 
     const total = await Route.countDocuments(filtro);
 
@@ -162,18 +230,35 @@ async function getRoutes(req, res) {
 }
 
 // ==========================================
-// 2.b Obtener rutas destacadas (FEATURED)
+// 2.b Featured paginado
+// ✅ Resuelve imágenes a proxy
 // ==========================================
 async function getFeaturedRoutes(req, res) {
   try {
-    const limit = parseInt(req.query.limit, 10) || 10;
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 20;
+    const skip = (page - 1) * limit;
 
-    const routes = await Route.find({ featured: true })
+    let routes = await Route.find({ featured: true })
+      .select(
+        "_id type source name coverImage images distanceKm difficulty " +
+        "startLocality comunidad provincia featured createdAt"
+      )
       .sort({ createdAt: -1 })
-      .limit(limit);
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    routes = routes.map((r) => resolveRouteImages(req, r));
+
+    const total = await Route.countDocuments({ featured: true });
 
     res.json({
       ok: true,
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
       count: routes.length,
       routes
     });
@@ -186,7 +271,8 @@ async function getFeaturedRoutes(req, res) {
 }
 
 // ==========================================
-// 2.c Obtener TODAS las rutas para el mapa (sin filtro featured)
+// 2.c Obtener TODAS las rutas para el mapa
+// ✅ Resuelve imágenes a proxy (por si el mapa usa coverImage)
 // ==========================================
 async function getAllRoutesForMap(req, res) {
   try {
@@ -199,10 +285,13 @@ async function getAllRoutesForMap(req, res) {
     const limitFinal = parseInt(limit, 10);
     const skip = (pageFinal - 1) * limitFinal;
 
-    const routes = await Route.find(filtro)
+    let routes = await Route.find(filtro)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limitFinal);
+      .limit(limitFinal)
+      .lean();
+
+    routes = routes.map((r) => resolveRouteImages(req, r));
 
     const total = await Route.countDocuments(filtro);
 
@@ -221,14 +310,17 @@ async function getAllRoutesForMap(req, res) {
 
 // ==========================================
 // 3. Obtener ruta por ID
+// ✅ Resuelve imágenes a proxy
 // ==========================================
 async function getRouteById(req, res) {
   try {
-    const route = await Route.findById(req.params.id);
-
-    if (!route) {
+    const routeDoc = await Route.findById(req.params.id);
+    if (!routeDoc) {
       return res.status(404).json({ ok: false, message: "Ruta no encontrada" });
     }
+
+    const route = routeDoc.toObject();
+    resolveRouteImages(req, route);
 
     res.json({ ok: true, route });
   } catch (err) {
@@ -238,10 +330,16 @@ async function getRouteById(req, res) {
 
 // ==========================================
 // 4. Rutas por usuario
+// ✅ Resuelve imágenes a proxy
 // ==========================================
 async function getRoutesByUser(req, res) {
   try {
-    const routes = await Route.find({ uid: req.params.uid }).sort({ createdAt: -1 });
+    let routes = await Route.find({ uid: req.params.uid })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    routes = routes.map((r) => resolveRouteImages(req, r));
+
     res.json({ ok: true, count: routes.length, routes });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });
@@ -250,15 +348,12 @@ async function getRoutesByUser(req, res) {
 
 // ==========================================
 // 5. Rutas cercanas (GEO 2dsphere)
-// - Busca por startPointGeo (DB)
-// - Responde con startPoint/endPoint (Android)
-// - NO envía geometry (evita crash Gson + reduce payload)
+// ✅ Resuelve imágenes a proxy
 // ==========================================
 async function getRoutesNearMe(req, res) {
   try {
     const { lat, lng, radio = 50000, limit = 100 } = req.query;
 
-    // 1) Validación básica
     if (lat == null || lng == null) {
       return res.status(400).json({
         ok: false,
@@ -282,26 +377,23 @@ async function getRoutesNearMe(req, res) {
       `\n📍 Buscando rutas cercanas (startPointGeo): [${lngNum}, ${latNum}], radio=${radioFinal}m, limit=${limitFinal}`
     );
 
-    // 2) Query GEO (usamos el campo indexado startPointGeo)
     const nearbyRoutes = await Route.find({
       startPointGeo: {
         $near: {
           $geometry: {
             type: "Point",
-            coordinates: [lngNum, latNum] // [lng, lat]
+            coordinates: [lngNum, latNum]
           },
           $maxDistance: radioFinal
         }
       }
     })
-      // ✅ NO mandamos geometry. Solo lo necesario para mapa/lista.
       .select(
         "_id type source name description coverImage images distanceKm durationMin difficulty startLocality comunidad provincia parqueNacional featured startPointGeo endPointGeo code externalId uid createdAt updatedAt"
       )
       .limit(limitFinal)
-      .lean(); // ✅ para poder transformar objetos sin doc mongoose
+      .lean();
 
-    // 3) Transformación para Android: startPoint/endPoint (y eliminamos startPointGeo/endPointGeo)
     const routesForClient = nearbyRoutes.map((r) => {
       const out = { ...r };
 
@@ -309,16 +401,17 @@ async function getRoutesNearMe(req, res) {
       out.startPoint = out.startPointGeo || null;
       out.endPoint = out.endPointGeo || null;
 
-      // No enviamos los campos nuevos al cliente
       delete out.startPointGeo;
       delete out.endPointGeo;
+
+      // ✅ Resolver imágenes también aquí
+      resolveRouteImages(req, out);
 
       return out;
     });
 
     console.log(`✅ Encontradas: ${routesForClient.length} rutas`);
 
-    // 4) Respuesta
     return res.json({
       ok: true,
       count: routesForClient.length,
@@ -329,8 +422,6 @@ async function getRoutesNearMe(req, res) {
     return res.status(500).json({ ok: false, message: err.message });
   }
 }
-
-
 
 // ==========================================
 // 6. Obtener parques nacionales (DISTINCT)

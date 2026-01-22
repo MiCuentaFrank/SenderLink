@@ -52,9 +52,14 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.cardview)
 
-
-    // Firebase Auth
+    // Firebase BOM (gestiona versiones)
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    // Firebase
     implementation(libs.firebase.auth.ktx)
+    implementation("com.google.firebase:firebase-storage-ktx")
+
+
+
 
     // Jetpack Navigation
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
@@ -70,17 +75,26 @@ dependencies {
 
     // OkHttp (para Google Directions API) ✅ NUEVO
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-
+    // OkHttp Logging Interceptor
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     // Gson (ya lo tienes con Retrofit, pero asegúrate)
     implementation("com.google.code.gson:gson:2.10.1")
 
     // Glide para imágenes
     implementation("com.github.bumptech.glide:glide:4.16.0")
     kapt("com.github.bumptech.glide:compiler:4.16.0")
+    // CircleImageView
+    implementation("de.hdodenhof:circleimageview:3.1.0")
     //dataStore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+
+    implementation("androidx.viewpager2:viewpager2:1.1.0")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+
+
 
     // Testing
     testImplementation(libs.junit)
