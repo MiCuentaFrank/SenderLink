@@ -4,6 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/nav_home">
+    <action
+        android:id="@+id/action_global_groupChatFragment"
+        app:destination="@id/groupChatFragment" />
+    <action
+        android:id="@+id/action_global_routeDetailFragment"
+        app:destination="@id/routeDetailFragment" />
+
 
     <!-- ========================= -->
     <!-- HOME -->
@@ -48,11 +55,10 @@
             android:id="@+id/action_routeDetailFragment_to_nav_maps"
             app:destination="@id/nav_maps" />
 
-
+        <!-- ✅ MODIFICADO: Ahora navega a nav_comunidad en vez de rutasGrupalesFragment -->
         <action
-            android:id="@+id/action_routeDetailFragment_to_rutasGrupalesFragment"
-            app:destination="@id/rutasGrupalesFragment" />
-
+            android:id="@+id/action_routeDetailFragment_to_nav_comunidad"
+            app:destination="@id/nav_comunidad" />
 
     </fragment>
 
@@ -64,7 +70,20 @@
         android:id="@+id/nav_comunidad"
         android:name="com.senderlink.app.view.fragments.SocialFragment"
         android:label="Comunidad"
-        tools:layout="@layout/fragment_social" />
+        tools:layout="@layout/fragment_social">
+
+        <!-- ✅ NUEVO: Argumento para seleccionar tab inicial -->
+        <argument
+            android:name="initialTab"
+            app:argType="integer"
+            android:defaultValue="0" />
+        <argument
+            android:name="routeId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+
+    </fragment>
 
     <!-- ========================= -->
     <!-- MAPAS -->
@@ -170,10 +189,16 @@
             app:argType="string"
             app:nullable="true"
             android:defaultValue="@null" />
-
         <action
-            android:id="@+id/action_rutasGrupalesFragment_to_groupChatFragment"
-            app:destination="@id/groupChatFragment" />
+            android:id="@+id/action_rutasGrupalesFragment_to_routeDetailFragment"
+            app:destination="@id/routeDetailFragment"
+            app:enterAnim="@android:anim/slide_in_left"
+            app:exitAnim="@android:anim/slide_out_right"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
+
+
+
     </fragment>
 
 
@@ -183,7 +208,7 @@
     <fragment
         android:id="@+id/groupChatFragment"
         android:name="com.senderlink.app.view.fragments.GroupChatFragment"
-        android:label="Chat del evento"
+        android:label="GroupChatFragment"
         tools:layout="@layout/fragment_group_chat">
 
         <argument
@@ -193,6 +218,13 @@
         <argument
             android:name="eventName"
             app:argType="string" />
+
+        <argument
+            android:name="eventoId"
+            app:argType="string"
+            android:defaultValue="" />
+
     </fragment>
+
 
 </navigation>

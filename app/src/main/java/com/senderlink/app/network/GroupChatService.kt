@@ -27,4 +27,10 @@ interface GroupChatService {
         @Path("chatId") chatId: String,
         @Path("messageId") messageId: String
     ): Call<DeleteGroupMessageResponse>
+
+    // ✅ NUEVO: participantes del chat
+    @GET("api/group-chat/{chatId}/participants")
+    fun getParticipants(
+        @Path("chatId") chatId: String
+    ): Call<GroupChatParticipantsResponse>
 }

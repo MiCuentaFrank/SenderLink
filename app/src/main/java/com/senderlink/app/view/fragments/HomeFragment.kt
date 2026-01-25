@@ -4,24 +4,27 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.senderlink.app.R
 import com.senderlink.app.databinding.FragmentHomeBinding
 import com.senderlink.app.view.adapters.FeaturedRouteAdapter
 import com.senderlink.app.view.adapters.RouteAdapter
 import com.senderlink.app.viewmodel.HomeViewModel
 
 /**
- * 🏠 HomeFragment - OPTIMIZADO CON PAGINACIÓN
+ * 🏠 HomeFragment - OPTIMIZADO
  *
  * MEJORAS:
- * - ⚡ Carga paralela con loadAllData()
- * - 💾 Usa caché de destacadas
- * - 🔄 Paginación infinita en destacadas
+ * - ⚡ Carga secuencial (destacadas primero)
+ * - 🎨 Skeleton loading mientras carga
+ * - 🔄 Pull-to-refresh
+ * - 📄 Paginación infinita (destacadas)
  */
 class HomeFragment : Fragment() {
 
@@ -31,6 +34,8 @@ class HomeFragment : Fragment() {
     private val viewModel: HomeViewModel by viewModels()
     private lateinit var featuredAdapter: FeaturedRouteAdapter
     private lateinit var routesAdapter: RouteAdapter
+
+    private var isSkeletonVisible = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,10 +50,16 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView()
+        setupSwipeRefresh()
         observeViewModel()
 
-        // ⚡ CARGA PARALELA - Una sola llamada carga TODO
-        viewModel.loadAllData(requireContext())
+        // ⚡ CARGA INICIAL (solo si no hay datos ya cargados)
+        if (viewModel.featuredRoutes.value.isNullOrEmpty()) {
+            showSkeletonLoading()
+            viewModel.loadAllData(requireContext())
+        } else {
+            hideSkeletonLoading()
+        }
     }
 
     // =====================================
@@ -56,6 +67,7 @@ class HomeFragment : Fragment() {
     // =====================================
     private fun setupRecyclerView() {
 
+        // ✅ DESTACADAS (horizontal scroll)
         featuredAdapter = FeaturedRouteAdapter { route ->
             viewModel.markRouteAsRecent(requireContext(), route)
             navigateToDetail(route.id)
@@ -72,7 +84,7 @@ class HomeFragment : Fragment() {
             adapter = featuredAdapter
             setHasFixedSize(true)
 
-            // 🔄 SCROLL LISTENER - Cargar más al llegar al final
+            // 📄 Paginación infinita - Cargar más al llegar al final
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                     super.onScrolled(recyclerView, dx, dy)
@@ -80,14 +92,14 @@ class HomeFragment : Fragment() {
                     val lastVisible = featuredLayoutManager.findLastVisibleItemPosition()
                     val totalItems = featuredLayoutManager.itemCount
 
-                    // Cuando faltan 3 items para el final, cargar más
-                    if (lastVisible >= totalItems - 3) {
+                    if (totalItems > 0 && lastVisible >= totalItems - 3) {
                         viewModel.loadMoreFeaturedRoutes()
                     }
                 }
             })
         }
 
+        // ✅ RECIENTES (grid 2 columnas)
         routesAdapter = RouteAdapter { route ->
             viewModel.markRouteAsRecent(requireContext(), route)
             navigateToDetail(route.id)
@@ -96,49 +108,114 @@ class HomeFragment : Fragment() {
         binding.rvRoutes.apply {
             layoutManager = GridLayoutManager(requireContext(), 2)
             adapter = routesAdapter
-            setHasFixedSize(true)
+
+            // 🔥 CLAVE para RV dentro de NestedScrollView con wrap_content
+            setHasFixedSize(false)
+            isNestedScrollingEnabled = false
+        }
+
+    }
+
+    // =====================================
+    // 🔄 PULL TO REFRESH
+    // =====================================
+    private fun setupSwipeRefresh() {
+        binding.swipeRefresh.setOnRefreshListener {
+            showSkeletonLoading()
+            viewModel.refresh(requireContext())
         }
     }
 
+    // =====================================
+    // 👀 OBSERVERS
+    // =====================================
     private fun observeViewModel() {
-        // Observar destacadas
-        viewModel.featuredRoutes.observe(viewLifecycleOwner) {
-            featuredAdapter.submitList(it)
+
+        viewModel.featuredRoutes.observe(viewLifecycleOwner) { routes ->
+            featuredAdapter.submitList(routes)
+            binding.rvFeaturedRoutes.visibility = if (routes.isNullOrEmpty()) View.GONE else View.VISIBLE
+            binding.rvFeaturedRoutes.requestLayout()
+            hideSkeletonLoading()
         }
 
-        // Observar recientes
-        viewModel.routes.observe(viewLifecycleOwner) {
-            routesAdapter.submitList(it)
+        viewModel.routes.observe(viewLifecycleOwner) { routes ->
+            routesAdapter.submitList(routes)
+            binding.rvRoutes.post { binding.rvRoutes.requestLayout() }
         }
 
-        // Observar loading (opcional - puedes mostrar un ProgressBar)
+
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            // Aquí podrías mostrar/ocultar un ProgressBar
-            // binding.progressBar?.visibility = if (isLoading) View.VISIBLE else View.GONE
+            binding.swipeRefresh.isRefreshing = isLoading
+
+            // Si termina de cargar y ya hay algo, fuera shimmer
+            if (!isLoading) {
+                if (!viewModel.featuredRoutes.value.isNullOrEmpty() || !viewModel.routes.value.isNullOrEmpty()) {
+                    hideSkeletonLoading()
+                }
+            }
         }
 
-        // Observar errores (opcional - puedes mostrar un Toast)
         viewModel.error.observe(viewLifecycleOwner) { error ->
             error?.let {
-                // Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                hideSkeletonLoading()
             }
         }
     }
 
     // =====================================
-    // 🧭 NAVEGACIÓN
+    // 🎨 SKELETON LOADING (SHIMMER OVERLAY)
     // =====================================
-    private fun navigateToMapWithFilter(filterType: String) {
-        val action =
-            HomeFragmentDirections.actionHomeFragmentToMapasFragment(filterType)
-        findNavController().navigate(action)
+    private fun showSkeletonLoading() {
+        isSkeletonVisible = true
+        binding.shimmerLayout.visibility = View.VISIBLE
+        binding.shimmerLayout.startShimmer()
+        binding.contentLayout.visibility = View.GONE
     }
 
+    private fun hideSkeletonLoading() {
+        isSkeletonVisible = false
+        binding.shimmerLayout.stopShimmer()
+        binding.shimmerLayout.visibility = View.GONE
+        binding.contentLayout.visibility = View.VISIBLE
+    }
+
+
+
+    // =====================================
+    // 🧭 NAVEGACIÓN
+    // =====================================
     private fun navigateToDetail(routeId: String?) {
         if (routeId.isNullOrBlank()) return
-        val action =
-            HomeFragmentDirections.actionHomeFragmentToRouteDetailFragment(routeId)
-        findNavController().navigate(action)
+
+        try {
+            val bundle = Bundle().apply { putString("routeId", routeId) }
+            findNavController().navigate(
+                R.id.action_global_routeDetailFragment,
+                bundle
+            )
+        } catch (e: Exception) {
+            try {
+                val action = HomeFragmentDirections
+                    .actionHomeFragmentToRouteDetailFragment(routeId)
+                findNavController().navigate(action)
+            } catch (e2: Exception) {
+                Toast.makeText(requireContext(), "Error abriendo ruta", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // =====================================
+    // 🔄 LIFECYCLE
+    // =====================================
+    override fun onResume() {
+        super.onResume()
+        if (isSkeletonVisible) binding.shimmerLayout.startShimmer()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (isSkeletonVisible) binding.shimmerLayout.stopShimmer()
     }
 
     override fun onDestroyView() {

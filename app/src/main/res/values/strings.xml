@@ -8,12 +8,14 @@
     <string name="comunidad_subtitle">comunidad</string>
     <string name="comunidad_title">comunidad_titulo</string>
     <string name="comunidad_header_image_desc">comunidad_heder_image_desc</string>
+    <string name="ver_participantes">Participantes</string>
+    <string name="organizador">Organizador</string>
 
-        <!--
-        ====================================================================
-        STRINGS PARA RUTAS GRUPALES
-        ====================================================================
-        -->
+    <!--
+    ====================================================================
+    STRINGS PARA RUTAS GRUPALES
+    ====================================================================
+    -->
 
         <!-- Títulos -->
     <string name="rutas_grupales">Rutas Grupales</string>
@@ -56,7 +58,9 @@
     <string name="error_unirse_evento">Error al unirse al evento</string>
     <string name="exito_unido">Te has unido al evento</string>
     <string name="exito_salido">Has salido del evento</string>
-
+    <string name="enviar">enviar</string>
+    <string name="chat_empty">No hay mensajes</string>
+    <string name="chat_hint">Escribe un mensaje...</string>
 
 
 </resources>

@@ -1,23 +1,39 @@
 package com.senderlink.app.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.senderlink.app.model.GroupMessage
+import com.senderlink.app.model.Participante
+import com.senderlink.app.repository.EventRepository
 import com.senderlink.app.repository.GroupChatRepository
+import kotlinx.coroutines.launch
+
+/**
+ * Datos de participantes (organizador + lista)
+ */
+data class ParticipantsData(
+    val participantes: List<Participante>,
+    val organizadorUid: String?
+)
 
 class GroupChatViewModel : ViewModel() {
 
-    private val repo = GroupChatRepository()
-
+    private val chatRepo = GroupChatRepository()
+    private val eventRepo = EventRepository()  // ✅ AÑADIDO
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    // -----------------------------
-    // LiveData
-    // -----------------------------
+    private val TAG = "GroupChatViewModel"
+
     private val _messages = MutableLiveData<List<GroupMessage>>(emptyList())
     val messages: LiveData<List<GroupMessage>> = _messages
+
+    // ✅ CAMBIADO: data class propia en lugar de importar de network
+    private val _participantsData = MutableLiveData<ParticipantsData?>(null)
+    val participantsData: LiveData<ParticipantsData?> = _participantsData
 
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean> = _isLoading
@@ -25,31 +41,40 @@ class GroupChatViewModel : ViewModel() {
     private val _error = MutableLiveData<String?>(null)
     val error: LiveData<String?> = _error
 
-    // Guardamos el chat actual para refrescar fácil
     private var currentChatId: String? = null
 
-    // -----------------------------
-    // Public API
-    // -----------------------------
+    // loading counter para que no "parpadee" si cargas varias cosas
+    private var loadingCount = 0
+    private fun startLoading() {
+        loadingCount++
+        _isLoading.value = loadingCount > 0
+    }
+    private fun stopLoading() {
+        loadingCount = (loadingCount - 1).coerceAtLeast(0)
+        _isLoading.value = loadingCount > 0
+    }
+
     fun clearError() {
         _error.value = null
     }
 
     fun loadMessages(chatId: String, limit: Int = 50) {
         currentChatId = chatId
-        _isLoading.value = true
+        startLoading()
         _error.value = null
 
-        repo.getMessages(
+        chatRepo.getMessages(
             chatId = chatId,
             limit = limit,
             onSuccess = { list ->
                 _messages.value = list
-                _isLoading.value = false
+                Log.d(TAG, "✅ Mensajes cargados: ${list.size}")
+                stopLoading()
             },
             onError = { msg ->
                 _error.value = msg
-                _isLoading.value = false
+                Log.e(TAG, "❌ Error cargando mensajes: $msg")
+                stopLoading()
             }
         )
     }
@@ -66,7 +91,6 @@ class GroupChatViewModel : ViewModel() {
             _error.value = "No puedes enviar un mensaje vacío 👀"
             return
         }
-
         if (trimmed.length > 500) {
             _error.value = "Máximo 500 caracteres (ahora mismo llevas ${trimmed.length})"
             return
@@ -74,50 +98,85 @@ class GroupChatViewModel : ViewModel() {
 
         val user = auth.currentUser
         val uid = user?.uid
-
         if (uid.isNullOrBlank()) {
             _error.value = "No estás autenticado. Vuelve a iniciar sesión."
             return
         }
 
-        // Info opcional (si backend lo ignora, no pasa nada)
         val senderName = user.displayName ?: "Usuario"
         val senderPhoto = user.photoUrl?.toString()
 
-        _isLoading.value = true
+        startLoading()
         _error.value = null
         currentChatId = chatId
 
-        repo.sendMessage(
+        chatRepo.sendMessage(
             chatId = chatId,
             uid = uid,
             text = trimmed,
             senderName = senderName,
             senderPhoto = senderPhoto,
             onSuccess = { sentMessage ->
-                // 1) Añadimos optimista (rápido)
                 val current = _messages.value ?: emptyList()
                 _messages.value = current + sentMessage
 
-                // 2) y refrescamos para que quede igual que servidor
-                repo.getMessages(
+                chatRepo.getMessages(
                     chatId = chatId,
                     limit = 50,
                     onSuccess = { list ->
                         _messages.value = list
-                        _isLoading.value = false
+                        stopLoading()
                     },
                     onError = { msg ->
-                        // Si falla el refresh, al menos el mensaje optimista queda en pantalla
                         _error.value = msg
-                        _isLoading.value = false
+                        stopLoading()
                     }
                 )
             },
             onError = { msg ->
                 _error.value = msg
-                _isLoading.value = false
+                stopLoading()
             }
         )
+    }
+
+    // ✅ CORREGIDO: Cargar participantes usando EventRepository
+    fun loadParticipants(eventoId: String) {
+        Log.d(TAG, "➡️ loadParticipants(eventoId=$eventoId)")
+
+        startLoading()
+        _error.value = null
+
+        viewModelScope.launch {
+            try {
+                val uid = auth.currentUser?.uid
+
+                // ✅ Usar EventRepository.getEventoById() que YA existe
+                val response = eventRepo.getEventoById(eventoId, uid)
+
+                if (response.ok && response.data != null) {
+                    val evento = response.data
+
+                    // ✅ Extraer participantes y organizador del evento
+                    val data = ParticipantsData(
+                        participantes = evento.participantes,
+                        organizadorUid = evento.organizadorUid
+                    )
+
+                    _participantsData.value = data
+
+                    Log.d(TAG, "✅ Participantes cargados: ${evento.participantes.size} " +
+                            "organizador=${evento.organizadorUid.take(8)}")
+                } else {
+                    _error.value = response.message ?: "No se pudo cargar información del evento"
+                    Log.e(TAG, "❌ Error: ${response.message}")
+                }
+            } catch (e: Exception) {
+                _error.value = "Error de conexión: ${e.message}"
+                Log.e(TAG, "❌ Excepción: ${e.message}", e)
+            } finally {
+                stopLoading()
+            }
+        }
     }
 }

@@ -1,65 +1,49 @@
 package com.senderlink.app.repository
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.senderlink.app.model.User
-import com.senderlink.app.network.UserResponse
 import com.senderlink.app.network.CreateUserResponse
 import com.senderlink.app.network.RetrofitClient
+import com.senderlink.app.network.UserResponse
 import com.senderlink.app.network.UserService
+import com.senderlink.app.network.UploadUserPhotoResponse
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.File
+import java.io.FileOutputStream
 
-/**
- * Repository que gestiona las operaciones relacionadas con usuarios
- * Actúa como intermediario entre el ViewModel y la capa de red
- */
 class UserRepository {
 
-    // Instancia del servicio de usuarios
     private val userService: UserService = RetrofitClient.instance.create(UserService::class.java)
-
-    // Tag para los logs
     private val TAG = "UserRepository"
 
-    /**
-     * Obtiene los datos de un usuario por su UID
-     *
-     * @param uid - ID único del usuario de Firebase
-     * @return LiveData con el resultado de la operación
-     */
     fun getUserByUid(uid: String): LiveData<Result<User>> {
         val result = MutableLiveData<Result<User>>()
-
-        // Indicamos que estamos cargando
         result.value = Result.Loading
 
         Log.d(TAG, "Obteniendo usuario con UID: $uid")
 
-        // Hacemos la llamada al backend
         userService.getUserByUid(uid).enqueue(object : Callback<UserResponse> {
-            override fun onResponse(
-                call: Call<UserResponse>,
-                response: Response<UserResponse>
-            ) {
+            override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
                 if (response.isSuccessful) {
-                    // La respuesta fue exitosa (código 200-299)
                     val userResponse = response.body()
-
                     if (userResponse?.ok == true) {
-                        // Todo correcto, tenemos el usuario
                         Log.d(TAG, "Usuario obtenido: ${userResponse.user.email}")
                         result.value = Result.Success(userResponse.user)
                     } else {
-                        // La API respondió pero con un error
                         val error = userResponse?.message ?: "Error desconocido"
                         Log.e(TAG, "Error de API: $error")
                         result.value = Result.Error(error)
                     }
                 } else {
-                    // Error HTTP (404, 500, etc.)
                     val error = "Error del servidor: ${response.code()}"
                     Log.e(TAG, error)
                     result.value = Result.Error(error)
@@ -67,7 +51,6 @@ class UserRepository {
             }
 
             override fun onFailure(call: Call<UserResponse>, t: Throwable) {
-                // Error de red o conexión
                 Log.e(TAG, "Error de conexión: ${t.message}")
                 result.value = Result.Error(t.message ?: "Error de conexión")
             }
@@ -76,12 +59,6 @@ class UserRepository {
         return result
     }
 
-    /**
-     * Crea un nuevo usuario en el backend
-     *
-     * @param user - Datos del usuario a crear
-     * @return LiveData con el resultado de la operación
-     */
     fun createUser(user: User): LiveData<Result<User>> {
         val result = MutableLiveData<Result<User>>()
         result.value = Result.Loading
@@ -89,13 +66,9 @@ class UserRepository {
         Log.d(TAG, "Creando usuario: ${user.email}")
 
         userService.createUser(user).enqueue(object : Callback<CreateUserResponse> {
-            override fun onResponse(
-                call: Call<CreateUserResponse>,
-                response: Response<CreateUserResponse>
-            ) {
+            override fun onResponse(call: Call<CreateUserResponse>, response: Response<CreateUserResponse>) {
                 if (response.isSuccessful) {
                     val createResponse = response.body()
-
                     if (createResponse?.ok == true) {
                         Log.d(TAG, "Usuario creado correctamente")
                         result.value = Result.Success(createResponse.user)
@@ -117,24 +90,106 @@ class UserRepository {
 
         return result
     }
-    fun updateUserProfile(uid: String, req: com.senderlink.app.network.UpdateUserProfileRequest): LiveData<Result<User>> {
+
+    fun updateUserProfile(
+        uid: String,
+        req: com.senderlink.app.network.UpdateUserProfileRequest
+    ): LiveData<Result<User>> {
         val result = MutableLiveData<Result<User>>()
         result.value = Result.Loading
 
         Log.d(TAG, "Actualizando perfil de UID: $uid")
 
-        userService.updateUserProfile(uid, req).enqueue(object : Callback<com.senderlink.app.network.UpdateUserProfileResponse> {
+        userService.updateUserProfile(uid, req)
+            .enqueue(object : Callback<com.senderlink.app.network.UpdateUserProfileResponse> {
+                override fun onResponse(
+                    call: Call<com.senderlink.app.network.UpdateUserProfileResponse>,
+                    response: Response<com.senderlink.app.network.UpdateUserProfileResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        val body = response.body()
+                        if (body?.ok == true) {
+                            Log.d(TAG, "Perfil actualizado correctamente")
+                            result.value = Result.Success(body.user)
+                        } else {
+                            val error = body?.message ?: "Error al actualizar perfil"
+                            Log.e(TAG, error)
+                            result.value = Result.Error(error)
+                        }
+                    } else {
+                        val error = "Error del servidor: ${response.code()}"
+                        Log.e(TAG, error)
+                        result.value = Result.Error(error)
+                    }
+                }
+
+                override fun onFailure(
+                    call: Call<com.senderlink.app.network.UpdateUserProfileResponse>,
+                    t: Throwable
+                ) {
+                    Log.e(TAG, "Error actualizando perfil: ${t.message}")
+                    result.value = Result.Error(t.message ?: "Error de conexión")
+                }
+            })
+
+        return result
+    }
+
+    // =========================================================
+    // ✅ SUBIDA FOTO PERFIL (multipart/form-data)
+    // =========================================================
+
+    /**
+     * Helper: convierte un Uri (galería/cámara) a MultipartBody.Part
+     * - Copia a cache porque Retrofit/OkHttp trabajan mejor con File real.
+     */
+    fun buildPhotoPartFromUri(context: Context, uri: Uri): MultipartBody.Part {
+        val contentResolver = context.contentResolver
+
+        val inputStream = contentResolver.openInputStream(uri)
+            ?: throw IllegalArgumentException("No se pudo abrir el Uri de la imagen")
+
+        val tempFile = File(context.cacheDir, "profile_${System.currentTimeMillis()}.jpg")
+
+        FileOutputStream(tempFile).use { output ->
+            inputStream.use { input ->
+                input.copyTo(output)
+            }
+        }
+
+        val mime = contentResolver.getType(uri) ?: "image/*"
+        val requestBody = tempFile.asRequestBody(mime.toMediaTypeOrNull())
+
+        // ✅ IMPORTANTE: el nombre del campo ("photo") debe coincidir con tu backend (multer)
+        return MultipartBody.Part.createFormData(
+            "photo",
+            tempFile.name,
+            requestBody
+        )
+    }
+
+    /**
+     * Sube la foto al backend:
+     * PUT /api/users/{uid}/photo
+     */
+    fun uploadUserPhoto(uid: String, photo: MultipartBody.Part): LiveData<Result<User>> {
+        val result = MutableLiveData<Result<User>>()
+        result.value = Result.Loading
+
+        Log.d(TAG, "Subiendo foto para UID: $uid")
+
+        userService.uploadUserPhoto(uid, photo).enqueue(object : Callback<UploadUserPhotoResponse> {
             override fun onResponse(
-                call: Call<com.senderlink.app.network.UpdateUserProfileResponse>,
-                response: Response<com.senderlink.app.network.UpdateUserProfileResponse>
+                call: Call<UploadUserPhotoResponse>,
+                response: Response<UploadUserPhotoResponse>
             ) {
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body?.ok == true) {
-                        Log.d(TAG, "Perfil actualizado correctamente")
+                        Log.d(TAG, "Foto actualizada OK")
                         result.value = Result.Success(body.user)
                     } else {
-                        val error = body?.message ?: "Error al actualizar perfil"
+                        val error = body?.message ?: "Error al subir la foto"
                         Log.e(TAG, error)
                         result.value = Result.Error(error)
                     }
@@ -145,8 +200,8 @@ class UserRepository {
                 }
             }
 
-            override fun onFailure(call: Call<com.senderlink.app.network.UpdateUserProfileResponse>, t: Throwable) {
-                Log.e(TAG, "Error actualizando perfil: ${t.message}")
+            override fun onFailure(call: Call<UploadUserPhotoResponse>, t: Throwable) {
+                Log.e(TAG, "Error subiendo foto: ${t.message}")
                 result.value = Result.Error(t.message ?: "Error de conexión")
             }
         })
@@ -154,11 +209,6 @@ class UserRepository {
         return result
     }
 
-
-    /**
-     * Clase sellada que representa los diferentes estados de una operación
-     * Permite manejar: Cargando, Éxito o Error
-     */
     sealed class Result<out T> {
         object Loading : Result<Nothing>()
         data class Success<T>(val data: T) : Result<T>()

@@ -87,19 +87,19 @@ data class EventoGrupal(
 ) {
 
     // ==========================================
-    // HELPERS
+    // ✅ FUNCIONES PARA EXTRAER DATOS DE routeIdRaw
     // ==========================================
 
     /**
      * ✅ Devuelve SIEMPRE el ID real de la ruta
-     * Soporta: string | object | null(JsonNull)
+     * Puede ser string simple o dentro de un objeto populate
      */
     fun getRouteId(): String {
         return try {
             when {
                 routeIdRaw.isJsonPrimitive -> routeIdRaw.asString
                 routeIdRaw.isJsonObject -> routeIdRaw.asJsonObject.get("_id")?.asString ?: ""
-                else -> "" // JsonNull u otros raros
+                else -> ""
             }
         } catch (_: Exception) {
             ""
@@ -107,19 +107,49 @@ data class EventoGrupal(
     }
 
     /**
-     * (Opcional) Nombre de la ruta si viene populate
+     * ✅ Nombre de la ruta (si viene populated)
+     * Usada por EventoAdapter
      */
-    fun getRouteNameOrNull(): String? {
+    fun getNombreRuta(): String? {
         return try {
             if (routeIdRaw.isJsonObject) {
                 routeIdRaw.asJsonObject.get("name")?.asString
-            } else null
+            } else {
+                null
+            }
         } catch (_: Exception) {
             null
         }
     }
 
+    /**
+     * ✅ NUEVO: Imagen de portada de la ruta (si viene populated)
+     * Usada por EventoAdapter
+     */
+    fun getCoverImage(): String? {
+        return try {
+            if (routeIdRaw.isJsonObject) {
+                routeIdRaw.asJsonObject.get("coverImage")?.asString
+            } else {
+                null
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /**
+     * @Deprecated Use getNombreRuta() instead
+     */
+    @Deprecated("Use getNombreRuta()", ReplaceWith("getNombreRuta()"))
+    fun getRouteNameOrNull(): String? = getNombreRuta()
+
+    // ==========================================
+    // FUNCIONES DE VALIDACIÓN
+    // ==========================================
+
     fun isOrganizador(uid: String): Boolean = organizadorUid == uid
+
     fun isParticipante(uid: String): Boolean = participantes.any { it.uid == uid }
 
     fun getNumParticipantes(): Int = numParticipantes ?: participantes.size
@@ -129,10 +159,18 @@ data class EventoGrupal(
 
     fun hasPlazasDisponibles(): Boolean = getPlazasDisponibles() > 0
 
+    // ==========================================
+    // FUNCIONES DE ESTADO
+    // ==========================================
+
     fun isAbierto(): Boolean = estado == Estado.ABIERTO
     fun isCompleto(): Boolean = estado == Estado.COMPLETO
     fun isFinalizado(): Boolean = estado == Estado.FINALIZADO
     fun isCancelado(): Boolean = estado == Estado.CANCELADO
+
+    // ==========================================
+    // FUNCIONES DE PERMISOS
+    // ==========================================
 
     fun canJoin(uid: String): Boolean {
         return !isParticipante(uid) &&
@@ -146,6 +184,10 @@ data class EventoGrupal(
         return isParticipante(uid) && !isOrganizador(uid)
     }
 
+    // ==========================================
+    // CONSTANTES
+    // ==========================================
+
     object Estado {
         const val ABIERTO = "ABIERTO"
         const val COMPLETO = "COMPLETO"
@@ -158,23 +200,6 @@ data class EventoGrupal(
 // MODELOS AUXILIARES
 // ==========================================
 
-data class Participante(
-    @SerializedName("uid")
-    val uid: String,
-
-    @SerializedName("nombre")
-    val nombre: String,
-
-    @SerializedName("foto")
-    val foto: String? = null,
-
-    @SerializedName("fechaUnion")
-    val fechaUnion: String? = null,
-
-    @SerializedName("_id")
-    val id: String? = null
-)
-
 data class PuntoEncuentro(
     @SerializedName("nombre")
     val nombre: String? = null,
@@ -185,6 +210,5 @@ data class PuntoEncuentro(
     @SerializedName("lng")
     val lng: Double? = null
 ) {
-    fun isValid(): Boolean =
-        lat != null && lng != null && lat != 0.0 && lng != 0.0
+    fun isValid(): Boolean = lat != null && lng != null && lat != 0.0 && lng != 0.0
 }

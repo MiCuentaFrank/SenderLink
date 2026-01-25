@@ -24,6 +24,28 @@ function fail(res, status, message) {
 }
 
 // ========================================
+// HELPER: Agregar flags isParticipant e isOrganizer
+// ========================================
+function enrichEventWithFlags(evento, uid) {
+  if (!uid) {
+    return {
+      ...evento,
+      isParticipant: false,
+      isOrganizer: false
+    };
+  }
+
+  const isParticipant = (evento.participantes || []).some((p) => p.uid === uid);
+  const isOrganizer = evento.organizadorUid === uid;
+
+  return {
+    ...evento,
+    isParticipant,
+    isOrganizer
+  };
+}
+
+// ========================================
 // 1. CREAR EVENTO GRUPAL
 // POST /api/events
 // ========================================
@@ -59,44 +81,47 @@ async function createEvento(req, res) {
       return fail(res, 400, "La fecha del evento debe ser futura");
     }
 
-        // Crear el evento (guardando para garantizar chatId)
-        const evento = new EventoGrupal({
-          routeId,
-          organizadorUid,
-          organizadorNombre,
-          organizadorFoto: organizadorFoto || "",
-          fecha: fechaEvento,
-          maxParticipantes: maxParticipantes || 10,
-          descripcion: descripcion || "",
-          nivelRecomendado: nivelRecomendado || "",
-          puntoEncuentro: puntoEncuentro || {},
-          horaEncuentro: horaEncuentro || "09:00",
-          participantes: [
-            {
-              uid: organizadorUid,
-              nombre: organizadorNombre,
-              foto: organizadorFoto || "",
-              fechaUnion: new Date()
-            }
-          ],
-          estado: "ABIERTO"
-        });
+    // Crear el evento (guardando para garantizar chatId)
+    const evento = new EventoGrupal({
+      routeId,
+      organizadorUid,
+      organizadorNombre,
+      organizadorFoto: organizadorFoto || "",
+      fecha: fechaEvento,
+      maxParticipantes: maxParticipantes || 10,
+      descripcion: descripcion || "",
+      nivelRecomendado: nivelRecomendado || "",
+      puntoEncuentro: puntoEncuentro || {},
+      horaEncuentro: horaEncuentro || "09:00",
+      participantes: [
+        {
+          uid: organizadorUid,
+          nombre: organizadorNombre,
+          foto: organizadorFoto || "",
+          fechaUnion: new Date()
+        }
+      ],
+      estado: "ABIERTO"
+    });
 
-        await evento.save();
+    await evento.save();
 
-        return ok(res, evento, "Evento creado correctamente");
+    // ✅ Enriquecer con flags
+    const eventoEnriquecido = enrichEventWithFlags(evento.toObject(), organizadorUid);
 
-    } catch (error) {
-      console.error("createEvento error FULL:", error);
+    return ok(res, eventoEnriquecido, "Evento creado correctamente");
 
-      return res.status(500).json({
-        ok: false,
-        message: "Error creando evento",
-        debug: error.message,
-        code: error.code,
-        name: error.name
-      });
-    }
+  } catch (error) {
+    console.error("createEvento error FULL:", error);
+
+    return res.status(500).json({
+      ok: false,
+      message: "Error creando evento",
+      debug: error.message,
+      code: error.code,
+      name: error.name
+    });
+  }
 }
 
 // ========================================
@@ -111,6 +136,7 @@ async function listEventos(req, res) {
 
     if (estado) filtro.estado = estado;
     else filtro.estado = { $in: ["ABIERTO", "COMPLETO"] };
+
     // Filtrar por ruta específica (validando ObjectId)
     if (routeId) {
       if (!mongoose.Types.ObjectId.isValid(routeId)) {
@@ -118,7 +144,6 @@ async function listEventos(req, res) {
       }
       filtro.routeId = routeId;
     }
-
 
     // Solo eventos futuros
     filtro.fecha = { $gte: new Date() };
@@ -133,21 +158,8 @@ async function listEventos(req, res) {
       .limit(limitFinal)
       .lean();
 
-    const eventosEnriquecidos = eventos.map((ev) => {
-      const isParticipant = uid
-        ? (ev.participantes || []).some((p) => p.uid === uid)
-        : false;
-
-      const isOrganizer = uid ? ev.organizadorUid === uid : false;
-
-      return {
-        ...ev,
-        isParticipant,
-        isOrganizer,
-        participantsCount: (ev.participantes || []).length,
-        hasSlots: (ev.participantes || []).length < (ev.maxParticipantes || 0)
-      };
-    });
+    // ✅ Enriquecer todos los eventos con flags
+    const eventosEnriquecidos = eventos.map((ev) => enrichEventWithFlags(ev, uid));
 
     const total = await EventoGrupal.countDocuments(filtro);
 
@@ -163,14 +175,14 @@ async function listEventos(req, res) {
   }
 }
 
-
 // ========================================
 // 3. OBTENER EVENTO POR ID
-// GET /api/events/:id
+// GET /api/events/:id?uid=xxx (uid opcional en query)
 // ========================================
 async function getEventoById(req, res) {
   try {
     const { id } = req.params;
+    const { uid } = req.query; // ✅ Ahora acepta uid en query
 
     const evento = await EventoGrupal.findById(id)
       .populate("routeId")
@@ -180,7 +192,10 @@ async function getEventoById(req, res) {
       return fail(res, 404, "Evento no encontrado");
     }
 
-    return ok(res, evento);
+    // ✅ Enriquecer con flags
+    const eventoEnriquecido = enrichEventWithFlags(evento, uid);
+
+    return ok(res, eventoEnriquecido);
   } catch (error) {
     console.error("getEventoById error:", error);
     return fail(res, 500, "Error obteniendo evento");
@@ -204,7 +219,14 @@ async function getEventosByUser(req, res) {
       .sort({ fecha: -1 })
       .lean();
 
-    return ok(res, eventos);
+    // ✅ Enriquecer TODOS con flags (isOrganizer = true, isParticipant = false)
+    const eventosEnriquecidos = eventos.map((ev) => ({
+      ...ev,
+      isOrganizer: true,    // ← Siempre true (el usuario organiza estos eventos)
+      isParticipant: false  // ← Siempre false (no eres "participante" de tus propios eventos)
+    }));
+
+    return ok(res, eventosEnriquecidos);
   } catch (error) {
     console.error("getEventosByUser error:", error);
     return fail(res, 500, "Error obteniendo eventos del usuario");
@@ -212,7 +234,7 @@ async function getEventosByUser(req, res) {
 }
 
 // ========================================
-// 5. EVENTOS EN LOS QUE PARTICIPA UN USUARIO
+// 5. EVENTOS EN LOS QUE PARTICIPA UN USUARIO (NO organizados por él)
 // GET /api/events/participating/:uid
 // ========================================
 async function getEventosParticipando(req, res) {
@@ -223,15 +245,22 @@ async function getEventosParticipando(req, res) {
       return fail(res, 400, "uid requerido");
     }
 
-    // Buscar eventos donde el uid esté en el array de participantes
     const eventos = await EventoGrupal.find({
-      "participantes.uid": uid
+      "participantes.uid": uid,
+      organizadorUid: { $ne: uid } // 👈 clave: NO organizados por él
     })
       .populate("routeId", "name coverImage distanceKm difficulty startLocality")
-      .sort({ fecha: 1 }) // Próximos primero
+      .sort({ fecha: 1 })
       .lean();
 
-    return ok(res, eventos);
+    // ✅ Enriquecer TODOS con flags (isParticipant = true, isOrganizer = false)
+    const eventosEnriquecidos = eventos.map((ev) => ({
+      ...ev,
+      isParticipant: true,  // ← Siempre true (estás participando)
+      isOrganizer: false    // ← Siempre false (no organizas estos eventos)
+    }));
+
+    return ok(res, eventosEnriquecidos);
   } catch (error) {
     console.error("getEventosParticipando error:", error);
     return fail(res, 500, "Error obteniendo eventos donde participas");
@@ -267,7 +296,10 @@ async function joinEvento(req, res) {
     // Guardar cambios
     await evento.save();
 
-    return ok(res, evento, result.message);
+    // ✅ Enriquecer con flags antes de devolver
+    const eventoEnriquecido = enrichEventWithFlags(evento.toObject(), uid);
+
+    return ok(res, eventoEnriquecido, result.message);
   } catch (error) {
     console.error("joinEvento error:", error);
     return fail(res, 500, "Error uniéndose al evento");
@@ -303,7 +335,10 @@ async function leaveEvento(req, res) {
     // Guardar cambios
     await evento.save();
 
-    return ok(res, evento, result.message);
+    // ✅ Enriquecer con flags antes de devolver
+    const eventoEnriquecido = enrichEventWithFlags(evento.toObject(), uid);
+
+    return ok(res, eventoEnriquecido, result.message);
   } catch (error) {
     console.error("leaveEvento error:", error);
     return fail(res, 500, "Error saliendo del evento");
@@ -338,7 +373,10 @@ async function cancelEvento(req, res) {
     const result = evento.cancelar();
     await evento.save();
 
-    return ok(res, evento, result.message);
+    // ✅ Enriquecer con flags antes de devolver
+    const eventoEnriquecido = enrichEventWithFlags(evento.toObject(), uid);
+
+    return ok(res, eventoEnriquecido, result.message);
   } catch (error) {
     console.error("cancelEvento error:", error);
     return fail(res, 500, "Error cancelando evento");
@@ -378,7 +416,10 @@ async function finishEvento(req, res) {
     const result = evento.finalizar();
     await evento.save();
 
-    return ok(res, evento, result.message);
+    // ✅ Enriquecer con flags antes de devolver
+    const eventoEnriquecido = enrichEventWithFlags(evento.toObject(), uid);
+
+    return ok(res, eventoEnriquecido, result.message);
   } catch (error) {
     console.error("finishEvento error:", error);
     return fail(res, 500, "Error finalizando evento");
@@ -428,7 +469,10 @@ async function updateEvento(req, res) {
 
     await evento.save();
 
-    return ok(res, evento, "Evento actualizado correctamente");
+    // ✅ Enriquecer con flags antes de devolver
+    const eventoEnriquecido = enrichEventWithFlags(evento.toObject(), uid);
+
+    return ok(res, eventoEnriquecido, "Evento actualizado correctamente");
   } catch (error) {
     console.error("updateEvento error:", error);
     return fail(res, 500, "Error actualizando evento");

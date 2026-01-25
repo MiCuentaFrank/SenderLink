@@ -1,58 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_app"
-    android:fitsSystemWindows="true"
     tools:context=".view.fragments.PerfilFragment">
-
-    <!-- TOOLBAR -->
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/sl_primary"
-        android:fitsSystemWindows="true">
-
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbarPerfil"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@android:color/transparent"
-            app:title="Perfil"
-            app:titleTextColor="@color/text_on_dark" />
-
-    </com.google.android.material.appbar.AppBarLayout>
 
     <!-- CONTENIDO -->
     <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:id="@+id/scrollPerfil"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:fillViewport="true"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- HEADER DEL PERFIL (sin botón de ajustes) -->
+            <!-- HEADER DEL PERFIL (sin toolbar) -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:background="@color/sl_primary">
 
-                <!-- Imagen de fondo opcional (puedes añadirla después) -->
+                <!-- Imagen de fondo opcional -->
                 <ImageView
                     android:id="@+id/imgBackgroundProfile"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
                     android:alpha="0.3"
-                    android:contentDescription="Fondo de perfil" />
+                    android:contentDescription="Fondo de perfil"
+                    android:scaleType="centerCrop" />
 
             </RelativeLayout>
 
@@ -63,9 +48,9 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginTop="-60dp"
+                app:cardBackgroundColor="@color/card_background"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
-                app:cardBackgroundColor="@color/card_background">
+                app:cardElevation="4dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -73,14 +58,32 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <!-- FOTO DE PERFIL CIRCULAR -->
-                    <ImageView
-                        android:id="@+id/imgFotoPerfil"
-                        android:layout_width="100dp"
-                        android:layout_height="100dp"
-                        android:layout_gravity="center_horizontal"
-                        android:background="@drawable/bg_circle_transparent"
-                        android:contentDescription="Foto de perfil" />
+                    <!-- FOTO DE PERFIL + BOTÓN EDITAR -->
+                    <FrameLayout
+                        android:layout_width="110dp"
+                        android:layout_height="110dp"
+                        android:layout_gravity="center_horizontal">
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/imgFotoPerfil"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:contentDescription="Foto de perfil"
+                            android:scaleType="centerCrop"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerFull" />
+
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/btnEditFoto"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:layout_gravity="bottom|end"
+                            android:layout_margin="4dp"
+                            app:backgroundTint="@color/sl_primary"
+                            app:elevation="2dp"
+                            app:fabSize="mini"
+                            app:srcCompat="@drawable/ic_edit"
+                            app:tint="@color/text_on_dark" />
+                    </FrameLayout>
 
                     <!-- NOMBRE -->
                     <TextView
@@ -90,9 +93,9 @@
                         android:layout_gravity="center_horizontal"
                         android:layout_marginTop="12dp"
                         android:text="Usuario"
+                        android:textColor="@color/text_primary"
                         android:textSize="22sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
+                        android:textStyle="bold" />
 
                     <!-- SUBTÍTULO -->
                     <TextView
@@ -102,89 +105,84 @@
                         android:layout_gravity="center_horizontal"
                         android:layout_marginTop="4dp"
                         android:text="Explorador"
-                        android:textSize="14sp"
-                        android:textColor="@color/text_secondary" />
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp" />
 
                     <!-- BOTONES DE ACCIÓN -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="20dp"
-                        android:orientation="horizontal"
-                        android:gravity="center">
+                        android:gravity="center"
+                        android:orientation="horizontal">
 
-                        <!-- BOTÓN EDITAR PERFIL -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnEditar"
                             android:layout_width="0dp"
                             android:layout_height="48dp"
-                            android:layout_weight="1"
                             android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
                             android:text="Editar perfil"
                             android:textColor="@color/text_on_dark"
                             app:backgroundTint="@color/sl_primary"
                             app:cornerRadius="12dp" />
 
-                        <!-- BOTÓN AJUSTES -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnSettings"
                             style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="0dp"
                             android:layout_height="48dp"
-                            android:layout_weight="1"
                             android:layout_marginStart="8dp"
+                            android:layout_weight="1"
                             android:text="Ajustes"
                             android:textColor="@color/sl_primary"
+                            app:cornerRadius="12dp"
                             app:strokeColor="@color/sl_primary"
-                            app:strokeWidth="2dp"
-                            app:cornerRadius="12dp" />
+                            app:strokeWidth="2dp" />
 
                     </LinearLayout>
 
                 </LinearLayout>
-
             </com.google.android.material.card.MaterialCardView>
 
             <!-- SECCIÓN: MIS LOGROS -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:layout_marginTop="16dp"
+                android:orientation="vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 tools:ignore="RtlSymmetry">
 
-                <!-- HEADER DE SECCIÓN -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Mis logros"
+                        android:textColor="@color/text_primary"
                         android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/txtVerTodosLogros"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="VER TODO"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/sl_primary"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:padding="8dp" />
+                        android:padding="8dp"
+                        android:text="VER TODO"
+                        android:textColor="@color/sl_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
 
                 </LinearLayout>
 
-                <!-- RECYCLER DE LOGROS -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvLogros"
                     android:layout_width="match_parent"
@@ -193,45 +191,44 @@
                     android:orientation="horizontal" />
 
             </LinearLayout>
+
             <!-- SECCIÓN: MIS PUBLICACIONES -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:layout_marginTop="24dp"
+                android:orientation="vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 tools:ignore="RtlSymmetry">
 
-                <!-- HEADER DE SECCIÓN -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Mis publicaciones"
+                        android:textColor="@color/text_primary"
                         android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/txtVerMisPublicaciones"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="VER TODO"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/sl_primary"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:padding="8dp" />
+                        android:padding="8dp"
+                        android:text="VER TODO"
+                        android:textColor="@color/sl_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- RECYCLER DE POSTS -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvMisPublicaciones"
                     android:layout_width="match_parent"
@@ -242,46 +239,42 @@
 
             </LinearLayout>
 
-
             <!-- SECCIÓN: MIS RUTAS PUBLICADAS -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:layout_marginTop="24dp"
+                android:orientation="vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 tools:ignore="RtlSymmetry">
 
-                <!-- HEADER DE SECCIÓN -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Mis rutas publicadas"
+                        android:textColor="@color/text_primary"
                         android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
+                        android:textStyle="bold" />
 
-                    <!-- BOTÓN CAMBIAR VISTA -->
                     <TextView
                         android:id="@+id/btnCambiarVista"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:text="⊞"
-                        android:textSize="24sp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
                         android:gravity="center"
-                        android:background="?attr/selectableItemBackgroundBorderless" />
+                        android:text="⊞"
+                        android:textSize="24sp" />
 
                 </LinearLayout>
 
-                <!-- RECYCLER DE RUTAS -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvRutasPublicadas"
                     android:layout_width="match_parent"
@@ -301,4 +294,4 @@
 
     </androidx.core.widget.NestedScrollView>
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

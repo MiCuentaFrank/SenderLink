@@ -6,7 +6,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -17,12 +19,14 @@ import com.google.firebase.auth.FirebaseAuth
 import com.senderlink.app.R
 import com.senderlink.app.databinding.DialogCreateEventBinding
 import com.senderlink.app.databinding.FragmentRouteDetailBinding
-import com.senderlink.app.model.EventoGrupal
 import com.senderlink.app.model.Route
-import com.senderlink.app.view.adapters.EventoAdapter
 import com.senderlink.app.view.adapters.ImageGalleryAdapter
 import com.senderlink.app.viewmodel.RouteDetailViewModel
 import com.senderlink.app.viewmodel.RutasGrupalesViewModel
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
 
 class RouteDetailFragment : Fragment() {
 
@@ -31,16 +35,15 @@ class RouteDetailFragment : Fragment() {
 
     private val args: RouteDetailFragmentArgs by navArgs()
 
-    // ✅ ViewModel de detalle ruta (solo ruta)
-    private val viewModel: RouteDetailViewModel by viewModels()
+    // ✅ VM de detalle ruta
+    private val routeDetailViewModel: RouteDetailViewModel by viewModels()
 
-    // ✅ ViewModel de eventos
-    private val eventosViewModel: RutasGrupalesViewModel by viewModels()
+    // ✅ VM de eventos (compartido con Comunidad/RutasGrupales)
+    private val eventosViewModel: RutasGrupalesViewModel by activityViewModels()
 
     private lateinit var galleryAdapter: ImageGalleryAdapter
-    private lateinit var eventosAdapter: EventoAdapter
 
-    private var eventosCache: List<EventoGrupal> = emptyList()
+    private val TAG = "ROUTE_DETAIL"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,40 +58,20 @@ class RouteDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val routeId = args.routeId
-        Log.d("ROUTE_DETAIL", "Route ID recibido: $routeId")
+        Log.d(TAG, "Route ID recibido: $routeId")
 
-        setupToolbar()
+        // ❌ setupToolbar() eliminado (ya no hay toolbar en el XML)
         setupGallery()
-        setupEventosRecycler()
+        setupEventosActions(routeId)
 
         observeRouteViewModel()
-        observeEventosViewModel()
-        observeEventosList()
-
-        // ✅ Botón crear evento (está en la card de eventos)
-        binding.btnCrearEvento.setOnClickListener {
-            showCreateEventoBottomSheet(routeId)
-        }
-        binding.btnVerEventosRuta.setOnClickListener {
-            val bundle = Bundle().apply { putString("routeId", args.routeId) }
-            findNavController().navigate(
-                R.id.action_routeDetailFragment_to_rutasGrupalesFragment,
-                bundle
-            )
-        }
-
+        observeEventosState()
 
         // ✅ Cargar detalle de ruta
-        viewModel.loadRouteById(routeId)
+        routeDetailViewModel.loadRouteById(routeId)
 
-        // ✅ Cargar eventos CON flags (isParticipant/isOrganizer)
-        loadEventosDeRutaConFlags(routeId)
-    }
-
-    private fun setupToolbar() {
-        binding.toolbar.setNavigationOnClickListener {
-            findNavController().navigateUp()
-        }
+        // ✅ Comprobar si hay eventos de esta ruta (sin mostrar lista aquí)
+        refreshEventosState(routeId)
     }
 
     private fun setupGallery() {
@@ -97,130 +80,107 @@ class RouteDetailFragment : Fragment() {
         }
 
         binding.rvGallery.apply {
-            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            layoutManager = LinearLayoutManager(
+                requireContext(),
+                LinearLayoutManager.HORIZONTAL,
+                false
+            )
             adapter = galleryAdapter
             setHasFixedSize(true)
         }
     }
 
     // ===========================
-    // ✅ EVENTOS UI
+    // ✅ EVENTOS (SIN LISTA)
     // ===========================
-    private fun setupEventosRecycler() {
-        eventosAdapter = EventoAdapter(
-            onEventoClick = { evento ->
-                // click en card -> lo dejo neutral por ahora
-                Log.d("ROUTE_DETAIL", "Click evento: ${evento.id}")
-            },
-            onJoinClick = { evento ->
-                eventosViewModel.joinEvento(evento)
-            },
-            onLeaveClick = { evento ->
-                eventosViewModel.leaveEvento(evento)
-            },
-            onChatClick = {
-                goToRutasGrupales(args.routeId)
-            }
-
-        )
-
-        binding.rvEventos.apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = eventosAdapter
-            setHasFixedSize(false)
-        }
-
-        // Estado inicial
+    private fun setupEventosActions(routeId: String) {
+        // Arranque: todo oculto hasta tener resultado
         binding.progressEventos.visibility = View.GONE
-        binding.rvEventos.visibility = View.GONE
-        binding.tvEventosEmpty.visibility = View.GONE
-    }
+        binding.tvEventosInfo.visibility = View.GONE
+        binding.btnCrearEvento.visibility = View.GONE
+        binding.btnVerEventosRuta.visibility = View.GONE
 
-    private fun loadEventosDeRutaConFlags(routeId: String) {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        if (uid.isNullOrBlank()) {
-            eventosCache = emptyList()
-            renderEventosUI()
-            return
-        }
-
-        // mini-loading de eventos
-        binding.progressEventos.visibility = View.VISIBLE
-        binding.rvEventos.visibility = View.GONE
-        binding.tvEventosEmpty.visibility = View.GONE
-
-        // ✅ Usamos el VM (no repo directo)
-        eventosViewModel.loadEventosPorRutaForUser(routeId)
-    }
-    private fun goToRutasGrupales(routeId: String) {
-        val bundle = Bundle().apply { putString("routeId", routeId) }
-        findNavController().navigate(
-            R.id.action_routeDetailFragment_to_rutasGrupalesFragment,
-            bundle
-        )
-    }
-
-
-    private fun observeEventosList() {
-        eventosViewModel.eventos.observe(viewLifecycleOwner) { list ->
-            binding.progressEventos.visibility = View.GONE
-
-            eventosCache = list ?: emptyList()
-
-            // Debug rápido
-            eventosCache.take(5).forEachIndexed { i, ev ->
-                Log.d(
-                    "ROUTE_DETAIL",
-                    "Evento[$i] id=${ev.id} isParticipant=${ev.isParticipant} isOrganizer=${ev.isOrganizer} chatId=${ev.chatId}"
-                )
+        binding.btnCrearEvento.setOnClickListener {
+            val uid = FirebaseAuth.getInstance().currentUser?.uid
+            if (uid.isNullOrBlank()) {
+                Toast.makeText(
+                    requireContext(),
+                    "Necesitas iniciar sesión para crear una ruta grupal",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
             }
+            showCreateEventoBottomSheet(routeId)
+        }
 
-            renderEventosUI()
+        binding.btnVerEventosRuta.setOnClickListener {
+            goToRutasGrupales(routeId)
         }
     }
 
-    private fun renderEventosUI() {
-        if (eventosCache.isEmpty()) {
-            binding.rvEventos.visibility = View.GONE
-            binding.tvEventosEmpty.visibility = View.VISIBLE
+    private fun refreshEventosState(routeId: String) {
+        binding.progressEventos.visibility = View.VISIBLE
+        binding.tvEventosInfo.visibility = View.GONE
+        binding.btnCrearEvento.visibility = View.GONE
+        binding.btnVerEventosRuta.visibility = View.GONE
+
+        // ✅ EXISTE: carga eventos por ruta y publica en eventosRuta
+        eventosViewModel.loadEventosPorRuta(routeId)
+    }
+
+    private fun renderEventosUI(eventosCount: Int) {
+        binding.progressEventos.visibility = View.GONE
+        binding.tvEventosInfo.visibility = View.VISIBLE
+
+        if (eventosCount <= 0) {
+            binding.tvEventosInfo.text =
+                "Aún no hay rutas grupales para esta ruta. ¿Creas la primera?"
+            binding.btnCrearEvento.visibility = View.VISIBLE
+            binding.btnVerEventosRuta.visibility = View.GONE
         } else {
-            binding.tvEventosEmpty.visibility = View.GONE
-            binding.rvEventos.visibility = View.VISIBLE
-            eventosAdapter.submitList(eventosCache)
+            binding.tvEventosInfo.text =
+                "Hay $eventosCount rutas grupales para esta ruta."
+            binding.btnCrearEvento.visibility = View.GONE
+            binding.btnVerEventosRuta.visibility = View.VISIBLE
         }
     }
 
+    private fun goToRutasGrupales(routeId: String) {
+        Log.d(TAG, "📍 Navegando a Rutas Grupales con routeId=$routeId")
 
+        eventosViewModel.openFromRouteDetail(routeId, eventId = null)
 
+        val bundle = Bundle().apply {
+            putInt("initialTab", SocialFragment.TAB_RUTAS_GRUPALES)
+            putString("routeId", routeId)
+        }
+
+        try {
+            findNavController().navigate(R.id.nav_comunidad, bundle)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al navegar a Rutas Grupales", e)
+            Toast.makeText(requireContext(), "Error al abrir Rutas Grupales", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     // ===========================
     // OBSERVERS
     // ===========================
-    private fun observeRouteViewModel() {
-        viewModel.route.observe(viewLifecycleOwner) { route ->
-            route?.let { displayRouteDetails(it) }
+    private fun observeEventosState() {
+        eventosViewModel.eventosRuta.observe(viewLifecycleOwner) { list ->
+            renderEventosUI(eventosCount = list.size)
         }
 
-        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-        }
-
-        viewModel.error.observe(viewLifecycleOwner) { error ->
-            error?.let {
-                Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
-                Log.e("ROUTE_DETAIL", "Error: $it")
-            }
-        }
-    }
-
-    private fun observeEventosViewModel() {
         eventosViewModel.error.observe(viewLifecycleOwner) { err ->
             err?.let {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
                 eventosViewModel.clearMessages()
 
-                // Si hubo error, recargar para mantener UI coherente
-                loadEventosDeRutaConFlags(args.routeId)
+                binding.progressEventos.visibility = View.GONE
+                binding.tvEventosInfo.visibility = View.VISIBLE
+                binding.tvEventosInfo.text = "No se pudieron cargar las rutas grupales ahora mismo."
+                binding.btnCrearEvento.visibility = View.GONE
+                binding.btnVerEventosRuta.visibility = View.GONE
             }
         }
 
@@ -228,9 +188,24 @@ class RouteDetailFragment : Fragment() {
             msg?.let {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
                 eventosViewModel.clearMessages()
+                refreshEventosState(args.routeId)
+            }
+        }
+    }
 
-                // ✅ tras create/join/leave -> recargar lista de esta ruta con flags
-                loadEventosDeRutaConFlags(args.routeId)
+    private fun observeRouteViewModel() {
+        routeDetailViewModel.route.observe(viewLifecycleOwner) { route ->
+            route?.let { displayRouteDetails(it) }
+        }
+
+        routeDetailViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
+
+        routeDetailViewModel.error.observe(viewLifecycleOwner) { error ->
+            error?.let {
+                Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
+                Log.e(TAG, "Error: $it")
             }
         }
     }
@@ -239,9 +214,10 @@ class RouteDetailFragment : Fragment() {
     // UI RUTA
     // ===========================
     private fun displayRouteDetails(route: Route) {
-        binding.apply {
-            collapsingToolbar.title = route.name
+        // ✅ Ya no hay collapsingToolbar -> usamos título del Activity (opcional)
+        requireActivity().title = route.name
 
+        binding.apply {
             loadImageInCover(route.coverImage, 0)
 
             if (route.images.size > 1) {
@@ -266,7 +242,7 @@ class RouteDetailFragment : Fragment() {
 
             tvRouteName.text = route.name
 
-            tvDistance.text = String.format("%.1f km", route.distanceKm)
+            tvDistance.text = String.format(Locale.getDefault(), "%.1f km", route.distanceKm)
             displayDuration(route.durationMin)
             tvDifficulty.text = formatDifficulty(route.difficulty)
             tvDifficulty.setTextColor(getDifficultyColor(route.difficulty))
@@ -370,7 +346,9 @@ class RouteDetailFragment : Fragment() {
     }
 
     private fun formatCoordinates(lat: Double, lng: Double): String {
-        return "${String.format("%.4f", lat)}, ${String.format("%.4f", lng)}"
+        return "${String.format(Locale.getDefault(), "%.4f", lat)}, ${
+            String.format(Locale.getDefault(), "%.4f", lng)
+        }"
     }
 
     private fun navigateToMap(route: Route) {
@@ -401,11 +379,10 @@ class RouteDetailFragment : Fragment() {
             }
 
             findNavController().navigate(R.id.nav_maps, bundle)
-
             Toast.makeText(requireContext(), "📍 Cargando ruta en el mapa...", Toast.LENGTH_SHORT).show()
 
         } catch (e: Exception) {
-            Log.e("ROUTE_DETAIL", "Error al navegar al mapa: ${e.message}", e)
+            Log.e(TAG, "Error al navegar al mapa: ${e.message}", e)
             Toast.makeText(requireContext(), "Error al abrir el mapa", Toast.LENGTH_SHORT).show()
         }
     }
@@ -421,16 +398,13 @@ class RouteDetailFragment : Fragment() {
 
     private fun getDifficultyColor(difficulty: String): Int {
         return when (difficulty) {
-            "FACIL" -> resources.getColor(android.R.color.holo_green_dark, null)
-            "MODERADA" -> resources.getColor(android.R.color.holo_orange_dark, null)
-            "DIFICIL" -> resources.getColor(android.R.color.holo_red_dark, null)
-            else -> resources.getColor(android.R.color.darker_gray, null)
+            "FACIL" -> ContextCompat.getColor(requireContext(), android.R.color.holo_green_dark)
+            "MODERADA" -> ContextCompat.getColor(requireContext(), android.R.color.holo_orange_dark)
+            "DIFICIL" -> ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark)
+            else -> ContextCompat.getColor(requireContext(), android.R.color.darker_gray)
         }
     }
 
-    // ===========================
-    // ✅ CREAR EVENTO DESDE DETALLE
-    // ===========================
     private fun showCreateEventoBottomSheet(routeId: String) {
         val dialog = BottomSheetDialog(requireContext())
         val dialogBinding = DialogCreateEventBinding.inflate(layoutInflater)
@@ -449,7 +423,41 @@ class RouteDetailFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            val fechaIso = "${fechaSimple}T${hora}:00.000Z"
+            val fechaIso = try {
+                val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                val fechaParsed = dateFormat.parse(fechaSimple)
+
+                if (fechaParsed == null) {
+                    Toast.makeText(requireContext(), "Formato de fecha inválido. Usa dd/MM/yyyy", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                val calendar = Calendar.getInstance()
+                calendar.time = fechaParsed
+
+                val horaParts = hora.split(":")
+                if (horaParts.size == 2) {
+                    calendar.set(Calendar.HOUR_OF_DAY, horaParts[0].toIntOrNull() ?: 9)
+                    calendar.set(Calendar.MINUTE, horaParts[1].toIntOrNull() ?: 0)
+                } else {
+                    calendar.set(Calendar.HOUR_OF_DAY, 9)
+                    calendar.set(Calendar.MINUTE, 0)
+                }
+
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+
+                val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+                isoFormat.timeZone = TimeZone.getTimeZone("UTC")
+                isoFormat.format(calendar.time)
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Error parseando fecha: $fechaSimple", e)
+                Toast.makeText(requireContext(), "Error en el formato de fecha", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            Log.d(TAG, "📅 Fecha ISO generada: $fechaIso")
 
             eventosViewModel.createEvento(
                 routeId = routeId,

@@ -13,7 +13,7 @@ const app = express();
 
 
 // 3) Middlewares
-
+app.use("/uploads", express.static("uploads"));
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev")); // mostrar cada petición en consola
@@ -53,6 +53,8 @@ mongoose
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
       console.log(`🚀 Servidor Node corriendo en puerto ${PORT}`);
+      console.log("DB conectada:", mongoose.connection.name);
+
     });
   })
   .catch((err) => {

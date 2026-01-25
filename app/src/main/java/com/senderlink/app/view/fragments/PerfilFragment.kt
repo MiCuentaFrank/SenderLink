@@ -3,15 +3,23 @@ package com.senderlink.app.view.fragments
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.senderlink.app.R
@@ -20,6 +28,7 @@ import com.senderlink.app.model.Post
 import com.senderlink.app.network.CommentsResponse
 import com.senderlink.app.network.CreateCommentResponse
 import com.senderlink.app.repository.CommunityRepository
+import com.senderlink.app.repository.UserRepository
 import com.senderlink.app.view.LoginActivity
 import com.senderlink.app.view.adapters.CommentAdapter
 import com.senderlink.app.view.adapters.PostAdapter
@@ -29,16 +38,6 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-/**
- * Fragment de Perfil del usuario
- *
- * FUNCIONALIDAD:
- * 1. Mostrar datos del usuario
- * 2. Botón para editar perfil -> navega a EditProfileFragment
- * 3. Botón settings -> muestra dialog
- * 4. Logout
- * 5. ✅ Mis publicaciones (backend) con PostAdapter + BottomSheet comentarios (backend)
- */
 class PerfilFragment : Fragment() {
 
     private var _binding: FragmentPerfilBinding? = null
@@ -46,9 +45,24 @@ class PerfilFragment : Fragment() {
 
     private val viewModel: PerfilViewModel by viewModels()
     private val postsViewModel: PerfilPostsViewModel by viewModels()
+    private lateinit var myPostsAdapter: PostAdapter
 
-    // Repo comunidad para comments (y luego likes si quieres)
     private val communityRepo = CommunityRepository()
+
+    private val pickImageLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri != null) {
+                // ✅ 1) Preview inmediato
+                Glide.with(this)
+                    .load(uri)
+                    .placeholder(R.drawable.bg_avatar_circle)
+                    .error(R.drawable.bg_avatar_circle)
+                    .into(binding.imgFotoPerfil)
+
+                // ✅ 2) Subir al backend
+                viewModel.updateProfilePhoto(requireContext(), uri)
+            }
+        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,91 +76,108 @@ class PerfilFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // ✅ Si no hay toolbar en el fragment, al menos ponemos título en el Activity
+        requireActivity().title = "Perfil"
+
+        setupMenu()      // ✅ reemplaza a toolbarPerfil menu
         setupViews()
         observeViewModel()
 
-        // ✅ Monta adapter y observers primero
+        binding.btnEditFoto.setOnClickListener { pickImageLauncher.launch("image/*") }
+        binding.imgFotoPerfil.setOnClickListener { pickImageLauncher.launch("image/*") }
+
         setupMyPosts()
 
-        // Cargar datos del usuario
         viewModel.loadUserData()
-
-        // Cargar posts reales del usuario
         postsViewModel.loadMyPosts()
 
-        // Setup demo de listas (opcional)
         setupDemoLists()
     }
 
     /**
-     * Configura listeners
+     * ✅ Menú del fragment sin Toolbar propia
+     * (aparece en la TopBar/ActionBar del Activity si existe)
      */
-    private fun setupViews() {
+    private fun setupMenu() {
+        val menuHost: MenuHost = requireActivity()
 
-        // TOOLBAR - Menú de compartir
-        binding.toolbarPerfil.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.action_share -> {
-                    Toast.makeText(
-                        requireContext(),
-                        "Compartir perfil (pendiente)",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    true
-                }
-                else -> false
+        menuHost.addMenuProvider(object : MenuProvider {
+
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menu.clear()
+                // OJO: usa tu menú real de perfil (si se llama distinto, cámbialo aquí)
+                menuInflater.inflate(R.menu.menu_perfil, menu)
             }
-        }
 
-        // BOTÓN EDITAR
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.action_share -> {
+                        Toast.makeText(requireContext(), "Compartir perfil (pendiente)", Toast.LENGTH_SHORT).show()
+                        true
+                    }
+                    else -> false
+                }
+            }
+
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+    }
+
+    private fun setupViews() {
         binding.btnEditar.setOnClickListener {
             findNavController().navigate(R.id.action_perfilFragment_to_editProfileFragment)
         }
 
-        // BOTÓN SETTINGS
         binding.btnSettings.setOnClickListener {
             showSettingsDialog()
         }
 
-        // BOTÓN CAMBIAR VISTA
         binding.btnCambiarVista.setOnClickListener {
             Toast.makeText(requireContext(), "Cambiar vista (pendiente)", Toast.LENGTH_SHORT).show()
         }
 
-        // VER TODOS LOS LOGROS
         binding.txtVerTodosLogros.setOnClickListener {
             Toast.makeText(requireContext(), "Ver todos los logros (pendiente)", Toast.LENGTH_SHORT).show()
         }
     }
 
-    /**
-     * Observa el PerfilViewModel (usuario)
-     */
     private fun observeViewModel() {
-
         viewModel.userResult.observe(viewLifecycleOwner) { result ->
             viewModel.handleUserResult(result)
         }
 
         viewModel.userData.observe(viewLifecycleOwner) { user ->
             if (user != null) {
-                binding.txtNombre.text =
-                    if (user.nombre.isNotEmpty()) user.nombre else "Usuario sin nombre"
+                binding.txtNombre.text = if (user.nombre.isNotEmpty()) user.nombre else "Usuario sin nombre"
 
                 val ubicacion = listOfNotNull(user.comunidad, user.provincia)
                     .joinToString(", ")
                     .ifBlank { "España" }
 
                 binding.txtSubtitulo.text = "Explorador · $ubicacion"
+
+                Glide.with(this)
+                    .load(user.foto)
+                    .placeholder(R.drawable.bg_avatar_circle)
+                    .error(R.drawable.bg_avatar_circle)
+                    .into(binding.imgFotoPerfil)
+
             } else {
                 binding.txtNombre.text = "Usuario"
                 binding.txtSubtitulo.text = "Explorador · España"
+
+                Glide.with(this)
+                    .load(null as String?)
+                    .placeholder(R.drawable.bg_avatar_circle)
+                    .error(R.drawable.bg_avatar_circle)
+                    .into(binding.imgFotoPerfil)
             }
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.btnEditar.isEnabled = !isLoading
             binding.btnSettings.isEnabled = !isLoading
+            binding.btnEditFoto.isEnabled = !isLoading
+            binding.imgFotoPerfil.isEnabled = !isLoading
         }
 
         viewModel.errorMessage.observe(viewLifecycleOwner) { error ->
@@ -155,28 +186,47 @@ class PerfilFragment : Fragment() {
                 viewModel.clearError()
             }
         }
+
+        // ✅ Resultado subida foto
+        viewModel.updatePhotoResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is UserRepository.Result.Success -> {
+                    Toast.makeText(requireContext(), "Foto actualizada ✅", Toast.LENGTH_SHORT).show()
+
+                    viewModel.handleUpdatePhotoResult(result)
+
+                    // ✅ refresca cards inmediatamente
+                    myPostsAdapter.setCurrentUserPhotoUrl(result.data.foto)
+
+                    // ✅ refresca posts desde backend
+                    postsViewModel.loadMyPosts()
+                }
+
+                is UserRepository.Result.Error -> {
+                    Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
+                    viewModel.handleUpdatePhotoResult(result)
+                }
+
+                is UserRepository.Result.Loading -> {
+                    viewModel.handleUpdatePhotoResult(result)
+                }
+            }
+        }
     }
 
-    /**
-     * ✅ Mis publicaciones (BACKEND)
-     */
     private fun setupMyPosts() {
-
-        val adapter = PostAdapter(
+        myPostsAdapter = PostAdapter(
             onLike = {
-                // ✅ Lo dejamos pendiente hasta el back de likes en perfil, o lo activamos luego
                 Toast.makeText(requireContext(), "Like (pendiente)", Toast.LENGTH_SHORT).show()
             },
-            onComments = { post ->
-                showCommentsBottomSheet(post)
-            }
+            onComments = { post -> showCommentsBottomSheet(post) }
         )
 
         binding.rvMisPublicaciones.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvMisPublicaciones.adapter = adapter
+        binding.rvMisPublicaciones.adapter = myPostsAdapter
 
         postsViewModel.myPosts.observe(viewLifecycleOwner) { posts ->
-            adapter.submitList(posts)
+            myPostsAdapter.submitList(posts)
         }
 
         postsViewModel.error.observe(viewLifecycleOwner) { msg ->
@@ -191,9 +241,6 @@ class PerfilFragment : Fragment() {
         }
     }
 
-    /**
-     * ✅ BottomSheet comentarios (BACKEND)
-     */
     private fun showCommentsBottomSheet(post: Post) {
         val dialog = BottomSheetDialog(requireContext())
         val v = layoutInflater.inflate(R.layout.bottomsheet_comments, null)
@@ -207,12 +254,8 @@ class PerfilFragment : Fragment() {
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = commentAdapter
 
-        // 1) Cargar comentarios reales
         communityRepo.getComments(post.id).enqueue(object : Callback<CommentsResponse> {
-            override fun onResponse(
-                call: Call<CommentsResponse>,
-                response: Response<CommentsResponse>
-            ) {
+            override fun onResponse(call: Call<CommentsResponse>, response: Response<CommentsResponse>) {
                 if (response.isSuccessful && response.body()?.ok == true) {
                     commentAdapter.submitList(response.body()?.data ?: emptyList())
                 } else {
@@ -225,22 +268,17 @@ class PerfilFragment : Fragment() {
             }
         })
 
-        // 2) Enviar comentario real
         btn.setOnClickListener {
             val text = et.text.toString().trim()
             if (text.isEmpty()) return@setOnClickListener
 
-            val user = FirebaseAuth.getInstance().currentUser
-            val uid = user?.uid
-            val userName = user?.displayName ?: "Yo"
-
+            val uid = FirebaseAuth.getInstance().currentUser?.uid
             if (uid.isNullOrBlank()) {
                 Toast.makeText(requireContext(), "No hay usuario autenticado", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             communityRepo.createComment(post.id, uid, text)
-
                 .enqueue(object : Callback<CreateCommentResponse> {
                     override fun onResponse(
                         call: Call<CreateCommentResponse>,
@@ -248,24 +286,21 @@ class PerfilFragment : Fragment() {
                     ) {
                         if (response.isSuccessful && response.body()?.ok == true) {
                             et.setText("")
-
-                            // Recargar comentarios
-                            communityRepo.getComments(post.id).enqueue(object : Callback<CommentsResponse> {
-                                override fun onResponse(
-                                    call: Call<CommentsResponse>,
-                                    response: Response<CommentsResponse>
-                                ) {
-                                    if (response.isSuccessful && response.body()?.ok == true) {
-                                        commentAdapter.submitList(response.body()?.data ?: emptyList())
+                            communityRepo.getComments(post.id)
+                                .enqueue(object : Callback<CommentsResponse> {
+                                    override fun onResponse(
+                                        call: Call<CommentsResponse>,
+                                        response: Response<CommentsResponse>
+                                    ) {
+                                        if (response.isSuccessful && response.body()?.ok == true) {
+                                            commentAdapter.submitList(response.body()?.data ?: emptyList())
+                                        }
                                     }
-                                }
 
-                                override fun onFailure(call: Call<CommentsResponse>, t: Throwable) {}
-                            })
+                                    override fun onFailure(call: Call<CommentsResponse>, t: Throwable) {}
+                                })
 
-                            // Recargar posts para refrescar commentsCount
                             postsViewModel.loadMyPosts()
-
                         } else {
                             Toast.makeText(requireContext(), "No se pudo comentar", Toast.LENGTH_SHORT).show()
                         }
@@ -280,9 +315,6 @@ class PerfilFragment : Fragment() {
         dialog.show()
     }
 
-    /**
-     * Dialog settings
-     */
     private fun showSettingsDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_settings, null)
 
@@ -320,9 +352,7 @@ class PerfilFragment : Fragment() {
         activity?.finish()
     }
 
-    private fun setupDemoLists() {
-        // Por ahora dejamos vacío
-    }
+    private fun setupDemoLists() { }
 
     override fun onDestroyView() {
         super.onDestroyView()

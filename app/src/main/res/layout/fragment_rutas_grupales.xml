@@ -8,127 +8,141 @@
     android:background="@color/bg_app"
     tools:context=".view.fragments.RutasGrupalesFragment">
 
-    <androidx.core.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingBottom="80dp">
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp">
 
-        <LinearLayout
+        <!-- TÍTULO -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:text="@string/rutas_grupales"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="4dp" />
 
-            <!-- TÍTULO -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/rutas_grupales"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginBottom="4dp" />
+        <!-- SUBTÍTULO -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/rutas_grupales_subtitle"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="16dp" />
 
-            <!-- SUBTÍTULO -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/rutas_grupales_subtitle"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginBottom="16dp" />
+        <!-- FILTRO CONTEXTO -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardFiltroRuta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="2dp"
+            app:strokeWidth="0dp">
 
-            <!-- BOTÓN CREAR EVENTO -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCrearEvento"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/crear_evento"
-                android:textColor="@color/text_on_dark"
-                app:backgroundTint="@color/sl_primary"
-                app:icon="@drawable/ic_add"
-                app:iconTint="@color/text_on_dark"
-                app:iconPadding="10dp"
-                app:cornerRadius="12dp"
-                android:layout_marginBottom="20dp" />
-
-
-            <!-- TABS -->
-            <com.google.android.material.tabs.TabLayout
-                android:id="@+id/tabLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:background="@android:color/transparent"
-                app:tabMode="fixed"
-                app:tabIndicatorColor="@color/sl_primary"
-                app:tabIndicatorHeight="3dp"
-                app:tabSelectedTextColor="@color/sl_primary"
-                app:tabTextColor="@color/text_secondary">
-
-                <com.google.android.material.tabs.TabItem
-                    android:text="@string/tab_disponibles" />
-
-                <com.google.android.material.tabs.TabItem
-                    android:text="@string/tab_mis_eventos" />
-
-                <com.google.android.material.tabs.TabItem
-                    android:text="@string/tab_participo" />
-
-            </com.google.android.material.tabs.TabLayout>
-
-            <!-- LISTA EVENTOS -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvEventos"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                tools:listitem="@layout/item_evento" />
-
-            <!-- LOADING -->
-            <ProgressBar
-                android:id="@+id/progressBar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="32dp"
-                android:indeterminateTint="@color/sl_primary"
-                android:visibility="gone"
-                tools:visibility="visible" />
-
-            <!-- EMPTY STATE -->
             <LinearLayout
-                android:id="@+id/tvEmpty"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="48dp"
-                android:gravity="center"
                 android:orientation="vertical"
-                android:visibility="gone"
-                tools:visibility="visible">
-
-                <ImageView
-                    android:layout_width="96dp"
-                    android:layout_height="96dp"
-                    android:src="@drawable/ic_comunidad"
-                    app:tint="@color/icon_muted"
-                    android:contentDescription="@string/sin_eventos"
-                    android:layout_marginBottom="12dp" />
+                android:padding="14dp">
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:id="@+id/tvFiltroRutaTitle"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/empty_disponibles"
-                    android:textSize="15sp"
-                    android:textColor="@color/text_secondary"
-                    android:textAlignment="center" />
+                    android:text="Mostrando eventos de esta ruta"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="8dp" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchVerTodas"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Ver todas disponibles"
+                    android:checked="false" />
 
             </LinearLayout>
 
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- TABS -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@android:color/transparent"
+            app:tabMode="fixed"
+            app:tabIndicatorColor="@color/sl_primary"
+            app:tabIndicatorHeight="3dp"
+            app:tabSelectedTextColor="@color/sl_primary"
+            app:tabTextColor="@color/text_secondary">
+
+            <com.google.android.material.tabs.TabItem android:text="@string/tab_disponibles" />
+            <com.google.android.material.tabs.TabItem android:text="@string/tab_mis_eventos" />
+            <com.google.android.material.tabs.TabItem android:text="@string/tab_participo" />
+
+        </com.google.android.material.tabs.TabLayout>
+
+        <!-- LOADING -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="12dp"
+            android:indeterminateTint="@color/sl_primary"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <!-- EMPTY STATE -->
+        <LinearLayout
+            android:id="@+id/tvEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <ImageView
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:src="@drawable/ic_comunidad"
+                app:tint="@color/icon_muted"
+                android:contentDescription="@string/sin_eventos"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/empty_disponibles"
+                android:textSize="15sp"
+                android:textColor="@color/text_secondary"
+                android:textAlignment="center" />
+
         </LinearLayout>
 
-    </androidx.core.widget.NestedScrollView>
+        <!-- LISTA EVENTOS (SCROLL REAL AQUÍ) -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvEventos"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            tools:listitem="@layout/item_evento" />
+
+    </LinearLayout>
 
     <!-- FAB REFRESH -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -140,10 +154,6 @@
         android:contentDescription="@string/actualizar_lista"
         app:backgroundTint="@color/sl_primary"
         app:srcCompat="@drawable/ic_refresh_24"
-        app:tint="@color/text_on_dark"
-        />
-
-
-
+        app:tint="@color/text_on_dark" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

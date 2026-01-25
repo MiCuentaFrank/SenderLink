@@ -20,14 +20,32 @@ class EventRepository {
     private val TAG = "EventRepository"
 
     // ========================================
+    // CORRECCIÓN DE FLAGS
+    // ========================================
+
+    /**
+     * ✅ Función auxiliar para corregir flags isParticipant / isOrganizer
+     * Calcula los flags basándose en los datos reales del evento
+     */
+    private fun corregirFlags(evento: EventoGrupal, uid: String?): EventoGrupal {
+        if (uid.isNullOrBlank()) return evento
+
+        val esOrganizador = evento.organizadorUid == uid
+        val esParticipante = evento.participantes.any { it.uid == uid }
+
+        return evento.copy(
+            isOrganizer = esOrganizador,
+            isParticipant = esParticipante
+        )
+    }
+
+    // ========================================
     // MÉTODOS SÍNCRONOS (coroutines + await)
     // ========================================
 
     /**
      * 📋 Obtener lista de eventos (con filtros)
-     *
-     * ✅ Para RouteDetail (CLAVE):
-     * routeId + uid => backend devuelve isParticipant / isOrganizer
+     * ✅ AHORA corrige flags localmente por si el backend no los envía correctamente
      */
     suspend fun getEventos(
         estado: String? = null,
@@ -36,19 +54,86 @@ class EventRepository {
         limit: Int = 20,
         skip: Int = 0
     ): EventosResponse {
-        return eventService.getEventos(estado, routeId, uid, limit, skip).await()
+        val response = eventService.getEventos(estado, routeId, uid, limit, skip).await()
+
+        // ✅ CORRECCIÓN: Si tenemos UID, corregimos los flags localmente
+        if (response.ok && response.data != null && !uid.isNullOrBlank()) {
+            val eventosCorregidos = response.data.eventos.map { evento ->
+                corregirFlags(evento, uid)
+            }
+
+            Log.d(TAG, "✅ getEventos: ${eventosCorregidos.size} eventos con flags corregidos")
+
+            val dataCorregida = response.data.copy(eventos = eventosCorregidos)
+            return response.copy(data = dataCorregida)
+        }
+
+        return response
     }
 
-    suspend fun getEventoById(eventoId: String): EventoDetailResponse {
-        return eventService.getEventoById(eventoId).await()
+    /**
+     * 🆔 Obtener evento por ID
+     * ✅ También corrige flags si se proporciona uid
+     */
+    suspend fun getEventoById(eventoId: String, uid: String? = null): EventoDetailResponse {
+        val response = eventService.getEventoById(eventoId).await()
+
+        // ✅ CORRECCIÓN: Si tenemos UID, corregimos los flags localmente
+        if (response.ok && response.data != null && !uid.isNullOrBlank()) {
+            val eventoCorregido = corregirFlags(response.data, uid)
+            Log.d(TAG, "✅ getEventoById: evento con flags corregidos")
+            return response.copy(data = eventoCorregido)
+        }
+
+        return response
     }
 
+    /**
+     * 👤 Mis eventos
+     * ✅ CORRECCIÓN: Forzar isOrganizer = true porque son eventos que YO organizo
+     */
     suspend fun getEventosByUser(uid: String): UserEventosResponse {
-        return eventService.getEventosByUser(uid).await()
+        val response = eventService.getEventosByUser(uid).await()
+
+        // ✅ Corregir flags: si son "mis eventos", soy el organizador
+        if (response.ok && response.data != null) {
+            val eventosCorregidos = response.data.map { evento ->
+                evento.copy(
+                    isOrganizer = true,    // ← Siempre true (tú organizas)
+                    isParticipant = false  // ← Siempre false (no eres participante de tu propio evento)
+                )
+            }
+
+            Log.d(TAG, "✅ getEventosByUser: ${eventosCorregidos.size} eventos con flags corregidos")
+
+            return response.copy(data = eventosCorregidos)
+        }
+
+        return response
     }
 
+    /**
+     * 👥 Eventos donde participo
+     * ✅ CORRECCIÓN: Forzar isParticipant = true porque son eventos donde participo
+     */
     suspend fun getEventosParticipando(uid: String): UserEventosResponse {
-        return eventService.getEventosParticipando(uid).await()
+        val response = eventService.getEventosParticipando(uid).await()
+
+        // ✅ Corregir flags: si estoy participando, no soy el organizador
+        if (response.ok && response.data != null) {
+            val eventosCorregidos = response.data.map { evento ->
+                evento.copy(
+                    isParticipant = true,   // ← Siempre true (estás participando)
+                    isOrganizer = false     // ← Siempre false (no organizas estos eventos)
+                )
+            }
+
+            Log.d(TAG, "✅ getEventosParticipando: ${eventosCorregidos.size} eventos con flags corregidos")
+
+            return response.copy(data = eventosCorregidos)
+        }
+
+        return response
     }
 
     // ========================================
@@ -129,11 +214,7 @@ class EventRepository {
 
         Log.d(TAG, "Usuario $uid uniéndose a evento $eventoId")
 
-        val body = JoinLeaveEventoBody(
-            uid = uid,
-            nombre = nombre,
-            foto = foto
-        )
+        val body = JoinLeaveEventoBody(uid = uid, nombre = nombre, foto = foto)
 
         eventService.joinEvento(eventoId, body).enqueue(object : Callback<JoinEventoResponse> {
             override fun onResponse(
@@ -161,7 +242,6 @@ class EventRepository {
         return result
     }
 
-    // ✅ PASO 1: FUNCIÓN CORREGIDA
     fun leaveEvento(
         eventoId: String,
         uid: String,
@@ -172,7 +252,6 @@ class EventRepository {
         val result = MutableLiveData<Result<EventoGrupal>>()
         result.value = Result.Loading
 
-        // ✅ Ahora pasamos nombre y foto correctamente
         val body = JoinLeaveEventoBody(uid = uid, nombre = nombre, foto = foto)
 
         eventService.leaveEvento(eventoId, body).enqueue(object : Callback<LeaveEventoResponse> {

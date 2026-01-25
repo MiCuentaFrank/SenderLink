@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.signature.ObjectKey
 import com.senderlink.app.R
 import com.senderlink.app.databinding.ItemPostBinding
 import com.senderlink.app.model.Post
@@ -15,6 +16,9 @@ class PostAdapter(
 ) : RecyclerView.Adapter<PostAdapter.VH>() {
 
     private var items: List<Post> = emptyList()
+
+    // ✅ Foto “fresca” del usuario actual (para refrescar cards al cambiar avatar)
+    private var currentUserPhotoUrl: String? = null
 
     inner class VH(val binding: ItemPostBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -34,16 +38,20 @@ class PostAdapter(
         // =========================
         // ✅ Avatar (userPhoto)
         // =========================
-        val avatarUrl = post.userPhoto?.trim().orEmpty()
+        // Si hemos actualizado la foto del usuario actual recientemente,
+        // la usamos para refrescar las cards sin depender del backend.
+        val avatarUrl = (currentUserPhotoUrl ?: post.userPhoto)?.trim().orEmpty()
+
         if (avatarUrl.isNotBlank()) {
             Glide.with(b.imgAvatar)
                 .load(avatarUrl)
-                .placeholder(R.drawable.perfilsenderista) // pon el tuyo si quieres
+                // ✅ anti-cache: si cambia la URL, fuerza recarga
+                .signature(ObjectKey(avatarUrl))
+                .placeholder(R.drawable.perfilsenderista)
                 .error(R.drawable.perfilsenderista)
                 .circleCrop()
                 .into(b.imgAvatar)
         } else {
-            // Si no hay foto de perfil, dejamos una por defecto
             b.imgAvatar.setImageResource(R.drawable.perfilsenderista)
         }
 
@@ -55,6 +63,7 @@ class PostAdapter(
             b.imgPost.visibility = View.VISIBLE
             Glide.with(b.imgPost)
                 .load(imageUrl)
+                .signature(ObjectKey(imageUrl))
                 .placeholder(R.drawable.rutas1)
                 .error(R.drawable.rutas1)
                 .centerCrop()
@@ -74,6 +83,15 @@ class PostAdapter(
 
     fun submitList(newItems: List<Post>) {
         items = newItems
+        notifyDataSetChanged()
+    }
+
+    /**
+     * ✅ Llamar cuando el usuario cambie su foto.
+     * Esto refresca el avatar de todas las cards.
+     */
+    fun setCurrentUserPhotoUrl(url: String?) {
+        currentUserPhotoUrl = url?.trim()
         notifyDataSetChanged()
     }
 }

@@ -1,73 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/bg_app">
+    android:layout_height="match_parent">
 
-    <!-- 🟩 APP BAR FIJA -->
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/sl_primary"
-        android:fitsSystemWindows="true"
-        app:elevation="4dp">
+        android:layout_height="match_parent"
+        android:background="@color/bg_app">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbarHome"
+        <!-- ================================= -->
+        <!-- 🟢 SHIMMER -->
+        <!-- ================================= -->
+        <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/shimmerLayout"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:popupTheme="@style/ThemeOverlay.Material3.Light"
-            app:title="SenderLink"
-            app:titleTextColor="@color/text_on_dark" />
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            app:shimmer_auto_start="true"
+            app:shimmer_duration="1200">
 
-    </com.google.android.material.appbar.AppBarLayout>
+            <include layout="@layout/shimmer_home_placeholder"/>
 
-    <!-- 🧭 CONTENIDO SCROLLABLE -->
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true">
+        </com.facebook.shimmer.ShimmerFrameLayout>
 
-        <LinearLayout
+        <!-- ================================= -->
+        <!-- ✅ CONTENIDO REAL -->
+        <!-- ================================= -->
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/contentLayout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:visibility="visible">
 
-            <!-- ⭐ Carrusel de rutas destacadas -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvFeaturedRoutes"
-                android:layout_width="match_parent"
-                android:layout_height="357dp"
-                android:layout_marginBottom="20dp"
-                android:clipToPadding="false"
-                android:nestedScrollingEnabled="false"
-                android:overScrollMode="never"
-                android:paddingStart="4dp"
-                android:paddingEnd="4dp" />
-
-            <!-- 📋 RUTAS RECIENTES -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Rutas recientes"
-                android:textColor="@color/text_primary"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:layout_marginBottom="10dp"/>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvRoutes"
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"/>
+                android:paddingHorizontal="16dp"
+                android:paddingTop="20dp"
+                android:paddingBottom="32dp">
 
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+                <!-- ⭐ RUTAS DESTACADAS -->
+                <TextView
+                    android:id="@+id/tvFeaturedTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Rutas destacadas"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.02"
+                    android:textColor="@color/sl_primary"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-</LinearLayout>
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvFeaturedRoutes"
+                    android:layout_width="0dp"
+                    android:layout_height="210dp"
+                    android:layout_marginTop="12dp"
+                    android:clipToPadding="false"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:orientation="horizontal"
+                    android:nestedScrollingEnabled="false"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tvFeaturedTitle"
+                    tools:listitem="@layout/item_featured_route"
+                    tools:itemCount="3" />
+
+                <!-- Divider suave -->
+                <View
+                    android:id="@+id/dividerHome"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="24dp"
+                    android:background="#1A000000"
+                    app:layout_constraintTop_toBottomOf="@id/rvFeaturedRoutes"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+                <!-- 🔥 RUTAS RECIENTES -->
+                <TextView
+                    android:id="@+id/tvRecentTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Rutas recientes"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/dividerHome" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvRoutes"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:nestedScrollingEnabled="false"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tvRecentTitle"
+                    tools:listitem="@layout/item_route"
+                    tools:itemCount="4" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+    </FrameLayout>
+
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

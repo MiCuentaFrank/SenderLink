@@ -19,7 +19,8 @@ object RetrofitClient {
     // ✅ Logging interceptor
     private val loggingInterceptor: HttpLoggingInterceptor by lazy {
         HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = HttpLoggingInterceptor.Level.BASIC
+
         }
     }
 
@@ -33,13 +34,25 @@ object RetrofitClient {
             // ✅ NUEVO: Interceptor para asegurar headers JSON
             .addInterceptor { chain ->
                 val original = chain.request()
-                val request = original.newBuilder()
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .method(original.method, original.body)
-                    .build()
-                chain.proceed(request)
+
+                val contentType = original.body?.contentType()?.toString().orEmpty()
+                val isMultipart = contentType.startsWith("multipart/")
+
+                val builder = original.newBuilder()
+
+                // Solo forzar JSON si NO es multipart y no viene ya definido
+                builder.header("Accept", "application/json")
+
+                if (!isMultipart) {
+                    if (original.header("Content-Type") == null) {
+                        builder.header("Content-Type", "application/json")
+                    }
+                }
+
+
+                chain.proceed(builder.build())
             }
+
             .build()
     }
 

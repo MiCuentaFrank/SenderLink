@@ -3,6 +3,7 @@ package com.senderlink.app.network
 import com.senderlink.app.model.User
 import retrofit2.Call
 import retrofit2.http.*
+import okhttp3.MultipartBody
 
 /**
  * Interfaz que define los endpoints de la API relacionados con usuarios
@@ -86,6 +87,25 @@ interface UserService {
         @Path("uid") uid: String,
         @Body body: UpdateUserProfileRequest
     ): Call<UpdateUserProfileResponse>
+
+    /**
+     * Subir / actualizar foto de perfil
+     *
+     * ENDPOINT: PUT /api/users/:uid/photo
+     * CONTENT-TYPE: multipart/form-data
+     *
+     * @param uid UID del usuario
+     * @param photo Imagen de perfil
+     */
+    @Multipart
+    @POST("api/users/{uid}/photo")   // <-- POST, no PUT
+    fun uploadUserPhoto(
+        @Path("uid") uid: String,
+        @Part photo: MultipartBody.Part
+    ): Call<UploadUserPhotoResponse>
+
+
+
 
 }
 

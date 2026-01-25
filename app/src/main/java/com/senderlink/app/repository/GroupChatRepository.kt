@@ -1,10 +1,7 @@
 package com.senderlink.app.repository
 
 import com.senderlink.app.model.GroupMessage
-import com.senderlink.app.network.GroupChatService
-import com.senderlink.app.network.GroupMessagesResponse
-import com.senderlink.app.network.SendGroupMessageResponse
-import com.senderlink.app.network.RetrofitClient
+import com.senderlink.app.network.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -28,7 +25,7 @@ class GroupChatRepository {
                 val body = response.body()
 
                 if (response.isSuccessful && body != null && body.ok) {
-                    onSuccess(body.data) // <- en tu API es NO nullable
+                    onSuccess(body.data)
                 } else {
                     val msg = body?.message ?: "Error al cargar mensajes (${response.code()})"
                     onError(msg)
@@ -55,7 +52,6 @@ class GroupChatRepository {
             "text" to text
         )
 
-        // opcionales (si backend los ignora no pasa nada)
         if (!senderName.isNullOrBlank()) body["senderName"] = senderName
         if (!senderPhoto.isNullOrBlank()) body["senderPhoto"] = senderPhoto
 
@@ -67,7 +63,7 @@ class GroupChatRepository {
                 val res = response.body()
 
                 if (response.isSuccessful && res != null && res.ok) {
-                    onSuccess(res.data) // <- en tu API es NO nullable
+                    onSuccess(res.data)
                 } else {
                     val msg = res?.message ?: "Error al enviar mensaje (${response.code()})"
                     onError(msg)
@@ -76,6 +72,34 @@ class GroupChatRepository {
 
             override fun onFailure(call: Call<SendGroupMessageResponse>, t: Throwable) {
                 onError(t.message ?: "Error de conexión al enviar mensaje")
+            }
+        })
+    }
+
+    // ✅ NUEVO: participantes
+    fun getParticipants(
+        chatId: String,
+        onSuccess: (GroupChatParticipantsData) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        service.getParticipants(chatId).enqueue(object : Callback<GroupChatParticipantsResponse> {
+            override fun onResponse(
+                call: Call<GroupChatParticipantsResponse>,
+                response: Response<GroupChatParticipantsResponse>
+            ) {
+                val body = response.body()
+                val data = body?.data
+
+                if (response.isSuccessful && body != null && body.ok && data != null) {
+                    onSuccess(data)
+                } else {
+                    val msg = body?.message ?: "Error al cargar participantes (${response.code()})"
+                    onError(msg)
+                }
+            }
+
+            override fun onFailure(call: Call<GroupChatParticipantsResponse>, t: Throwable) {
+                onError(t.message ?: "Error de conexión al cargar participantes")
             }
         })
     }

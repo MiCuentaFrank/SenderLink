@@ -9,6 +9,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -21,10 +22,10 @@ import com.google.firebase.storage.ktx.storage
 import com.senderlink.app.R
 import com.senderlink.app.databinding.FragmentComunidadBinding
 import com.senderlink.app.model.Post
+import com.senderlink.app.repository.UserRepository
 import com.senderlink.app.view.adapters.CommentAdapter
 import com.senderlink.app.view.adapters.PostAdapter
 import com.senderlink.app.viewmodel.ComunidadViewModel
-import androidx.activity.result.contract.ActivityResultContracts
 
 class ComunidadFragment : Fragment() {
 
@@ -34,6 +35,9 @@ class ComunidadFragment : Fragment() {
     private val viewModel: ComunidadViewModel by viewModels()
     private lateinit var adapter: PostAdapter
 
+    // ✅ Para refrescar avatar del usuario actual
+    private val userRepo = UserRepository()
+
     // ✅ Foto seleccionada para el post
     private var selectedImageUri: Uri? = null
 
@@ -41,8 +45,6 @@ class ComunidadFragment : Fragment() {
     private val pickImage =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             selectedImageUri = uri
-            // La preview la actualizamos cuando el diálogo esté abierto (ver showCreatePostDialog)
-            // Aquí solo guardamos la Uri.
         }
 
     override fun onCreateView(
@@ -80,7 +82,38 @@ class ComunidadFragment : Fragment() {
             showCreatePostDialog()
         }
 
+        // ✅ 1) Carga posts
         viewModel.loadPosts()
+
+        // ✅ 2) Aplica foto actual del usuario al adapter (para refrescar cards)
+        refreshCurrentUserAvatar()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // ✅ Cuando vuelves desde Perfil tras cambiar foto, aquí se refresca
+        refreshCurrentUserAvatar()
+    }
+
+    /**
+     * ✅ Pide el usuario actual al backend y fuerza el avatar en las cards de comunidad
+     */
+    private fun refreshCurrentUserAvatar() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        userRepo.getUserByUid(uid).observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is UserRepository.Result.Success -> {
+                    val photoUrl = result.data.foto
+                    // ✅ esto hace que todas las cards usen la foto nueva
+                    adapter.setCurrentUserPhotoUrl(photoUrl)
+                }
+                is UserRepository.Result.Error -> {
+                    // Silencioso para no molestar; si quieres lo mostramos.
+                }
+                is UserRepository.Result.Loading -> { }
+            }
+        }
     }
 
     private fun showCreatePostDialog() {
@@ -88,15 +121,11 @@ class ComunidadFragment : Fragment() {
 
         val dialogView = layoutInflater.inflate(R.layout.dialog_create_post, null)
         val et = dialogView.findViewById<EditText>(R.id.etPostText)
-
-        // ✅ Estos IDs los tienes que añadir al XML
         val btnAddPhoto = dialogView.findViewById<TextView>(R.id.btnAddPhoto)
         val ivPreview = dialogView.findViewById<ImageView>(R.id.ivPostPreview)
 
-        // Estado inicial preview
         ivPreview?.isVisible = false
 
-        // ✅ al pulsar "Añadir foto"
         btnAddPhoto?.setOnClickListener {
             pickImage.launch("image/*")
         }
@@ -104,14 +133,12 @@ class ComunidadFragment : Fragment() {
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .setNegativeButton("Cancelar", null)
-            // OJO: lo ponemos vacío y lo controlamos después para evitar que se cierre al subir
             .setPositiveButton("Publicar", null)
             .create()
 
         dialog.setOnShowListener {
             val positiveBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
 
-            // Cada vez que se muestre, refrescamos preview por si el usuario ya eligió foto
             fun refreshPreview() {
                 val uri = selectedImageUri
                 if (ivPreview != null) {
@@ -125,9 +152,6 @@ class ComunidadFragment : Fragment() {
             }
 
             refreshPreview()
-
-            // Truco: como el picker es async, refrescamos preview también cuando vuelves
-            // (si el usuario selecciona foto, selectedImageUri cambia)
             dialog.window?.decorView?.postDelayed({ refreshPreview() }, 200)
 
             positiveBtn.setOnClickListener {
@@ -143,7 +167,6 @@ class ComunidadFragment : Fragment() {
                     return@setOnClickListener
                 }
 
-                // ✅ Si hay foto: subimos a Firebase Storage -> obtenemos URL -> creamos post
                 val uri = selectedImageUri
                 if (uri != null) {
                     positiveBtn.isEnabled = false
@@ -153,7 +176,6 @@ class ComunidadFragment : Fragment() {
                         uid = uid,
                         imageUri = uri,
                         onSuccess = { imageUrl ->
-                            // ✅ IMPORTANTE: tu ViewModel debe tener createPost(text, imageUrl?)
                             viewModel.createPost(text, imageUrl)
                             dialog.dismiss()
                         },
@@ -168,7 +190,6 @@ class ComunidadFragment : Fragment() {
                         }
                     )
                 } else {
-                    // ✅ Sin foto
                     viewModel.createPost(text, null)
                     dialog.dismiss()
                 }
@@ -177,13 +198,10 @@ class ComunidadFragment : Fragment() {
 
         dialog.show()
 
-        // ✅ Refresca preview cuando vuelves del selector
-        // (sin esto, a veces no se ve hasta reabrir el diálogo)
         dialog.setOnDismissListener {
             selectedImageUri = null
         }
 
-        // Mini “poll” para refrescar si seleccionas imagen mientras el diálogo está abierto
         dialog.window?.decorView?.postDelayed(object : Runnable {
             override fun run() {
                 val iv = dialogView.findViewById<ImageView>(R.id.ivPostPreview)

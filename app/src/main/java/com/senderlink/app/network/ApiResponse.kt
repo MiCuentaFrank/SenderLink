@@ -222,3 +222,27 @@ data class DeleteGroupMessageResponse(
 data class DeletedMessageData(
     val messageId: String
 )
+// ========================================
+// RESPUESTAS DE PARTICIPANTES (CHAT GRUPAL)
+// ========================================
+
+data class GroupChatParticipantsResponse(
+    val ok: Boolean,
+    val message: String? = null,
+    val data: GroupChatParticipantsData? = null
+)
+
+data class GroupChatParticipantsData(
+    val organizadorUid: String? = null,
+    val participantes: List<com.senderlink.app.model.Participante> = emptyList()
+)
+// ========================================
+// RESPUESTA SUBIDA FOTO PERFIL
+// ========================================
+
+data class UploadUserPhotoResponse(
+    val ok: Boolean,
+    val message: String? = null,
+    val user: User
+)
+
