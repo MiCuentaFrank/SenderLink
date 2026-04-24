@@ -1,6 +1,8 @@
 const Post = require("../models/Post");
 const Comment = require("../models/Comment");
 const User = require("../models/User");
+const { addXp, addBadge } = require("./userController");
+const { sanitizeText } = require("../utils/sanitize");
 
 // Helper: respuesta estándar
 function ok(res, data, message = "OK") {
@@ -9,27 +11,6 @@ function ok(res, data, message = "OK") {
 
 function fail(res, status, message) {
   return res.status(status).json({ ok: false, message });
-}
-
-// Utilidad: sacar nombre/foto del user con fallbacks
-function pickUserName(user) {
-  return (
-    user?.userName ||
-    user?.name ||
-    user?.username ||
-    user?.displayName ||
-    "Anónimo"
-  );
-}
-
-function pickUserPhoto(user) {
-  return (
-    user?.photo ||
-    user?.userPhoto ||
-    user?.avatar ||
-    user?.profilePhoto ||
-    ""
-  );
 }
 
 // GET /api/community/posts?limit=20&skip=0
@@ -44,7 +25,6 @@ async function listPosts(req, res) {
       .limit(limit)
       .lean();
 
-    // añadimos likesCount (porque virtual en lean no sale)
     const postsWithCounts = posts.map((p) => ({
       ...p,
       likesCount: (p.likedBy || []).length
@@ -52,7 +32,7 @@ async function listPosts(req, res) {
 
     return ok(res, postsWithCounts);
   } catch (e) {
-    console.error("listPosts error:", e);
+    console.error("listPosts error:", e.message);
     return fail(res, 500, "Error listando posts");
   }
 }
@@ -74,7 +54,7 @@ async function listPostsByUser(req, res) {
 
     return ok(res, postsWithCounts);
   } catch (e) {
-    console.error("listPostsByUser error:", e);
+    console.error("listPostsByUser error:", e.message);
     return fail(res, 500, "Error listando posts del usuario");
   }
 }
@@ -87,28 +67,41 @@ async function createPost(req, res) {
       return fail(res, 400, "uid y text son obligatorios");
     }
 
-    // ✅ 1) Buscar usuario real
+    // Auth: solo puedes crear posts como tú mismo
+    if (req.uid !== uid) {
+      return fail(res, 403, "No autorizado: no puedes crear posts en nombre de otro usuario");
+    }
+
+    const textSanitizado = sanitizeText(text, 5000);
+    if (textSanitizado.trim().length === 0) {
+      return fail(res, 400, "El texto del post no puede estar vacío");
+    }
+
     const user = await User.findOne({ uid }).lean();
     if (!user) return fail(res, 404, "Usuario no encontrado");
 
-    // ✅ 2) Sacar datos del perfil
     const userNameFinal = user.nombre || "Anónimo";
     const userPhotoFinal = user.foto || "";
 
-    // ✅ 3) Crear post
     const post = await Post.create({
       uid,
       userName: userNameFinal,
       userPhoto: userPhotoFinal,
-      text,
+      text: textSanitizado,
       image: image || "",
       routeId: routeId || null,
       likedBy: []
     });
 
+    const postCount = await Post.countDocuments({ uid });
+    await addXp(uid, 10);
+    if (postCount === 1) {
+      await addBadge(uid, "FIRST_POST");
+    }
+
     return ok(res, post, "Post creado");
   } catch (e) {
-    console.error("createPost error:", e);
+    console.error("createPost error:", e.message);
     return fail(res, 500, "Error creando post");
   }
 }
@@ -122,6 +115,12 @@ async function toggleLike(req, res) {
     const { uid } = req.body;
 
     if (!uid) return fail(res, 400, "uid requerido");
+
+    // Auth: solo puedes dar like como tú mismo
+    if (req.uid !== uid) {
+      return fail(res, 403, "No autorizado");
+    }
+
     const post = await Post.findById(postId);
     if (!post) return fail(res, 404, "Post no encontrado");
 
@@ -144,7 +143,7 @@ async function toggleLike(req, res) {
       "Like actualizado"
     );
   } catch (e) {
-    console.error("toggleLike error:", e);
+    console.error("toggleLike error:", e.message);
     return fail(res, 500, "Error en like");
   }
 }
@@ -160,7 +159,7 @@ async function listComments(req, res) {
 
     return ok(res, comments);
   } catch (e) {
-    console.error("listComments error:", e);
+    console.error("listComments error:", e.message);
     return fail(res, 500, "Error listando comentarios");
   }
 }
@@ -171,70 +170,102 @@ async function createComment(req, res) {
     const { uid, text } = req.body;
 
     if (!uid || !text) {
-      return res.status(400).json({
-        ok: false,
-        message: "uid y text son obligatorios"
-      });
+      return fail(res, 400, "uid y text son obligatorios");
     }
 
-    // 1️⃣ Comprobar que existe el post
+    // Auth: solo puedes comentar como tú mismo
+    if (req.uid !== uid) {
+      return fail(res, 403, "No autorizado: no puedes comentar en nombre de otro usuario");
+    }
+
+    const textSanitizado = sanitizeText(text, 1000);
+    if (textSanitizado.trim().length === 0) {
+      return fail(res, 400, "El comentario no puede estar vacío");
+    }
+
     const post = await Post.findById(postId);
     if (!post) {
-      return res.status(404).json({
-        ok: false,
-        message: "Post no encontrado"
-      });
+      return fail(res, 404, "Post no encontrado");
     }
 
-    // ✅ 2) Buscar usuario real
     const user = await User.findOne({ uid }).lean();
     if (!user) {
-      return res.status(404).json({
-        ok: false,
-        message: "Usuario no encontrado"
-      });
+      return fail(res, 404, "Usuario no encontrado");
     }
 
     const userNameFinal = user.nombre || "Anónimo";
     const userPhotoFinal = user.foto || "";
 
-    // 3️⃣ Crear comentario
     const comment = await Comment.create({
       postId,
       uid,
       userName: userNameFinal,
       userPhoto: userPhotoFinal,
-      text
+      text: textSanitizado
     });
 
-    // 4️⃣ Incrementar contador de comentarios
     await Post.findByIdAndUpdate(
       postId,
       { $inc: { commentsCount: 1 } },
       { new: true }
     );
 
-    return res.json({
-      ok: true,
-      message: "Comentario creado",
-      data: comment
-    });
+    return ok(res, comment, "Comentario creado");
 
   } catch (error) {
-    console.error("createComment error:", error);
-    return res.status(500).json({
-      ok: false,
-      message: "Error creando comentario"
-    });
+    console.error("createComment error:", error.message);
+    return fail(res, 500, "Error creando comentario");
   }
 }
 
+
+// DELETE /api/community/posts/:postId
+// body: { uid }  -> solo el autor puede borrar su post
+async function deletePost(req, res) {
+  try {
+    const { postId } = req.params;
+    const { uid } = req.body;
+
+    if (!uid) return fail(res, 400, "uid requerido");
+
+    // Auth: verificar con el token
+    if (req.uid !== uid) {
+      return fail(res, 403, "No autorizado");
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) return fail(res, 404, "Post no encontrado");
+    if (post.uid !== uid) return fail(res, 403, "No autorizado");
+
+    await Comment.deleteMany({ postId });
+    await post.deleteOne();
+
+    return ok(res, { postId }, "Post eliminado");
+  } catch (e) {
+    console.error("deletePost error:", e.message);
+    return fail(res, 500, "Error eliminando post");
+  }
+}
+
+// POST /api/community/posts/upload-image  (multipart: field "image")
+async function uploadPostImage(req, res) {
+  try {
+    if (!req.file) return fail(res, 400, "No se recibió ninguna imagen");
+    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/posts/${req.file.filename}`;
+    return ok(res, { imageUrl }, "Imagen subida");
+  } catch (e) {
+    console.error("uploadPostImage error:", e.message);
+    return fail(res, 500, "Error subiendo imagen");
+  }
+}
 
 module.exports = {
   listPosts,
   listPostsByUser,
   createPost,
+  deletePost,
   toggleLike,
   listComments,
-  createComment
+  createComment,
+  uploadPostImage
 };

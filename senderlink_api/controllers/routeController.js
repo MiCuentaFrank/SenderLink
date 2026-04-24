@@ -2,6 +2,7 @@
 
 const Route = require("../models/Route");
 const User = require("../models/User");
+const { escapeRegex } = require("../utils/sanitize");
 
 // ======================================================
 // ✅ IMÁGENES: normalizar a proxy (/api/photos/places)
@@ -49,7 +50,12 @@ function resolveImageUrl(req, img) {
     return toProxyUrl(req, ref, 1200);
   }
 
-  // 3) Cualquier otra URL (Unsplash, etc.)
+  // 3) URL local del servidor
+  if (img.startsWith("/uploads/")) {
+    return `${buildBaseUrl(req)}${img}`;
+  }
+
+  // 4) Cualquier otra URL (Unsplash, etc.)
   return img;
 }
 
@@ -105,22 +111,47 @@ async function createRoute(req, res) {
       coordinates: [Number(last.lng), Number(last.lat)]
     };
 
-    // Validación básica numérica (evita NaN silenciosos)
-    const bad =
-      startPointGeo.coordinates.some((n) => Number.isNaN(n)) ||
-      endPointGeo.coordinates.some((n) => Number.isNaN(n));
+    // Validación numérica y de rango geográfico
+    function isValidCoord(lng, lat) {
+      return Number.isFinite(lng) && Number.isFinite(lat) &&
+        lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+    }
 
-    if (bad) {
+    const startValid = isValidCoord(startPointGeo.coordinates[0], startPointGeo.coordinates[1]);
+    const endValid = isValidCoord(endPointGeo.coordinates[0], endPointGeo.coordinates[1]);
+
+    if (!startValid || !endValid) {
       return res.status(400).json({
         ok: false,
-        message: "Coordenadas inválidas en points (lat/lng deben ser números)"
+        message: "Coordenadas inválidas (lat: -90 a 90, lng: -180 a 180)"
       });
     }
 
-    // GeoJSON LineString
+    // Limitar cantidad de puntos para evitar payloads excesivos
+    if (points.length > 10000) {
+      return res.status(400).json({
+        ok: false,
+        message: "Demasiados puntos en la ruta (máximo 10000)"
+      });
+    }
+
+    // GeoJSON LineString con validación de cada punto
+    const coordinates = [];
+    for (const p of points) {
+      const lng = Number(p.lng);
+      const lat = Number(p.lat);
+      if (!isValidCoord(lng, lat)) {
+        return res.status(400).json({
+          ok: false,
+          message: "Coordenada inválida encontrada en la ruta"
+        });
+      }
+      coordinates.push([lng, lat]);
+    }
+
     const geometry = {
       type: "LineString",
-      coordinates: points.map((p) => [Number(p.lng), Number(p.lat)])
+      coordinates
     };
 
     const coverImage =
@@ -151,7 +182,8 @@ async function createRoute(req, res) {
 
     res.status(201).json({ ok: true, route: newRoute });
   } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
+    console.error(err.message);
+    res.status(500).json({ ok: false, message: "Error interno" });
   }
 }
 
@@ -177,16 +209,16 @@ async function getRoutes(req, res) {
     const filtro = {};
 
     if (parqueNacional) {
-      filtro.parqueNacional = { $regex: parqueNacional, $options: "i" };
+      filtro.parqueNacional = { $regex: escapeRegex(parqueNacional), $options: "i" };
     }
 
     if (provincia) {
-      filtro.provincia = { $regex: provincia, $options: "i" };
+      filtro.provincia = { $regex: escapeRegex(provincia), $options: "i" };
     }
 
     const loc = startLocality || localidad;
     if (loc) {
-      filtro.startLocality = { $regex: loc, $options: "i" };
+      filtro.startLocality = { $regex: escapeRegex(loc), $options: "i" };
     }
 
     const diff = difficulty || dificultad;
@@ -225,7 +257,8 @@ async function getRoutes(req, res) {
       routes
     });
   } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
+    console.error(err.message);
+    res.status(500).json({ ok: false, message: "Error interno" });
   }
 }
 
@@ -263,9 +296,10 @@ async function getFeaturedRoutes(req, res) {
       routes
     });
   } catch (err) {
+    console.error(err.message);
     res.status(500).json({
       ok: false,
-      message: err.message
+      message: "Error interno"
     });
   }
 }
@@ -304,7 +338,8 @@ async function getAllRoutesForMap(req, res) {
       routes
     });
   } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
+    console.error(err.message);
+    res.status(500).json({ ok: false, message: "Error interno" });
   }
 }
 
@@ -324,7 +359,8 @@ async function getRouteById(req, res) {
 
     res.json({ ok: true, route });
   } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
+    console.error(err.message);
+    res.status(500).json({ ok: false, message: "Error interno" });
   }
 }
 
@@ -342,7 +378,8 @@ async function getRoutesByUser(req, res) {
 
     res.json({ ok: true, count: routes.length, routes });
   } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
+    console.error(err.message);
+    res.status(500).json({ ok: false, message: "Error interno" });
   }
 }
 
@@ -418,8 +455,8 @@ async function getRoutesNearMe(req, res) {
       routes: routesForClient
     });
   } catch (err) {
-    console.error("❌ Error en getRoutesNearMe:", err);
-    return res.status(500).json({ ok: false, message: err.message });
+    console.error("Error en getRoutesNearMe:", err.message);
+    return res.status(500).json({ ok: false, message: "Error interno" });
   }
 }
 
@@ -440,7 +477,8 @@ async function getParques(req, res) {
       parques: parquesLimpios
     });
   } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
+    console.error(err.message);
+    res.status(500).json({ ok: false, message: "Error interno" });
   }
 }
 
