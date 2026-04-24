@@ -35,8 +35,9 @@ class ComunidadFragment : Fragment() {
     private val viewModel: ComunidadViewModel by viewModels()
     private lateinit var adapter: PostAdapter
 
-    // ✅ Para refrescar avatar del usuario actual
+    // Para refrescar avatar del usuario actual
     private val userRepo = UserRepository()
+    private var avatarLiveData: androidx.lifecycle.LiveData<UserRepository.Result<com.senderlink.app.model.User>>? = null
 
     // ✅ Foto seleccionada para el post
     private var selectedImageUri: Uri? = null
@@ -96,21 +97,24 @@ class ComunidadFragment : Fragment() {
     }
 
     /**
-     * ✅ Pide el usuario actual al backend y fuerza el avatar en las cards de comunidad
+     * Pide el usuario actual al backend y fuerza el avatar en las cards de comunidad.
+     * Reutiliza el mismo LiveData para evitar observer leaks en onResume.
      */
     private fun refreshCurrentUserAvatar() {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        userRepo.getUserByUid(uid).observe(viewLifecycleOwner) { result ->
+        // Evitar crear nueva suscripción si ya existe una
+        if (avatarLiveData != null) return
+
+        val liveData = userRepo.getUserByUid(uid)
+        avatarLiveData = liveData
+        liveData.observe(viewLifecycleOwner) { result ->
             when (result) {
                 is UserRepository.Result.Success -> {
                     val photoUrl = result.data.foto
-                    // ✅ esto hace que todas las cards usen la foto nueva
-                    adapter.setCurrentUserPhotoUrl(photoUrl)
+                    adapter.setCurrentUserPhotoUrl(photoUrl, uid)
                 }
-                is UserRepository.Result.Error -> {
-                    // Silencioso para no molestar; si quieres lo mostramos.
-                }
+                is UserRepository.Result.Error -> { }
                 is UserRepository.Result.Loading -> { }
             }
         }
@@ -277,6 +281,7 @@ class ComunidadFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        avatarLiveData = null
         _binding = null
     }
 }

@@ -99,6 +99,16 @@
                 android:layout_marginStart="14dp"
                 android:text="12 comentarios"
                 android:textColor="@color/text_secondary"/>
+
+            <TextView
+                android:id="@+id/btnDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:text="Eliminar"
+                android:textColor="@color/error"
+                android:padding="8dp"
+                android:visibility="gone"/>
         </LinearLayout>
 
     </LinearLayout>

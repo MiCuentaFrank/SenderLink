@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.senderlink.app.model.Post
+import com.senderlink.app.network.LikePostResponse
 import com.senderlink.app.network.UserPostsResponse
 import com.senderlink.app.repository.CommunityRepository
 import retrofit2.Call
@@ -41,7 +42,32 @@ class PerfilPostsViewModel : ViewModel() {
             }
 
             override fun onFailure(call: Call<UserPostsResponse>, t: Throwable) {
-                _error.value = t.message ?: "Error de red"
+                _error.value = "Error de conexión. Intenta de nuevo."
+            }
+        })
+    }
+
+    fun toggleLike(postId: String) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid.isNullOrBlank()) {
+            _error.value = "No hay usuario autenticado"
+            return
+        }
+
+        repo.toggleLike(postId, uid).enqueue(object : Callback<LikePostResponse> {
+            override fun onResponse(
+                call: Call<LikePostResponse>,
+                response: Response<LikePostResponse>
+            ) {
+                if (response.isSuccessful && response.body()?.ok == true) {
+                    loadMyPosts()
+                } else {
+                    _error.value = "No se pudo actualizar el like"
+                }
+            }
+
+            override fun onFailure(call: Call<LikePostResponse>, t: Throwable) {
+                _error.value = "Error de conexión. Intenta de nuevo."
             }
         })
     }

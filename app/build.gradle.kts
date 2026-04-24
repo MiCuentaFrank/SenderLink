@@ -20,15 +20,24 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // TODO: Configurar URL de producción real (HTTPS) antes de release
+        buildConfigField("String", "BASE_URL", "\"http://192.168.1.20:3000/\"")
+
+        // Google Maps API Key desde local.properties (no hardcodear en manifest)
+        val mapsKey = project.findProperty("GOOGLE_MAPS_API_KEY") as? String ?: ""
+        manifestPlaceholders["MAPS_API_KEY"] = mapsKey
     }
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            buildConfigField("String", "BASE_URL", "\"https://tu-dominio-produccion.com/\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -57,7 +66,7 @@ dependencies {
     // Firebase BOM (gestiona versiones)
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     // Firebase
-    implementation(libs.firebase.auth.ktx)
+    implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-storage-ktx")
 
 
@@ -90,6 +99,7 @@ dependencies {
     //dataStore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     implementation("androidx.viewpager2:viewpager2:1.1.0")

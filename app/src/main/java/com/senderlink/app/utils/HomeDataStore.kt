@@ -6,6 +6,9 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.senderlink.app.model.Route
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -24,6 +27,9 @@ object HomeDataStore {
 
     private val KEY_RECENTS = stringPreferencesKey("recent_routes_json")
     private val KEY_FEATURED = stringPreferencesKey("featured_routes_json")
+
+    private val gson = Gson()
+    private const val MAX_RECENTS = 20
 
     // ==========================================
     // 🕐 RUTAS RECIENTES
@@ -58,7 +64,36 @@ object HomeDataStore {
     }
 
     // ==========================================
-    // 🗑️ LIMPIAR CACHÉ
+    // RUTAS RECIENTES (objetos Route)
+    // ==========================================
+
+    suspend fun getRecentRoutes(context: Context): List<Route> {
+        return try {
+            val json = loadRecentsJson(context)
+            val type = object : TypeToken<List<Route>>() {}.type
+            gson.fromJson<List<Route>>(json, type) ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun addRecentRoute(context: Context, route: Route) {
+        try {
+            val current = getRecentRoutes(context).toMutableList()
+            // Eliminar si ya existe (para moverlo al inicio)
+            current.removeAll { it.id == route.id }
+            // Añadir al inicio
+            current.add(0, route)
+            // Limitar tamaño
+            val trimmed = current.take(MAX_RECENTS)
+            saveRecentsJson(context, gson.toJson(trimmed))
+        } catch (_: Exception) {
+            // Silenciar errores de serialización
+        }
+    }
+
+    // ==========================================
+    // LIMPIAR CACHE
     // ==========================================
 
     suspend fun clearAll(context: Context) {

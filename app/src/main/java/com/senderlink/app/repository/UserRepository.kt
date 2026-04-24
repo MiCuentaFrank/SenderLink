@@ -29,14 +29,14 @@ class UserRepository {
         val result = MutableLiveData<Result<User>>()
         result.value = Result.Loading
 
-        Log.d(TAG, "Obteniendo usuario con UID: $uid")
+        Log.d(TAG, "Obteniendo usuario")
 
         userService.getUserByUid(uid).enqueue(object : Callback<UserResponse> {
             override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
                 if (response.isSuccessful) {
                     val userResponse = response.body()
                     if (userResponse?.ok == true) {
-                        Log.d(TAG, "Usuario obtenido: ${userResponse.user.email}")
+                        Log.d(TAG, "Usuario obtenido correctamente")
                         result.value = Result.Success(userResponse.user)
                     } else {
                         val error = userResponse?.message ?: "Error desconocido"
@@ -63,7 +63,7 @@ class UserRepository {
         val result = MutableLiveData<Result<User>>()
         result.value = Result.Loading
 
-        Log.d(TAG, "Creando usuario: ${user.email}")
+        Log.d(TAG, "Creando usuario")
 
         userService.createUser(user).enqueue(object : Callback<CreateUserResponse> {
             override fun onResponse(call: Call<CreateUserResponse>, response: Response<CreateUserResponse>) {
@@ -98,7 +98,7 @@ class UserRepository {
         val result = MutableLiveData<Result<User>>()
         result.value = Result.Loading
 
-        Log.d(TAG, "Actualizando perfil de UID: $uid")
+        Log.d(TAG, "Actualizando perfil")
 
         userService.updateUserProfile(uid, req)
             .enqueue(object : Callback<com.senderlink.app.network.UpdateUserProfileResponse> {
@@ -176,7 +176,7 @@ class UserRepository {
         val result = MutableLiveData<Result<User>>()
         result.value = Result.Loading
 
-        Log.d(TAG, "Subiendo foto para UID: $uid")
+        Log.d(TAG, "Subiendo foto de perfil")
 
         userService.uploadUserPhoto(uid, photo).enqueue(object : Callback<UploadUserPhotoResponse> {
             override fun onResponse(

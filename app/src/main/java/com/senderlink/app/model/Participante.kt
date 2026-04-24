@@ -7,7 +7,7 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class Participante(
     @SerializedName("uid")
-    val uid: String,
+    val uid: String = "",
 
     @SerializedName("nombre")
     val nombre: String? = null,

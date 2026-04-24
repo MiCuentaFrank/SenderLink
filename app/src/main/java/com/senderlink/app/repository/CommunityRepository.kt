@@ -2,13 +2,17 @@ package com.senderlink.app.repository
 
 import com.senderlink.app.network.CommunityService
 import com.senderlink.app.network.RetrofitClient
+import okhttp3.MultipartBody
+
 
 class CommunityRepository {
 
     private val service = RetrofitClient.instance
         .create(CommunityService::class.java)
 
-    fun getPosts() = service.getPosts()
+    fun uploadPostImage(image: MultipartBody.Part) = service.uploadPostImage(image)
+
+    fun getPosts(limit: Int = 20, skip: Int = 0) = service.getPosts(limit, skip)
 
     fun getPostsByUser(uid: String) =
         service.getPostsByUser(uid)
@@ -29,6 +33,9 @@ class CommunityRepository {
             if (!image.isNullOrBlank()) put("image", image)
         }
     )
+
+    fun deletePost(postId: String, uid: String) =
+        service.deletePost(postId, mapOf("uid" to uid))
 
     fun toggleLike(postId: String, uid: String) =
         service.toggleLike(

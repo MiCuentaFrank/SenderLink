@@ -17,8 +17,9 @@ class PostAdapter(
 
     private var items: List<Post> = emptyList()
 
-    // ✅ Foto “fresca” del usuario actual (para refrescar cards al cambiar avatar)
+    // Foto “fresca” del usuario actual (para refrescar cards al cambiar avatar)
     private var currentUserPhotoUrl: String? = null
+    private var currentUserUid: String? = null
 
     inner class VH(val binding: ItemPostBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -36,11 +37,14 @@ class PostAdapter(
         b.tvText.text = post.text
 
         // =========================
-        // ✅ Avatar (userPhoto)
+        // Avatar (userPhoto)
         // =========================
-        // Si hemos actualizado la foto del usuario actual recientemente,
-        // la usamos para refrescar las cards sin depender del backend.
-        val avatarUrl = (currentUserPhotoUrl ?: post.userPhoto)?.trim().orEmpty()
+        // Solo usar la foto fresca si el post pertenece al usuario actual
+        val avatarUrl = if (currentUserUid != null && post.uid == currentUserUid) {
+            (currentUserPhotoUrl ?: post.userPhoto)?.trim().orEmpty()
+        } else {
+            post.userPhoto?.trim().orEmpty()
+        }
 
         if (avatarUrl.isNotBlank()) {
             Glide.with(b.imgAvatar)
@@ -87,11 +91,12 @@ class PostAdapter(
     }
 
     /**
-     * ✅ Llamar cuando el usuario cambie su foto.
-     * Esto refresca el avatar de todas las cards.
+     * Llamar cuando el usuario cambie su foto.
+     * Solo refresca el avatar de los posts del usuario actual.
      */
-    fun setCurrentUserPhotoUrl(url: String?) {
+    fun setCurrentUserPhotoUrl(url: String?, uid: String? = null) {
         currentUserPhotoUrl = url?.trim()
+        if (uid != null) currentUserUid = uid
         notifyDataSetChanged()
     }
 }

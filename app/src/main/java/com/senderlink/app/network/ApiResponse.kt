@@ -1,6 +1,8 @@
 package com.senderlink.app.network
 
 import com.senderlink.app.model.Comment
+import com.senderlink.app.model.Conversation
+import com.senderlink.app.model.DirectMessage
 import com.senderlink.app.model.EventoGrupal
 import com.senderlink.app.model.GroupMessage
 import com.senderlink.app.model.Post
@@ -89,10 +91,30 @@ data class UserPostsResponse(
     val data: List<Post>
 )
 
+data class UploadPostImageResponse(
+    val ok: Boolean,
+    val message: String,
+    val data: UploadPostImageData?
+)
+
+data class UploadPostImageData(
+    val imageUrl: String
+)
+
 data class CreatePostResponse(
     val ok: Boolean,
     val message: String,
     val data: Post
+)
+
+data class DeletePostResponse(
+    val ok: Boolean,
+    val message: String,
+    val data: DeletedPostData? = null
+)
+
+data class DeletedPostData(
+    val postId: String
 )
 
 data class LikePostResponse(
@@ -244,5 +266,28 @@ data class UploadUserPhotoResponse(
     val ok: Boolean,
     val message: String? = null,
     val user: User
+)
+
+// ========================================
+// MENSAJES DIRECTOS
+// ========================================
+
+data class DirectMessagesResponse(
+    val ok: Boolean,
+    val message: String? = null,
+    val count: Int = 0,
+    val messages: List<DirectMessage> = emptyList()
+)
+
+data class ConversationsResponse(
+    val ok: Boolean,
+    val message: String? = null,
+    val data: List<Conversation> = emptyList()
+)
+
+data class SendDirectMessageResponse(
+    val ok: Boolean,
+    val message: String? = null,
+    val data: DirectMessage? = null
 )
 

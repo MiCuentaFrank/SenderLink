@@ -33,6 +33,23 @@
         android:background="@color/bg_divider"
         android:layout_marginVertical="8dp"/>
 
+    <!-- Mensajes -->
+    <TextView
+        android:id="@+id/optionMessages"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:text="Mensajes"
+        android:textSize="16sp"
+        android:textColor="@color/text_primary"/>
+
+    <!-- Separador -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/bg_divider"
+        android:layout_marginVertical="8dp"/>
+
     <!-- Logout -->
     <TextView
         android:id="@+id/optionLogout"

@@ -369,10 +369,10 @@ class RouteDetailFragment : Fragment() {
 
             val bundle = Bundle().apply {
                 putString("routeName", route.name)
-                putFloat("startLat", route.startPoint?.lat?.toFloat() ?: 0.0f)
-                putFloat("startLng", route.startPoint?.lng?.toFloat() ?: 0.0f)
-                putFloat("endLat", route.endPoint?.lat?.toFloat() ?: 0.0f)
-                putFloat("endLng", route.endPoint?.lng?.toFloat() ?: 0.0f)
+                putFloat("startLat", route.getStartLat().toFloat())
+                putFloat("startLng", route.getStartLng().toFloat())
+                putFloat("endLat", route.getEndLat().toFloat())
+                putFloat("endLng", route.getEndLng().toFloat())
                 putFloat("distanceKm", route.distanceKm.toFloat())
                 putString("difficulty", route.difficulty)
                 routePointsArray?.let { putFloatArray("routePoints", it) }

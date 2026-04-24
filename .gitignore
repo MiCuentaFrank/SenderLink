@@ -13,6 +13,17 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Node modules
+node_modules/
+
 # Archivos sensibles
 .env
 senderlink_api/.env
+
+# Uploads (archivos subidos por usuarios)
+senderlink_api/uploads/
+
+# Firebase service account
+*.json
+!package.json
+!package-lock.json

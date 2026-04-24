@@ -15,25 +15,25 @@ import com.google.gson.annotations.SerializedName
 data class EventoGrupal(
 
     @SerializedName("_id")
-    val id: String,
+    val id: String = "",
 
     // 🗺️ RUTA (string u objeto)
     @SerializedName("routeId")
-    val routeIdRaw: JsonElement,
+    val routeIdRaw: JsonElement? = null,
 
     // 👤 ORGANIZADOR
     @SerializedName("organizadorUid")
-    val organizadorUid: String,
+    val organizadorUid: String = "",
 
     @SerializedName("organizadorNombre")
-    val organizadorNombre: String,
+    val organizadorNombre: String = "",
 
     @SerializedName("organizadorFoto")
     val organizadorFoto: String? = null,
 
     // 📅 FECHA Y HORA
     @SerializedName("fecha")
-    val fecha: String, // ISO 8601
+    val fecha: String = "", // ISO 8601
 
     @SerializedName("horaEncuentro")
     val horaEncuentro: String = "09:00",
@@ -48,11 +48,11 @@ data class EventoGrupal(
 
     // 📊 ESTADO
     @SerializedName("estado")
-    val estado: String, // ABIERTO, COMPLETO, FINALIZADO, CANCELADO
+    val estado: String = "", // ABIERTO, COMPLETO, FINALIZADO, CANCELADO
 
     // 💬 CHAT
     @SerializedName("chatId")
-    val chatId: String,
+    val chatId: String = "",
 
     // 📝 INFO
     @SerializedName("descripcion")
@@ -95,10 +95,11 @@ data class EventoGrupal(
      * Puede ser string simple o dentro de un objeto populate
      */
     fun getRouteId(): String {
+        val raw = routeIdRaw ?: return ""
         return try {
             when {
-                routeIdRaw.isJsonPrimitive -> routeIdRaw.asString
-                routeIdRaw.isJsonObject -> routeIdRaw.asJsonObject.get("_id")?.asString ?: ""
+                raw.isJsonPrimitive -> raw.asString
+                raw.isJsonObject -> raw.asJsonObject.get("_id")?.asString ?: ""
                 else -> ""
             }
         } catch (_: Exception) {
@@ -111,9 +112,10 @@ data class EventoGrupal(
      * Usada por EventoAdapter
      */
     fun getNombreRuta(): String? {
+        val raw = routeIdRaw ?: return null
         return try {
-            if (routeIdRaw.isJsonObject) {
-                routeIdRaw.asJsonObject.get("name")?.asString
+            if (raw.isJsonObject) {
+                raw.asJsonObject.get("name")?.asString
             } else {
                 null
             }
@@ -127,9 +129,10 @@ data class EventoGrupal(
      * Usada por EventoAdapter
      */
     fun getCoverImage(): String? {
+        val raw = routeIdRaw ?: return null
         return try {
-            if (routeIdRaw.isJsonObject) {
-                routeIdRaw.asJsonObject.get("coverImage")?.asString
+            if (raw.isJsonObject) {
+                raw.asJsonObject.get("coverImage")?.asString
             } else {
                 null
             }
@@ -173,11 +176,7 @@ data class EventoGrupal(
     // ==========================================
 
     fun canJoin(uid: String): Boolean {
-        return !isParticipante(uid) &&
-                isAbierto() &&
-                hasPlazasDisponibles() &&
-                !isFinalizado() &&
-                !isCancelado()
+        return !isParticipante(uid) && isAbierto() && hasPlazasDisponibles()
     }
 
     fun canLeave(uid: String): Boolean {

@@ -3,6 +3,7 @@ package com.senderlink.app.utils
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.google.firebase.auth.FirebaseAuth
 import com.senderlink.app.model.User
 import com.senderlink.app.repository.UserRepository
@@ -54,6 +55,10 @@ class UserManager private constructor() {
     private val _error = MutableLiveData<String?>(null)
     val error: LiveData<String?> = _error
 
+    // Referencia al observer activo para evitar memory leaks
+    private var activeObserver: Observer<UserRepository.Result<User>>? = null
+    private var activeLiveData: LiveData<UserRepository.Result<User>>? = null
+
     companion object {
         @Volatile
         private var INSTANCE: UserManager? = null
@@ -92,10 +97,16 @@ class UserManager private constructor() {
             return
         }
 
-        Log.d(TAG, "🔄 Cargando usuario desde backend: $uid")
+        Log.d(TAG, "Cargando usuario desde backend")
         _isLoading.value = true
 
-        repository.getUserByUid(uid).observeForever { result ->
+        // Eliminar observer anterior para evitar memory leak
+        activeObserver?.let { obs ->
+            activeLiveData?.removeObserver(obs)
+        }
+
+        val liveData = repository.getUserByUid(uid)
+        val observer = Observer<UserRepository.Result<User>> { result ->
             when (result) {
                 is UserRepository.Result.Loading -> {
                     _isLoading.value = true
@@ -104,15 +115,19 @@ class UserManager private constructor() {
                     _isLoading.value = false
                     _currentUser.value = result.data
                     _error.value = null
-                    Log.d(TAG, "✅ Usuario cargado: ${result.data.nombre}")
+                    Log.d(TAG, "Usuario cargado: ${result.data.nombre}")
                 }
                 is UserRepository.Result.Error -> {
                     _isLoading.value = false
                     _error.value = result.message
-                    Log.e(TAG, "❌ Error cargando usuario: ${result.message}")
+                    Log.e(TAG, "Error cargando usuario")
                 }
             }
         }
+
+        activeLiveData = liveData
+        activeObserver = observer
+        liveData.observeForever(observer)
     }
 
     /**
@@ -198,9 +213,14 @@ class UserManager private constructor() {
      * Útil al hacer logout
      */
     fun clearCache() {
+        activeObserver?.let { obs ->
+            activeLiveData?.removeObserver(obs)
+        }
+        activeObserver = null
+        activeLiveData = null
         _currentUser.value = null
         _error.value = null
-        Log.d(TAG, "🗑️ Caché limpiado")
+        Log.d(TAG, "Cache limpiado")
     }
 
     /**
