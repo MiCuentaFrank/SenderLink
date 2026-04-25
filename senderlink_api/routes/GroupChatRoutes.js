@@ -4,7 +4,7 @@ const router = express.Router();
 const {
   sendMessage,
   getMessages
-} = require("../controllers/groupChatController");
+} = require("../controllers/GroupChatController");
 
 /**
  * ===========================================
