@@ -8,7 +8,7 @@ if (!admin.apps.length) {
   } else {
     try {
       const serviceAccount = JSON.parse(
-        Buffer.from(serviceAccountB64, "base64").toString("utf8")
+        Buffer.from(serviceAccountB64.replace(/\s+/g, ""), "base64").toString("utf8")
       );
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)

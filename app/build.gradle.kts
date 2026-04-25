@@ -21,7 +21,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // TODO: Configurar URL de producción real (HTTPS) antes de release
-        buildConfigField("String", "BASE_URL", "\"http://192.168.1.20:3000/\"")
+        buildConfigField("String", "BASE_URL", "\"https://senderlink-production.up.railway.app/\"")
 
         // Google Maps API Key desde local.properties (no hardcodear en manifest)
         val mapsKey = project.findProperty("GOOGLE_MAPS_API_KEY") as? String ?: ""
@@ -37,7 +37,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            buildConfigField("String", "BASE_URL", "\"https://tu-dominio-produccion.com/\"")
+            buildConfigField("String", "BASE_URL", "\"https://senderlink-production.up.railway.app/\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
