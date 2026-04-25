@@ -1,22 +1,38 @@
 const admin = require("firebase-admin");
 
 if (!admin.apps.length) {
-  const serviceAccountB64 = process.env.FIREBASE_SERVICE_ACCOUNT_B64;
+  try {
+    // Método 1: JSON completo en Base64 (limpia espacios por si acaso)
+    const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_B64;
 
-  if (!serviceAccountB64) {
-    console.warn("⚠️  FIREBASE_SERVICE_ACCOUNT_B64 no configurado — verifyToken no funcionará");
-  } else {
-    try {
+    // Método 2: Variables individuales (más fácil en Railway)
+    const projectId   = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey  = process.env.FIREBASE_PRIVATE_KEY;
+
+    if (b64) {
       const serviceAccount = JSON.parse(
-        Buffer.from(serviceAccountB64.replace(/\s+/g, ""), "base64").toString("utf8")
+        Buffer.from(b64.replace(/\s+/g, ""), "base64").toString("utf8")
       );
+      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+      console.log("✅ Firebase Admin inicializado (B64)");
+
+    } else if (projectId && clientEmail && privateKey) {
       admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+        credential: admin.credential.cert({
+          projectId,
+          clientEmail,
+          // Railway escapa los \n como \\n — los restauramos
+          privateKey: privateKey.replace(/\\n/g, "\n")
+        })
       });
-      console.log("✅ Firebase Admin inicializado");
-    } catch (err) {
-      console.error("❌ Error inicializando Firebase Admin:", err.message);
+      console.log("✅ Firebase Admin inicializado (variables individuales)");
+
+    } else {
+      console.warn("⚠️  Firebase Admin no configurado — verifyToken no funcionará");
     }
+  } catch (err) {
+    console.error("❌ Error inicializando Firebase Admin:", err.message);
   }
 }
 
