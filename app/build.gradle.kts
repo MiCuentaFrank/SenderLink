@@ -97,6 +97,7 @@ dependencies {
     // uCrop - cropping interactivo de imágenes
     implementation("com.github.yalantis:ucrop:2.2.9")
 
+
     // Room - base de datos local (caché offline + grabación de rutas)
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
