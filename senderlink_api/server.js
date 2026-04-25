@@ -19,6 +19,9 @@ const verifyToken = require("./middleware/verifyToken");
 
 const app = express();
 
+// Railway usa un proxy — necesario para que rate-limit identifique IPs correctamente
+app.set("trust proxy", 1);
+
 const isProduction = process.env.NODE_ENV === "production";
 
 // 3) Middlewares de seguridad
