@@ -104,12 +104,19 @@ class RegisterActivity : AppCompatActivity() {
                 } else {
                     binding.btnRegister.isEnabled = true
                     binding.btnRegister.text = "Registrarse"
-                    Log.e(TAG, "Error en Firebase Auth")
-                    Toast.makeText(
-                        this,
-                        "Error en el registro. Intenta de nuevo.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    val errorMsg = task.exception?.message ?: "Error desconocido"
+                    Log.e(TAG, "Error en Firebase Auth: $errorMsg", task.exception)
+                    val userMsg = when {
+                        errorMsg.contains("email address is already in use", ignoreCase = true) ->
+                            "Ese email ya está registrado. Prueba a iniciar sesión."
+                        errorMsg.contains("badly formatted", ignoreCase = true) ->
+                            "El email no tiene un formato válido."
+                        errorMsg.contains("network", ignoreCase = true) ||
+                        errorMsg.contains("unable to resolve", ignoreCase = true) ->
+                            "Sin conexión. Comprueba tu internet."
+                        else -> "Error: $errorMsg"
+                    }
+                    Toast.makeText(this, userMsg, Toast.LENGTH_LONG).show()
                 }
             }
     }
