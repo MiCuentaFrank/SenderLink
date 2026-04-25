@@ -42,6 +42,14 @@ const UserSchema = new mongoose.Schema({
     streakDays: { type: Number, default: 0 }
   },
 
+  // Rutas completadas (para verificación y stats)
+  completedRoutes: [{
+    routeId: { type: String, required: true },
+    completedAt: { type: Date, default: Date.now },
+    durationMin: { type: Number, default: 0 },
+    xpGained: { type: Number, default: 0 }
+  }],
+
   // Para “Completa tu perfil”
   profileCompletion: { type: Number, default: 0 } // 0..100
 }, { timestamps: true });

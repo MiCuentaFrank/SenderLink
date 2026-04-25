@@ -98,18 +98,20 @@ class HomeViewModel : ViewModel() {
     // RECIENTES (interno)
     // ==============================
     private suspend fun loadRecentRoutesInternal(context: Context? = null, limit: Int = 10) {
+        // Mostrar caché inmediatamente si hay datos, pero siempre refrescar desde la API
         if (context != null) {
             val stored = HomeDataStore.getRecentRoutes(context)
             if (stored.isNotEmpty()) {
                 _routes.value = stored
-                Log.d(TAG, "✅ Recientes desde historial local: ${stored.size} rutas")
-                return
+                Log.d(TAG, "📦 Mostrando recientes desde caché: ${stored.size} rutas")
             }
         }
         val response = repository.getAllRoutes(page = 1, limit = limit)
         val list = response.routes ?: emptyList()
-        _routes.value = list
-        Log.d(TAG, "✅ Recientes desde API: ${list.size} rutas")
+        if (list.isNotEmpty()) {
+            _routes.value = list
+            Log.d(TAG, "✅ Recientes desde API: ${list.size} rutas")
+        }
     }
 
     // ==============================

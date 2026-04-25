@@ -1,7 +1,5 @@
 package com.senderlink.app.viewmodel
 
-import android.content.Context
-import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -9,7 +7,6 @@ import androidx.lifecycle.switchMap
 import com.google.firebase.auth.FirebaseAuth
 import com.senderlink.app.model.User
 import com.senderlink.app.repository.UserRepository
-import okhttp3.MultipartBody
 
 /**
  * ViewModel para la pantalla de Perfil
@@ -37,21 +34,16 @@ class PerfilViewModel : ViewModel() {
     private val _userData = MutableLiveData<User?>()
     val userData: LiveData<User?> get() = _userData
 
-    // ✅ Trigger PRO para subida de foto (sin observeForever)
-    private data class UploadPhotoParams(
-        val uid: String,
-        val context: Context,
-        val photoUri: Uri
-    )
-
-    private val _uploadPhotoTrigger = MutableLiveData<UploadPhotoParams>()
+    // Trigger para actualizar URL de foto tras subida a Firebase Storage
+    private val _photoUrlTrigger = MutableLiveData<String>()
 
     val updatePhotoResult: LiveData<UserRepository.Result<User>> =
-        _uploadPhotoTrigger.switchMap { params ->
-            val part: MultipartBody.Part =
-                userRepository.buildPhotoPartFromUri(params.context, params.photoUri)
-
-            userRepository.uploadUserPhoto(params.uid, part)
+        _photoUrlTrigger.switchMap { url ->
+            val uid = firebaseAuth.currentUser?.uid
+                ?: return@switchMap MutableLiveData<UserRepository.Result<User>>().apply {
+                    value = UserRepository.Result.Error("No hay usuario autenticado")
+                }
+            userRepository.updateUserPhotoUrl(uid, url)
         }
 
     fun loadUserData() {
@@ -78,21 +70,11 @@ class PerfilViewModel : ViewModel() {
     }
 
     /**
-     * ✅ Dispara la subida de foto (el Fragment pasa context)
+     * Llama esto desde el Fragment con la URL de Firebase Storage ya obtenida.
      */
-    fun updateProfilePhoto(context: Context, photoUri: Uri) {
-        val currentUser = firebaseAuth.currentUser
-        if (currentUser == null) {
-            _errorMessage.value = "No hay usuario autenticado"
-            return
-        }
-
+    fun updateProfilePhotoUrl(url: String) {
         _isLoading.value = true
-        _uploadPhotoTrigger.value = UploadPhotoParams(
-            uid = currentUser.uid,
-            context = context.applicationContext,
-            photoUri = photoUri
-        )
+        _photoUrlTrigger.value = url
     }
 
     /**

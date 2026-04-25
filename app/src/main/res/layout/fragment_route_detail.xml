@@ -365,6 +365,19 @@
                 android:fontFamily="monospace"/>
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnIniciarRuta"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="▶ Iniciar ruta"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="30dp"
+                app:backgroundTint="@color/success"
+                android:textColor="@color/text_on_dark"
+                app:elevation="6dp"
+                android:layout_marginBottom="12dp"/>
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnViewOnMap"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"

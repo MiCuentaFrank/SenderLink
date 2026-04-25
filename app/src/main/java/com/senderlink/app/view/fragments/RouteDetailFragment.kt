@@ -67,11 +67,15 @@ class RouteDetailFragment : Fragment() {
         observeRouteViewModel()
         observeEventosState()
 
-        // ✅ Cargar detalle de ruta
         routeDetailViewModel.loadRouteById(routeId)
-
-        // ✅ Comprobar si hay eventos de esta ruta (sin mostrar lista aquí)
         refreshEventosState(routeId)
+
+        // Botón "Iniciar ruta" → ActiveTrackingFragment
+        binding.btnIniciarRuta.setOnClickListener {
+            val action = RouteDetailFragmentDirections
+                .actionRouteDetailFragmentToActiveTrackingFragment(routeId)
+            findNavController().navigate(action)
+        }
     }
 
     private fun setupGallery() {
@@ -140,7 +144,7 @@ class RouteDetailFragment : Fragment() {
         } else {
             binding.tvEventosInfo.text =
                 "Hay $eventosCount rutas grupales para esta ruta."
-            binding.btnCrearEvento.visibility = View.GONE
+            binding.btnCrearEvento.visibility = View.VISIBLE
             binding.btnVerEventosRuta.visibility = View.VISIBLE
         }
     }
@@ -359,23 +363,23 @@ class RouteDetailFragment : Fragment() {
 
         try {
             val routePointsArray = route.geometry?.coordinates?.let { coords ->
-                FloatArray(coords.size * 2).apply {
+                DoubleArray(coords.size * 2).apply {
                     coords.forEachIndexed { index, coord ->
-                        this[index * 2] = coord[1].toFloat()
-                        this[index * 2 + 1] = coord[0].toFloat()
+                        this[index * 2] = coord[1]
+                        this[index * 2 + 1] = coord[0]
                     }
                 }
             }
 
             val bundle = Bundle().apply {
                 putString("routeName", route.name)
-                putFloat("startLat", route.getStartLat().toFloat())
-                putFloat("startLng", route.getStartLng().toFloat())
-                putFloat("endLat", route.getEndLat().toFloat())
-                putFloat("endLng", route.getEndLng().toFloat())
+                putDouble("startLat", route.getStartLat())
+                putDouble("startLng", route.getStartLng())
+                putDouble("endLat", route.getEndLat())
+                putDouble("endLng", route.getEndLng())
                 putFloat("distanceKm", route.distanceKm.toFloat())
                 putString("difficulty", route.difficulty)
-                routePointsArray?.let { putFloatArray("routePoints", it) }
+                routePointsArray?.let { putDoubleArray("routePoints", it) }
             }
 
             findNavController().navigate(R.id.nav_maps, bundle)

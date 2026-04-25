@@ -43,7 +43,7 @@ class LoginActivity : AppCompatActivity() {
                 startActivity(Intent(this, MainScreenActivity::class.java))
                 finish()
             }else{
-                Toast.makeText(this, "Error en el inicio de sesión: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Email o contraseña incorrectos", Toast.LENGTH_SHORT).show()
             }
         }
 

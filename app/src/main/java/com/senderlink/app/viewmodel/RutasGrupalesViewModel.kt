@@ -60,19 +60,34 @@ class RutasGrupalesViewModel : ViewModel() {
         userManager.loadCurrentUser()
     }
 
+    // Parsea fechas ISO 8601 con o sin milisegundos (2025-04-15T09:00:00.000Z o 2025-04-15T09:00:00Z)
+    private fun parseIsoDate(dateStr: String?): Date? {
+        if (dateStr.isNullOrBlank()) return null
+        val formats = listOf(
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss"
+        )
+        for (fmt in formats) {
+            try {
+                val sdf = SimpleDateFormat(fmt, Locale.US)
+                sdf.timeZone = TimeZone.getTimeZone("UTC")
+                return sdf.parse(dateStr)
+            } catch (_: Exception) { }
+        }
+        return null
+    }
+
     // ✅ Filtrar eventos cancelados con límite de 7 días
     private fun shouldShowCancelledEvent(evento: EventoGrupal): Boolean {
         if (!evento.isCancelado()) return true
 
         return try {
-            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-            sdf.timeZone = TimeZone.getTimeZone("UTC")
-
-            val fechaEvento = sdf.parse(evento.fecha) ?: return true
+            val fechaEvento = parseIsoDate(evento.fecha) ?: return true
             val hoy = Date()
 
             val fechaCancelacion = if (!evento.updatedAt.isNullOrBlank()) {
-                sdf.parse(evento.updatedAt) ?: fechaEvento
+                parseIsoDate(evento.updatedAt) ?: fechaEvento
             } else {
                 fechaEvento
             }

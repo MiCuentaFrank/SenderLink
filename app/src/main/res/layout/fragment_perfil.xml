@@ -337,6 +337,20 @@
 
                 </LinearLayout>
 
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnGrabarRuta"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="+ Grabar nueva ruta"
+                    android:textStyle="bold"
+                    android:textColor="@color/sl_primary"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    app:strokeColor="@color/sl_primary"
+                    app:strokeWidth="2dp"
+                    app:cornerRadius="24dp" />
+
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvRutasPublicadas"
                     android:layout_width="match_parent"

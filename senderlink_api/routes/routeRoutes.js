@@ -9,13 +9,15 @@ const {
   getRouteById,
   getRoutesByUser,
   getRoutesNearMe,
-  getParques
+  getParques,
+  addCompletion
 } = require("../controllers/routeController");
 
 // ===============================
 // POST
 // ===============================
 router.post("/", createRoute);
+router.post("/:id/completions", addCompletion);
 
 // ===============================
 // GET ESPECÍFICAS

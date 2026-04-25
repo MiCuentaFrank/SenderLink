@@ -54,13 +54,9 @@ async function getMessages(req, res) {
   try {
     const { chatId } = req.params;
 
-    // Auth: verificar que el usuario pertenece al chat
-    // Buscar cualquier mensaje donde el usuario sea participante en este chat
-    const userInChat = await Message.findOne({
-      chatId,
-      $or: [{ remitenteUid: req.uid }, { destinatarioUid: req.uid }]
-    });
-    if (!userInChat) {
+    // Auth: verificar que el usuario pertenece al chat por el formato del chatId (uid1_uid2)
+    const parts = chatId.split("_");
+    if (!parts.includes(req.uid)) {
       return res.status(403).json({
         ok: false,
         message: "No autorizado: no perteneces a este chat"
@@ -143,34 +139,36 @@ async function getConversations(req, res) {
       });
     }
 
-    // Todos los mensajes donde el usuario es remitente o destinatario
-    const messages = await Message.find({
-      $or: [{ remitenteUid: uid }, { destinatarioUid: uid }]
-    }).sort({ createdAt: -1 });
+    // Aggregation: obtener solo el último mensaje por chatId (evita cargar todos en memoria)
+    const latestMessages = await Message.aggregate([
+      { $match: { $or: [{ remitenteUid: uid }, { destinatarioUid: uid }] } },
+      { $sort: { createdAt: -1 } },
+      { $group: { _id: "$chatId", msg: { $first: "$$ROOT" } } },
+      { $replaceRoot: { newRoot: "$msg" } },
+      { $sort: { createdAt: -1 } }
+    ]);
 
-    // Agrupar por chatId, quedándose solo con el más reciente de cada uno
-    const byChat = new Map();
-    for (const msg of messages) {
-      if (!byChat.has(msg.chatId)) {
-        byChat.set(msg.chatId, msg);
-      }
-    }
-
-    // Enriquecer con datos del otro participante
-    const conversations = await Promise.all(
-      Array.from(byChat.values()).map(async (msg) => {
-        const otherUid = msg.remitenteUid === uid ? msg.destinatarioUid : msg.remitenteUid;
-        const otherUser = await User.findOne({ uid: otherUid }).select("uid nombre foto").lean();
-        return {
-          chatId: msg.chatId,
-          lastMessage: msg.texto,
-          lastMessageAt: msg.createdAt,
-          otherUid,
-          otherNombre: otherUser?.nombre || "Usuario",
-          otherFoto: otherUser?.foto || ""
-        };
-      })
+    // Obtener todos los otros UIDs de una vez (evita N+1 queries)
+    const otherUids = latestMessages.map(msg =>
+      msg.remitenteUid === uid ? msg.destinatarioUid : msg.remitenteUid
     );
+    const otherUsers = await User.find({ uid: { $in: otherUids } })
+      .select("uid nombre foto").lean();
+    const usersMap = {};
+    for (const u of otherUsers) { usersMap[u.uid] = u; }
+
+    const conversations = latestMessages.map(msg => {
+      const otherUid = msg.remitenteUid === uid ? msg.destinatarioUid : msg.remitenteUid;
+      const otherUser = usersMap[otherUid];
+      return {
+        chatId: msg.chatId,
+        lastMessage: msg.texto,
+        lastMessageAt: msg.createdAt,
+        otherUid,
+        otherNombre: otherUser?.nombre || "Usuario",
+        otherFoto: otherUser?.foto || ""
+      };
+    });
 
     // Ordenar por más reciente
     conversations.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));

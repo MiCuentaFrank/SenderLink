@@ -10,6 +10,7 @@ import com.senderlink.app.network.CreateUserResponse
 import com.senderlink.app.network.RetrofitClient
 import com.senderlink.app.network.UserResponse
 import com.senderlink.app.network.UserService
+import com.senderlink.app.network.UpdateUserResponse
 import com.senderlink.app.network.UploadUserPhotoResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -205,6 +206,36 @@ class UserRepository {
                 result.value = Result.Error(t.message ?: "Error de conexión")
             }
         })
+
+        return result
+    }
+
+    /**
+     * Actualiza solo el campo `foto` en MongoDB con la URL de Firebase Storage.
+     * Se usa tras subir la imagen a Firebase desde el Fragment.
+     */
+    fun updateUserPhotoUrl(uid: String, photoUrl: String): LiveData<Result<User>> {
+        val result = MutableLiveData<Result<User>>()
+        result.value = Result.Loading
+
+        userService.updateUser(uid, mapOf("foto" to photoUrl))
+            .enqueue(object : Callback<UpdateUserResponse> {
+                override fun onResponse(
+                    call: Call<UpdateUserResponse>,
+                    response: Response<UpdateUserResponse>
+                ) {
+                    if (response.isSuccessful && response.body()?.ok == true) {
+                        Log.d(TAG, "Foto URL guardada en MongoDB OK")
+                        result.value = Result.Success(response.body()!!.user)
+                    } else {
+                        result.value = Result.Error("Error al guardar la foto")
+                    }
+                }
+                override fun onFailure(call: Call<UpdateUserResponse>, t: Throwable) {
+                    Log.e(TAG, "Error guardando foto URL: ${t.message}")
+                    result.value = Result.Error(t.message ?: "Error de conexión")
+                }
+            })
 
         return result
     }

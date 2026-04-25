@@ -94,6 +94,14 @@ async function createRoute(req, res) {
       });
     }
 
+    // Auth: solo puedes crear rutas con tu propio uid
+    if (req.uid !== uid) {
+      return res.status(403).json({
+        ok: false,
+        message: "No autorizado: no puedes crear rutas en nombre de otro usuario"
+      });
+    }
+
     const user = await User.findOne({ uid });
     if (!user) {
       return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
@@ -233,8 +241,8 @@ async function getRoutes(req, res) {
       if (featured === "false") filtro.featured = false;
     }
 
-    const pageFinal = parseInt(page, 10);
-    const limitFinal = parseInt(limit, 10);
+    const pageFinal = Math.max(1, parseInt(page, 10) || 1);
+    const limitFinal = Math.min(Math.max(1, parseInt(limit, 10) || 20), 200);
     const skip = (pageFinal - 1) * limitFinal;
 
     let routes = await Route.find(filtro)
@@ -315,8 +323,8 @@ async function getAllRoutesForMap(req, res) {
     const filtro = {};
     if (difficulty) filtro.difficulty = difficulty;
 
-    const pageFinal = parseInt(page, 10);
-    const limitFinal = parseInt(limit, 10);
+    const pageFinal = Math.max(1, parseInt(page, 10) || 1);
+    const limitFinal = Math.min(Math.max(1, parseInt(limit, 10) || 100), 200);
     const skip = (pageFinal - 1) * limitFinal;
 
     let routes = await Route.find(filtro)
@@ -482,6 +490,76 @@ async function getParques(req, res) {
   }
 }
 
+// ==========================================
+// 7. Registrar compleción de ruta
+// ==========================================
+const XP_PER_ROUTE = 50;
+const RANK_TITLES = ["Explorer", "Hiker", "Trekker", "Mountaineer", "Summit Master"];
+
+function getRankTitle(level) {
+  return RANK_TITLES[Math.min(level - 1, RANK_TITLES.length - 1)];
+}
+
+async function addCompletion(req, res) {
+  try {
+    const routeId = req.params.id;
+    const { uid, durationMin } = req.body;
+
+    if (!uid || !routeId) {
+      return res.status(400).json({ ok: false, message: "uid y routeId son obligatorios" });
+    }
+
+    if (req.uid !== uid) {
+      return res.status(403).json({ ok: false, message: "No autorizado" });
+    }
+
+    const user = await User.findOne({ uid });
+    if (!user) {
+      return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
+    }
+
+    // Evitar duplicados en las últimas 24h
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const alreadyDone = user.completedRoutes?.some(
+      (c) => c.routeId === routeId && new Date(c.completedAt) > oneDayAgo
+    );
+    if (alreadyDone) {
+      return res.json({
+        ok: true,
+        message: "Ruta ya completada hoy",
+        xpGained: 0,
+        newXp: user.progreso.xp,
+        newLevel: user.progreso.level,
+        newRankTitle: user.progreso.rankTitle
+      });
+    }
+
+    // Sumar XP y calcular nivel
+    const newXp = (user.progreso.xp || 0) + XP_PER_ROUTE;
+    const newLevel = Math.floor(newXp / 100) + 1;
+    const newRankTitle = getRankTitle(newLevel);
+
+    user.completedRoutes.push({ routeId, durationMin: durationMin || 0, xpGained: XP_PER_ROUTE });
+    user.progreso.xp = newXp;
+    user.progreso.level = newLevel;
+    user.progreso.rankTitle = newRankTitle;
+    user.stats.routesCompleted = (user.stats.routesCompleted || 0) + 1;
+
+    await user.save();
+
+    res.json({
+      ok: true,
+      xpGained: XP_PER_ROUTE,
+      newXp,
+      newLevel,
+      newRankTitle
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ ok: false, message: "Error interno" });
+  }
+}
+
 module.exports = {
   createRoute,
   getRoutes,
@@ -490,5 +568,6 @@ module.exports = {
   getRoutesNearMe,
   getParques,
   getFeaturedRoutes,
-  getAllRoutesForMap
+  getAllRoutesForMap,
+  addCompletion
 };

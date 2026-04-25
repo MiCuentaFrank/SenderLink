@@ -1,7 +1,9 @@
 package com.senderlink.app.network
 
 import retrofit2.Call
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -81,4 +83,23 @@ interface RouteService {
     fun getRoutesByUser(
         @Path("uid") uid: String
     ): Call<UserRoutesResponse>
+
+    /**
+     * ➕ Crear ruta grabada por el usuario
+     * POST /api/routes
+     */
+    @POST("api/routes")
+    fun createRoute(
+        @Body request: CreateRouteRequest
+    ): Call<CreateRouteApiResponse>
+
+    /**
+     * 🏁 Registrar finalización de ruta
+     * POST /api/routes/{id}/completions
+     */
+    @POST("api/routes/{id}/completions")
+    fun completeRoute(
+        @Path("id") routeId: String,
+        @Body request: CompleteRouteRequest
+    ): Call<CompleteRouteResponse>
 }

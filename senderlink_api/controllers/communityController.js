@@ -121,25 +121,39 @@ async function toggleLike(req, res) {
       return fail(res, 403, "No autorizado");
     }
 
-    const post = await Post.findById(postId);
-    if (!post) return fail(res, 404, "Post no encontrado");
+    const existing = await Post.findOne({ _id: postId, likedBy: uid }).lean();
+    if (existing === null) {
+      // Verificar que el post existe
+      const postExists = await Post.exists({ _id: postId });
+      if (!postExists) return fail(res, 404, "Post no encontrado");
+    }
 
-    const idx = post.likedBy.indexOf(uid);
     let liked;
+    let updatedPost;
 
-    if (idx >= 0) {
-      post.likedBy.splice(idx, 1);
+    if (existing) {
+      // Ya tiene like → quitar (operación atómica, evita race condition)
+      updatedPost = await Post.findByIdAndUpdate(
+        postId,
+        { $pull: { likedBy: uid } },
+        { new: true }
+      );
       liked = false;
     } else {
-      post.likedBy.push(uid);
+      // No tiene like → añadir (operación atómica, $addToSet evita duplicados)
+      updatedPost = await Post.findByIdAndUpdate(
+        postId,
+        { $addToSet: { likedBy: uid } },
+        { new: true }
+      );
       liked = true;
     }
 
-    await post.save();
+    if (!updatedPost) return fail(res, 404, "Post no encontrado");
 
     return ok(
       res,
-      { postId, liked, likesCount: post.likedBy.length },
+      { postId, liked, likesCount: updatedPost.likedBy.length },
       "Like actualizado"
     );
   } catch (e) {

@@ -41,9 +41,11 @@ router.get("/places", async (req, res) => {
       maxContentLength: 10 * 1024 * 1024 // 10MB máximo
     });
 
-    if (r.headers["content-type"]) {
-      res.setHeader("Content-Type", r.headers["content-type"]);
+    const contentType = r.headers["content-type"] || "";
+    if (!contentType.startsWith("image/")) {
+      return res.status(502).json({ ok: false, message: "Tipo de contenido inválido recibido del proveedor" });
     }
+    res.setHeader("Content-Type", contentType);
     // Cache de imágenes por 1 hora
     res.setHeader("Cache-Control", "public, max-age=3600");
 

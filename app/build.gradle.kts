@@ -94,6 +94,14 @@ dependencies {
     // Glide para imágenes
     implementation("com.github.bumptech.glide:glide:4.16.0")
     kapt("com.github.bumptech.glide:compiler:4.16.0")
+    // uCrop - cropping interactivo de imágenes
+    implementation("com.github.yalantis:ucrop:2.2.9")
+
+    // Room - base de datos local (caché offline + grabación de rutas)
+    val roomVersion = "2.6.1"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    kapt("androidx.room:room-compiler:$roomVersion")
     // CircleImageView
     implementation("de.hdodenhof:circleimageview:3.1.0")
     //dataStore

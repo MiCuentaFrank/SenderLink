@@ -1,6 +1,7 @@
 const GroupMessage = require("../models/GroupMessage");
 const User = require("../models/User");
 const EventoGrupal = require("../models/EventoGrupal");
+const { sanitizeText } = require("../utils/sanitize");
 
 /**
  * ===========================================
@@ -45,12 +46,12 @@ async function sendMessage(req, res) {
       return fail(res, 403, "No autorizado: no puedes enviar mensajes en nombre de otro usuario");
     }
 
-    const textTrimmed = text.trim();
-    if (textTrimmed.length === 0) {
+    const textSanitized = sanitizeText(text.trim(), 500);
+    if (textSanitized.length === 0) {
       return fail(res, 400, "El mensaje no puede estar vacío");
     }
 
-    if (textTrimmed.length > 500) {
+    if (textSanitized.length > 500) {
       return fail(res, 400, "El mensaje no puede superar 500 caracteres");
     }
 
@@ -85,7 +86,7 @@ async function sendMessage(req, res) {
       senderUid: uid,
       senderName: user.nombre || "Usuario",
       senderPhoto: user.foto || "",
-      text: textTrimmed,
+      text: textSanitized,
       type: "TEXT"
     });
 

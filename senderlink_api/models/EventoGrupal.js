@@ -121,10 +121,11 @@ EventoGrupalSchema.index({ routeId: 1, fecha: -1 });
 // ===========================================
 // MIDDLEWARE: Generar chatId automático
 // ===========================================
-EventoGrupalSchema.pre("save", function () {
+EventoGrupalSchema.pre("save", function (next) {
   if (!this.chatId) {
     this.chatId = `evento_${this._id}_${Date.now()}`;
   }
+  next();
 });
 
 

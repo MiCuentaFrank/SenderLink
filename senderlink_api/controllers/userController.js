@@ -172,7 +172,13 @@ async function updateUserProfile(req, res) {
     if (safeBody.nombre) safeBody.nombre = sanitizeText(safeBody.nombre, 100);
     if (safeBody.bio) safeBody.bio = sanitizeText(safeBody.bio, 500);
 
-    const completion = calculateProfileCompletion(safeBody);
+    // Obtener datos actuales para calcular profileCompletion con datos completos
+    const currentUser = await User.findOne({ uid }).lean();
+    if (!currentUser) {
+      return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
+    }
+    const mergedData = { ...currentUser, ...safeBody };
+    const completion = calculateProfileCompletion(mergedData);
     safeBody.profileCompletion = completion;
 
     const user = await User.findOneAndUpdate(
@@ -237,6 +243,23 @@ async function uploadUserPhoto(req, res) {
   }
 }
 
+// Rangos por nivel
+const RANK_TITLES = [
+  { minLevel: 50, title: "Trail Master" },
+  { minLevel: 35, title: "Adventurer" },
+  { minLevel: 20, title: "Mountaineer" },
+  { minLevel: 10, title: "Trekker" },
+  { minLevel: 5, title: "Hiker" },
+  { minLevel: 1, title: "Explorer" }
+];
+
+function getRankTitle(level) {
+  for (const rank of RANK_TITLES) {
+    if (level >= rank.minLevel) return rank.title;
+  }
+  return "Explorer";
+}
+
 // AÑADIR XP y recalcular nivel (función interna, no expuesta como endpoint directo)
 async function addXp(uid, amount) {
   try {
@@ -244,8 +267,13 @@ async function addXp(uid, amount) {
     if (!user) return;
     const newXp = ((user.progreso && user.progreso.xp) || 0) + amount;
     const newLevel = Math.floor(newXp / 100) + 1;
+    const newRankTitle = getRankTitle(newLevel);
     await User.updateOne({ uid }, {
-      $set: { "progreso.xp": newXp, "progreso.level": newLevel }
+      $set: {
+        "progreso.xp": newXp,
+        "progreso.level": newLevel,
+        "progreso.rankTitle": newRankTitle
+      }
     });
   } catch (err) {
     console.error("addXp error:", err.message);

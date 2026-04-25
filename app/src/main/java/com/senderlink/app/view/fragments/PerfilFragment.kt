@@ -22,7 +22,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.senderlink.app.view.adapters.AchievementAdapter
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import android.app.Activity
+import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
+import com.yalantis.ucrop.UCrop
+import java.io.File
 import com.senderlink.app.R
 import com.senderlink.app.databinding.FragmentPerfilBinding
 import com.senderlink.app.model.Post
@@ -57,18 +63,33 @@ class PerfilFragment : Fragment() {
     private val communityRepo = CommunityRepository()
     private lateinit var achievementAdapter: AchievementAdapter
 
-    private val pickImageLauncher =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            if (uri != null) {
-                // ✅ 1) Preview inmediato
+    // Recibe el resultado del crop y sube a Firebase Storage
+    private val cropProfileLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val croppedUri = UCrop.getOutput(result.data ?: return@registerForActivityResult)
+                    ?: return@registerForActivityResult
                 Glide.with(this)
-                    .load(uri)
+                    .load(croppedUri)
                     .placeholder(R.drawable.bg_avatar_circle)
                     .error(R.drawable.bg_avatar_circle)
                     .into(binding.imgFotoPerfil)
+                uploadProfilePhotoToFirebase(croppedUri)
+            }
+        }
 
-                // ✅ 2) Subir al backend
-                viewModel.updateProfilePhoto(requireContext(), uri)
+    // Abre galería → lanza uCrop (1:1)
+    private val pickImageLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri != null) {
+                val destUri = Uri.fromFile(
+                    File(requireContext().cacheDir, "crop_profile_${System.currentTimeMillis()}.jpg")
+                )
+                val intent = UCrop.of(uri, destUri)
+                    .withAspectRatio(1f, 1f)
+                    .withMaxResultSize(512, 512)
+                    .getIntent(requireContext())
+                cropProfileLauncher.launch(intent)
             }
         }
 
@@ -94,6 +115,9 @@ class PerfilFragment : Fragment() {
 
         binding.btnEditFoto.setOnClickListener { pickImageLauncher.launch("image/*") }
         binding.imgFotoPerfil.setOnClickListener { pickImageLauncher.launch("image/*") }
+        binding.btnGrabarRuta.setOnClickListener {
+            findNavController().navigate(R.id.action_perfilFragment_to_createRouteFragment)
+        }
 
         setupMyPosts()
         setupMyRoutes()
@@ -480,6 +504,26 @@ class PerfilFragment : Fragment() {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         activity?.finish()
+    }
+
+    private fun uploadProfilePhotoToFirebase(uri: android.net.Uri) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val storageRef = Firebase.storage.reference
+        val fileRef = storageRef.child("profiles/$uid/photo_${System.currentTimeMillis()}.jpg")
+
+        fileRef.putFile(uri)
+            .continueWithTask { task ->
+                if (!task.isSuccessful) throw task.exception ?: RuntimeException("Upload failed")
+                fileRef.downloadUrl
+            }
+            .addOnSuccessListener { downloadUri ->
+                viewModel.updateProfilePhotoUrl(downloadUri.toString())
+            }
+            .addOnFailureListener {
+                if (!isAdded) return@addOnFailureListener
+                Toast.makeText(requireContext(), "Error subiendo foto", Toast.LENGTH_LONG).show()
+                viewModel.loadUserData() // revert preview
+            }
     }
 
     override fun onDestroyView() {

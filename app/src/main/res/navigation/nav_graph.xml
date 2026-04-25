@@ -58,11 +58,66 @@
             android:id="@+id/action_routeDetailFragment_to_nav_maps"
             app:destination="@id/nav_maps" />
 
-        <!-- ✅ MODIFICADO: Ahora navega a nav_comunidad en vez de rutasGrupalesFragment -->
         <action
             android:id="@+id/action_routeDetailFragment_to_nav_comunidad"
             app:destination="@id/nav_comunidad" />
 
+        <action
+            android:id="@+id/action_routeDetailFragment_to_activeTrackingFragment"
+            app:destination="@id/activeTrackingFragment"
+            app:enterAnim="@android:anim/slide_in_left"
+            app:exitAnim="@android:anim/slide_out_right"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
+
+    </fragment>
+
+    <!-- ========================= -->
+    <!-- SEGUIR RUTA (GPS activo) -->
+    <!-- ========================= -->
+    <fragment
+        android:id="@+id/activeTrackingFragment"
+        android:name="com.senderlink.app.view.fragments.ActiveTrackingFragment"
+        android:label="Siguiendo ruta"
+        tools:layout="@layout/fragment_active_tracking">
+
+        <argument
+            android:name="routeId"
+            app:argType="string" />
+    </fragment>
+
+    <!-- ========================= -->
+    <!-- GRABAR NUEVA RUTA -->
+    <!-- ========================= -->
+    <fragment
+        android:id="@+id/createRouteFragment"
+        android:name="com.senderlink.app.view.fragments.CreateRouteFragment"
+        android:label="Grabar ruta"
+        tools:layout="@layout/fragment_create_route">
+
+        <action
+            android:id="@+id/action_createRouteFragment_to_saveRouteFragment"
+            app:destination="@id/saveRouteFragment"
+            app:enterAnim="@android:anim/slide_in_left"
+            app:exitAnim="@android:anim/slide_out_right"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
+    </fragment>
+
+    <!-- ========================= -->
+    <!-- GUARDAR RUTA GRABADA -->
+    <!-- ========================= -->
+    <fragment
+        android:id="@+id/saveRouteFragment"
+        android:name="com.senderlink.app.view.fragments.SaveRouteFragment"
+        android:label="Guardar ruta"
+        tools:layout="@layout/fragment_save_route">
+
+        <action
+            android:id="@+id/action_saveRouteFragment_to_nav_perfil"
+            app:destination="@id/nav_perfil"
+            app:popUpTo="@id/nav_home"
+            app:popUpToInclusive="false" />
     </fragment>
 
 
@@ -181,6 +236,14 @@
         <action
             android:id="@+id/action_perfilFragment_to_misPublicacionesFragment"
             app:destination="@id/misPublicacionesFragment" />
+
+        <action
+            android:id="@+id/action_perfilFragment_to_createRouteFragment"
+            app:destination="@id/createRouteFragment"
+            app:enterAnim="@android:anim/slide_in_left"
+            app:exitAnim="@android:anim/slide_out_right"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
 
     </fragment>
 

@@ -223,11 +223,7 @@ async function getEventosByUser(req, res) {
       .sort({ fecha: -1 })
       .lean();
 
-    const eventosEnriquecidos = eventos.map((ev) => ({
-      ...ev,
-      isOrganizer: true,
-      isParticipant: false
-    }));
+    const eventosEnriquecidos = eventos.map((ev) => enrichEventWithFlags(ev, uid));
 
     return ok(res, eventosEnriquecidos);
   } catch (error) {

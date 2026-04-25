@@ -1,5 +1,6 @@
 package com.senderlink.app.view.fragments
 
+import android.app.Activity
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -19,6 +20,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
+import com.yalantis.ucrop.UCrop
+import java.io.File
 import com.senderlink.app.R
 import com.senderlink.app.databinding.FragmentComunidadBinding
 import com.senderlink.app.model.Post
@@ -42,10 +45,32 @@ class ComunidadFragment : Fragment() {
     // ✅ Foto seleccionada para el post
     private var selectedImageUri: Uri? = null
 
-    // ✅ Selector de imagen (galería)
+    // Callback para actualizar el preview del diálogo cuando se selecciona imagen
+    private var onImagePicked: ((Uri?) -> Unit)? = null
+
+    // Recibe el resultado del crop y actualiza el preview del diálogo
+    private val cropPostLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val croppedUri = UCrop.getOutput(result.data ?: return@registerForActivityResult)
+                    ?: return@registerForActivityResult
+                selectedImageUri = croppedUri
+                onImagePicked?.invoke(croppedUri)
+            }
+        }
+
+    // Abre galería → lanza uCrop (libre, sin ratio fijo)
     private val pickImage =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            selectedImageUri = uri
+            if (uri != null) {
+                val destUri = Uri.fromFile(
+                    File(requireContext().cacheDir, "crop_post_${System.currentTimeMillis()}.jpg")
+                )
+                val intent = UCrop.of(uri, destUri)
+                    .withMaxResultSize(1080, 1080)
+                    .getIntent(requireContext())
+                cropPostLauncher.launch(intent)
+            }
         }
 
     override fun onCreateView(
@@ -103,9 +128,6 @@ class ComunidadFragment : Fragment() {
     private fun refreshCurrentUserAvatar() {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        // Evitar crear nueva suscripción si ya existe una
-        if (avatarLiveData != null) return
-
         val liveData = userRepo.getUserByUid(uid)
         avatarLiveData = liveData
         liveData.observe(viewLifecycleOwner) { result ->
@@ -140,23 +162,20 @@ class ComunidadFragment : Fragment() {
             .setPositiveButton("Publicar", null)
             .create()
 
-        dialog.setOnShowListener {
-            val positiveBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-
-            fun refreshPreview() {
-                val uri = selectedImageUri
-                if (ivPreview != null) {
-                    if (uri != null) {
-                        ivPreview.isVisible = true
-                        ivPreview.setImageURI(uri)
-                    } else {
-                        ivPreview.isVisible = false
-                    }
+        // Callback que se invoca desde pickImage cuando el usuario selecciona imagen
+        onImagePicked = { uri ->
+            if (ivPreview != null) {
+                if (uri != null) {
+                    ivPreview.isVisible = true
+                    ivPreview.setImageURI(uri)
+                } else {
+                    ivPreview.isVisible = false
                 }
             }
+        }
 
-            refreshPreview()
-            dialog.window?.decorView?.postDelayed({ refreshPreview() }, 200)
+        dialog.setOnShowListener {
+            val positiveBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
 
             positiveBtn.setOnClickListener {
                 val text = et.text.toString().trim()
@@ -183,14 +202,10 @@ class ComunidadFragment : Fragment() {
                             viewModel.createPost(text, imageUrl)
                             dialog.dismiss()
                         },
-                        onError = { e ->
+                        onError = {
                             positiveBtn.isEnabled = true
                             btnAddPhoto?.isEnabled = true
-                            Toast.makeText(
-                                requireContext(),
-                                "Error subiendo foto: ${e.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
+                            Toast.makeText(requireContext(), "Error subiendo foto", Toast.LENGTH_LONG).show()
                         }
                     )
                 } else {
@@ -204,50 +219,26 @@ class ComunidadFragment : Fragment() {
 
         dialog.setOnDismissListener {
             selectedImageUri = null
+            onImagePicked = null
         }
-
-        dialog.window?.decorView?.postDelayed(object : Runnable {
-            override fun run() {
-                val iv = dialogView.findViewById<ImageView>(R.id.ivPostPreview)
-                val uri = selectedImageUri
-                if (iv != null) {
-                    if (uri != null && !iv.isVisible) {
-                        iv.isVisible = true
-                        iv.setImageURI(uri)
-                    } else if (uri != null) {
-                        iv.setImageURI(uri)
-                    }
-                }
-                if (dialog.isShowing) {
-                    dialog.window?.decorView?.postDelayed(this, 350)
-                }
-            }
-        }, 350)
     }
 
     private fun uploadPostImageToFirebase(
         uid: String,
         imageUri: Uri,
         onSuccess: (String) -> Unit,
-        onError: (Exception) -> Unit
+        onError: () -> Unit
     ) {
         val storageRef = Firebase.storage.reference
-        val filePath = "posts/$uid/${System.currentTimeMillis()}.jpg"
-        val fileRef = storageRef.child(filePath)
+        val fileRef = storageRef.child("posts/$uid/${System.currentTimeMillis()}.jpg")
 
         fileRef.putFile(imageUri)
             .continueWithTask { task ->
-                if (!task.isSuccessful) {
-                    throw task.exception ?: RuntimeException("Upload failed")
-                }
+                if (!task.isSuccessful) throw task.exception ?: RuntimeException("Upload failed")
                 fileRef.downloadUrl
             }
-            .addOnSuccessListener { downloadUri ->
-                onSuccess(downloadUri.toString())
-            }
-            .addOnFailureListener { e ->
-                onError(e)
-            }
+            .addOnSuccessListener { downloadUri -> onSuccess(downloadUri.toString()) }
+            .addOnFailureListener { onError() }
     }
 
     private fun showCommentsBottomSheet(post: Post) {
@@ -282,6 +273,7 @@ class ComunidadFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         avatarLiveData = null
+        onImagePicked = null
         _binding = null
     }
 }

@@ -259,6 +259,41 @@ data class GroupChatParticipantsData(
     val participantes: List<com.senderlink.app.model.Participante> = emptyList()
 )
 // ========================================
+// GRABACIÓN Y VERIFICACIÓN DE RUTAS
+// ========================================
+
+data class PointData(val lat: Double, val lng: Double)
+
+data class CreateRouteRequest(
+    val uid: String,
+    val name: String,
+    val description: String?,
+    val difficulty: String,
+    val points: List<PointData>,
+    val distanceKm: Double
+)
+
+data class CreateRouteApiResponse(
+    val ok: Boolean,
+    val message: String? = null,
+    val route: Route
+)
+
+data class CompleteRouteRequest(
+    val uid: String,
+    val durationMin: Int
+)
+
+data class CompleteRouteResponse(
+    val ok: Boolean,
+    val message: String? = null,
+    val xpGained: Int = 0,
+    val newXp: Int = 0,
+    val newLevel: Int = 1,
+    val newRankTitle: String = "Explorer"
+)
+
+// ========================================
 // RESPUESTA SUBIDA FOTO PERFIL
 // ========================================
 

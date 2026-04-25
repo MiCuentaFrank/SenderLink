@@ -1,5 +1,6 @@
 package com.senderlink.app.network
 
+import android.util.Log
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.GsonBuilder
@@ -53,12 +54,17 @@ object RetrofitClient {
                 val user = FirebaseAuth.getInstance().currentUser
                 if (user != null) {
                     try {
-                        val tokenResult = Tasks.await(user.getIdToken(false))
+                        // Intentar con token en caché primero; forzar refresh si el token es nulo
+                        var tokenResult = Tasks.await(user.getIdToken(false))
+                        if (tokenResult.token == null) {
+                            tokenResult = Tasks.await(user.getIdToken(true))
+                        }
                         tokenResult.token?.let { token ->
                             builder.header("Authorization", "Bearer $token")
-                        }
-                    } catch (_: Exception) {
-                        // Continuar sin token si falla
+                        } ?: Log.w("RetrofitClient", "No se pudo obtener token de Firebase")
+                    } catch (e: Exception) {
+                        Log.w("RetrofitClient", "Error obteniendo token Firebase: ${e.message}")
+                        // Continuar sin token; el servidor responderá 401 si el endpoint requiere auth
                     }
                 }
                 chain.proceed(builder.build())
