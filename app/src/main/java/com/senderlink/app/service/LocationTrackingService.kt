@@ -209,8 +209,7 @@ class LocationTrackingService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("SenderLink")
             .setContentText(content)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setOngoing(true)
+            .setSmallIcon(R.drawable.ic_maps)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }

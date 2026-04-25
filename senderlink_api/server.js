@@ -1,3 +1,7 @@
+// Forzar stdout/stderr sin buffer en Railway/Docker
+if (process.stdout._handle) process.stdout._handle.setBlocking(true);
+if (process.stderr._handle) process.stderr._handle.setBlocking(true);
+
 // 1) Importar dependencias
 
 const express = require("express");

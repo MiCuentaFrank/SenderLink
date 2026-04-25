@@ -33,9 +33,9 @@ class SaveRouteFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // Mostrar preview de stats
-        binding.tvDistancePreview.text = DistanceFormatter.format(viewModel.totalDistanceM.value / 1000.0)
-        binding.tvDurationPreview.text = formatTime(viewModel.elapsedSeconds.value)
-        binding.tvPointsPreview.text   = "${viewModel.trackPoints.value.size} pts GPS"
+        binding.tvSummaryDistance.text = DistanceFormatter.format(viewModel.totalDistanceM.value / 1000.0)
+        binding.tvSummaryDuration.text = formatTime(viewModel.elapsedSeconds.value)
+        binding.tvSummaryPoints.text   = "${viewModel.trackPoints.value.size} pts GPS"
 
         // Spinner de dificultad
         val difficulties = listOf("FACIL", "MODERADA", "DIFICIL")
@@ -72,9 +72,9 @@ class SaveRouteFragment : Fragment() {
     }
 
     private fun saveRoute() {
-        val name = binding.etName.text?.toString()?.trim() ?: ""
+        val name = binding.etRouteName.text?.toString()?.trim() ?: ""
         if (name.isEmpty()) {
-            binding.etName.error = "El nombre es obligatorio"
+            binding.etRouteName.error = "El nombre es obligatorio"
             return
         }
 
@@ -85,7 +85,7 @@ class SaveRouteFragment : Fragment() {
         }
 
         val difficulty  = binding.spinnerDifficulty.selectedItem.toString()
-        val description = binding.etDescription.text?.toString()?.trim() ?: ""
+        val description = binding.etRouteDescription.text?.toString()?.trim() ?: ""
 
         viewModel.createRoute(uid, name, description, difficulty)
     }
