@@ -61,7 +61,20 @@ function resolveImageUrl(req, img) {
     return img.replace("http://", "https://");
   }
 
-  // 5) Cualquier otra URL (Unsplash, Firebase Storage, etc.)
+  // 5) Firebase Storage → proxy via backend (evita 403 por App Check)
+  if (img.includes("firebasestorage.googleapis.com")) {
+    try {
+      const u = new URL(img);
+      // Extrae el path de /v0/b/{bucket}/o/{encoded-path}
+      const match = u.pathname.match(/^\/v0\/b\/[^/]+\/o\/(.+)$/);
+      if (match) {
+        const storagePath = decodeURIComponent(match[1]);
+        return `${buildBaseUrl(req)}/api/photos/storage?path=${encodeURIComponent(storagePath)}`;
+      }
+    } catch (_) { /* mantener URL original si no se puede parsear */ }
+  }
+
+  // 6) Cualquier otra URL (Unsplash, etc.)
   return img;
 }
 

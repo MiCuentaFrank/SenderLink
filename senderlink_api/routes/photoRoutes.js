@@ -1,5 +1,6 @@
 const express = require("express");
 const axios = require("axios");
+const admin = require("../middleware/firebaseAdmin");
 
 const router = express.Router();
 
@@ -54,6 +55,58 @@ router.get("/places", async (req, res) => {
     const status = err.response?.status || 500;
     console.error("Photo proxy error:", status);
     res.status(status).json({ ok: false, message: "No se pudo cargar la foto" });
+  }
+});
+
+// GET /api/photos/storage?path=uploads/routes/filename.jpg
+// Proxy para Firebase Storage — evita 403 por App Check / reglas de seguridad.
+// El Admin SDK tiene acceso completo sin necesitar App Check.
+router.get("/storage", async (req, res) => {
+  const storagePath = req.query.path;
+
+  if (!storagePath || typeof storagePath !== "string") {
+    return res.status(400).json({ ok: false, message: "Falta path" });
+  }
+
+  // Validar: solo caracteres seguros, sin path traversal
+  if (
+    storagePath.length > 500 ||
+    storagePath.includes("..") ||
+    !/^[a-zA-Z0-9/_\-.]+$/.test(storagePath)
+  ) {
+    return res.status(400).json({ ok: false, message: "Path inválido" });
+  }
+
+  try {
+    const bucket = admin.storage().bucket();
+    const file = bucket.file(storagePath);
+
+    const [exists] = await file.exists();
+    if (!exists) {
+      return res.status(404).json({ ok: false, message: "Archivo no encontrado" });
+    }
+
+    const [metadata] = await file.getMetadata();
+    const contentType = metadata.contentType || "image/jpeg";
+
+    if (!contentType.startsWith("image/")) {
+      return res.status(403).json({ ok: false, message: "Solo se permiten imágenes" });
+    }
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400"); // 24h
+
+    file.createReadStream()
+      .on("error", (streamErr) => {
+        console.error("Storage stream error:", streamErr.message);
+        if (!res.headersSent) {
+          res.status(500).json({ ok: false, message: "Error al cargar el archivo" });
+        }
+      })
+      .pipe(res);
+  } catch (err) {
+    console.error("Storage proxy error:", err.message);
+    res.status(500).json({ ok: false, message: "Error al cargar el archivo" });
   }
 });
 
