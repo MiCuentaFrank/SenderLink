@@ -26,6 +26,7 @@ import com.senderlink.app.R
 import com.senderlink.app.databinding.FragmentComunidadBinding
 import com.senderlink.app.model.Post
 import com.senderlink.app.repository.UserRepository
+import com.senderlink.app.utils.UserManager
 import com.senderlink.app.view.adapters.CommentAdapter
 import com.senderlink.app.view.adapters.PostAdapter
 import com.senderlink.app.viewmodel.ComunidadViewModel
@@ -37,10 +38,6 @@ class ComunidadFragment : Fragment() {
 
     private val viewModel: ComunidadViewModel by viewModels()
     private lateinit var adapter: PostAdapter
-
-    // Para refrescar avatar del usuario actual
-    private val userRepo = UserRepository()
-    private var avatarLiveData: androidx.lifecycle.LiveData<UserRepository.Result<com.senderlink.app.model.User>>? = null
 
     // ✅ Foto seleccionada para el post
     private var selectedImageUri: Uri? = null
@@ -111,33 +108,12 @@ class ComunidadFragment : Fragment() {
         // ✅ 1) Carga posts
         viewModel.loadPosts()
 
-        // ✅ 2) Aplica foto actual del usuario al adapter (para refrescar cards)
-        refreshCurrentUserAvatar()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // ✅ Cuando vuelves desde Perfil tras cambiar foto, aquí se refresca
-        refreshCurrentUserAvatar()
-    }
-
-    /**
-     * Pide el usuario actual al backend y fuerza el avatar en las cards de comunidad.
-     * Reutiliza el mismo LiveData para evitar observer leaks en onResume.
-     */
-    private fun refreshCurrentUserAvatar() {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
-
-        val liveData = userRepo.getUserByUid(uid)
-        avatarLiveData = liveData
-        liveData.observe(viewLifecycleOwner) { result ->
-            when (result) {
-                is UserRepository.Result.Success -> {
-                    val photoUrl = result.data.foto
-                    adapter.setCurrentUserPhotoUrl(photoUrl, uid)
-                }
-                is UserRepository.Result.Error -> { }
-                is UserRepository.Result.Loading -> { }
+        // ✅ 2) Aplica foto actual del usuario al adapter — usa caché de UserManager,
+        //    se actualiza automáticamente si el usuario cambia su foto en otro fragment.
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid != null) {
+            UserManager.getInstance().currentUser.observe(viewLifecycleOwner) { user ->
+                adapter.setCurrentUserPhotoUrl(user?.foto, uid)
             }
         }
     }
@@ -272,7 +248,6 @@ class ComunidadFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        avatarLiveData = null
         onImagePicked = null
         _binding = null
     }

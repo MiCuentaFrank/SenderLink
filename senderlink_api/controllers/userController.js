@@ -1,4 +1,8 @@
 const User = require("../models/User");
+const Post = require("../models/Post");
+const Comment = require("../models/Comment");
+const Message = require("../models/Message");
+const EventoGrupal = require("../models/EventoGrupal");
 const { sanitizeText } = require("../utils/sanitize");
 
 // CREAR USUARIO
@@ -10,6 +14,14 @@ async function createUser(req, res) {
       return res.status(400).json({
         ok: false,
         message: "UID y email son obligatorios"
+      });
+    }
+
+    // Auth: solo puedes crear tu propio documento de usuario
+    if (req.uid !== uid) {
+      return res.status(403).json({
+        ok: false,
+        message: "No autorizado: no puedes crear un usuario con un UID ajeno"
       });
     }
 
@@ -42,10 +54,12 @@ async function createUser(req, res) {
   }
 }
 
-// OBTENER TODOS LOS USUARIOS
+// OBTENER TODOS LOS USUARIOS (solo campos públicos)
 async function getUsers(req, res) {
   try {
-    const users = await User.find().select("-__v").sort({ createdAt: -1 });
+    const users = await User.find()
+      .select("uid nombre foto comunidad provincia progreso badges stats createdAt")
+      .sort({ createdAt: -1 });
 
     res.json({
       ok: true,
@@ -335,6 +349,42 @@ async function deleteUser(req, res) {
         message: "Usuario no encontrado"
       });
     }
+
+    // Limpiar datos asociados al usuario eliminado
+    // 1. Comentarios en posts de otros → decrementar commentsCount antes de borrar
+    const commentsOnOthers = await Comment.find({ uid }).select("postId").lean();
+    if (commentsOnOthers.length > 0) {
+      const countByPost = {};
+      for (const c of commentsOnOthers) {
+        const id = c.postId.toString();
+        countByPost[id] = (countByPost[id] || 0) + 1;
+      }
+      await Promise.all(
+        Object.entries(countByPost).map(([postId, count]) =>
+          Post.updateOne({ _id: postId }, { $inc: { commentsCount: -count } })
+        )
+      );
+      await Comment.deleteMany({ uid });
+    }
+
+    // 2. Posts propios y sus comentarios
+    const userPostIds = await Post.find({ uid }).distinct("_id");
+    if (userPostIds.length > 0) {
+      await Comment.deleteMany({ postId: { $in: userPostIds } });
+      await Post.deleteMany({ uid });
+    }
+
+    // 3. Mensajes directos (enviados y recibidos)
+    await Message.deleteMany({ $or: [{ remitenteUid: uid }, { destinatarioUid: uid }] });
+
+    // 4. Eliminar de eventos grupales como participante (no como organizador;
+    //    los eventos organizados quedan visibles con los participantes restantes)
+    await EventoGrupal.updateMany(
+      { "participantes.uid": uid, organizadorUid: { $ne: uid } },
+      { $pull: { participantes: { uid } } }
+    );
+
+    // Nota: las rutas creadas por el usuario se conservan (contenido de la comunidad)
 
     res.json({
       ok: true,

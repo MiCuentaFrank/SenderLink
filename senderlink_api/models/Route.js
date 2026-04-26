@@ -110,7 +110,14 @@ const RouteSchema = new mongoose.Schema(
     // ============================
     geometry: {
       type: Object, // GeoJSON LineString
-      required: true
+      required: true,
+      validate: {
+        validator: (v) =>
+          v && v.type === "LineString" &&
+          Array.isArray(v.coordinates) &&
+          v.coordinates.length >= 2,
+        message: "geometry debe ser un GeoJSON LineString válido con al menos 2 puntos"
+      }
     },
 
     // ============================

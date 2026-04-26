@@ -351,6 +351,11 @@
             app:argType="string"
             android:defaultValue="" />
 
+        <argument
+            android:name="otherFoto"
+            app:argType="string"
+            android:defaultValue="" />
+
     </fragment>
 
 

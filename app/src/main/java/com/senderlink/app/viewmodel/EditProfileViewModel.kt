@@ -50,10 +50,11 @@ class EditProfileViewModel : ViewModel() {
         }
 
         val uid = currentUser.uid
-        _loadUserTrigger.value = uid
 
-        // Eliminar observer anterior
+        // Eliminar observer anterior ANTES de cambiar el trigger
         userResultObserver?.let { userResult.removeObserver(it) }
+
+        _loadUserTrigger.value = uid
 
         val observer = Observer<UserRepository.Result<User>> { result ->
             when (result) {

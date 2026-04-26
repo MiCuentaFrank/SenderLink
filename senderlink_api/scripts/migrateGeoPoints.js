@@ -1,6 +1,6 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const Route = require("./models/Route"); // ajusta si hace falta
+const Route = require("../models/Route");
 
 function toGeoFromLegacy(point) {
   if (!point) return null;

@@ -55,8 +55,16 @@ async function getMessages(req, res) {
     const { chatId } = req.params;
 
     // Auth: verificar que el usuario pertenece al chat por el formato del chatId (uid1_uid2)
+    // El chatId debe ser exactamente dos UIDs separados por "_"; ningún UID contiene "_".
+    if (!chatId || typeof chatId !== "string" || chatId.length > 200) {
+      return res.status(400).json({ ok: false, message: "chatId inválido" });
+    }
     const parts = chatId.split("_");
-    if (!parts.includes(req.uid)) {
+    if (
+      parts.length !== 2 ||
+      !parts.every(p => /^[a-zA-Z0-9]{20,40}$/.test(p)) ||
+      !parts.includes(req.uid)
+    ) {
       return res.status(403).json({
         ok: false,
         message: "No autorizado: no perteneces a este chat"

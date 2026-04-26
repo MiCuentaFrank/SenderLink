@@ -49,7 +49,10 @@ class DirectChatFragment : Fragment() {
     }
 
     private fun setupRecycler(currentUid: String) {
-        adapter = DirectMessageAdapter { currentUid }
+        adapter = DirectMessageAdapter(
+            currentUidProvider = { currentUid },
+            otherFoto = args.otherFoto.ifBlank { null }
+        )
 
         binding.recyclerMessages.apply {
             layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }

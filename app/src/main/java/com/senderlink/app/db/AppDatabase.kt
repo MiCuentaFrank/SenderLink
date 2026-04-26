@@ -20,7 +20,12 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "senderlink_db"
-                ).fallbackToDestructiveMigration().build().also { INSTANCE = it }
+                )
+                // TrackPoint y Route son solo caché local: perder datos en un cambio de
+                // esquema es aceptable (se re-sincronizan desde el servidor).
+                // En producción con datos de usuario valiosos, usar addMigrations(...).
+                .fallbackToDestructiveMigration()
+                .build().also { INSTANCE = it }
             }
     }
 }

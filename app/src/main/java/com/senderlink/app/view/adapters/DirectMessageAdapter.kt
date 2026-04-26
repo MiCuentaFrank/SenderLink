@@ -5,12 +5,15 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.senderlink.app.R
 import com.senderlink.app.databinding.ItemGroupMessageMineBinding
 import com.senderlink.app.databinding.ItemGroupMessageOtherBinding
 import com.senderlink.app.model.DirectMessage
 
 class DirectMessageAdapter(
-    private val currentUidProvider: () -> String?
+    private val currentUidProvider: () -> String?,
+    private val otherFoto: String? = null
 ) : ListAdapter<DirectMessage, RecyclerView.ViewHolder>(DIFF) {
 
     companion object {
@@ -59,7 +62,16 @@ class DirectMessageAdapter(
             b.tvName.text = ""
             b.tvMessage.text = msg.texto
             b.tvTime.text = formatTime(msg.createdAt)
-            b.imgAvatar.setImageResource(android.R.drawable.ic_menu_myplaces)
+            if (!otherFoto.isNullOrBlank()) {
+                Glide.with(b.imgAvatar)
+                    .load(otherFoto)
+                    .placeholder(R.drawable.perfilsenderista)
+                    .error(R.drawable.perfilsenderista)
+                    .circleCrop()
+                    .into(b.imgAvatar)
+            } else {
+                b.imgAvatar.setImageResource(R.drawable.perfilsenderista)
+            }
         }
     }
 }

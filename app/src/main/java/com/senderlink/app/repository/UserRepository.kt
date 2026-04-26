@@ -150,7 +150,8 @@ class UserRepository {
         val inputStream = contentResolver.openInputStream(uri)
             ?: throw IllegalArgumentException("No se pudo abrir el Uri de la imagen")
 
-        val tempFile = File(context.cacheDir, "profile_${System.currentTimeMillis()}.jpg")
+        // Nombre fijo para que no se acumulen archivos temporales en cache
+        val tempFile = File(context.cacheDir, "profile_upload_temp.jpg")
 
         FileOutputStream(tempFile).use { output ->
             inputStream.use { input ->

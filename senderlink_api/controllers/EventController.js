@@ -79,10 +79,14 @@ async function createEvento(req, res) {
       return fail(res, 404, "Ruta no encontrada");
     }
 
-    // Verificar que la fecha sea futura
+    // Verificar que la fecha sea futura (al menos 1h para absorber diferencias de zona horaria)
     const fechaEvento = new Date(fecha);
-    if (fechaEvento <= new Date()) {
-      return fail(res, 400, "La fecha del evento debe ser futura");
+    if (isNaN(fechaEvento.getTime())) {
+      return fail(res, 400, "Fecha inválida");
+    }
+    const unaHoraDesdeAhora = new Date(Date.now() + 60 * 60 * 1000);
+    if (fechaEvento <= unaHoraDesdeAhora) {
+      return fail(res, 400, "La fecha del evento debe ser al menos 1 hora en el futuro");
     }
 
     const descripcionSanitizada = descripcion ? sanitizeText(descripcion, 2000) : "";
@@ -309,7 +313,7 @@ async function joinEvento(req, res) {
     );
 
     if (!eventoActualizado) {
-      return fail(res, 400, "El evento está completo");
+      return fail(res, 400, "No es posible unirse al evento (puede estar completo o no disponible)");
     }
 
     if (eventoActualizado.participantes.length >= eventoActualizado.maxParticipantes) {

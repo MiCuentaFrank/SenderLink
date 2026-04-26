@@ -44,7 +44,8 @@ class ConversationsFragment : Fragment() {
                 .actionConversationsFragmentToDirectChatFragment(
                     chatId = conv.chatId,
                     otherUid = conv.otherUid,
-                    otherNombre = conv.otherNombre
+                    otherNombre = conv.otherNombre,
+                    otherFoto = conv.otherFoto
                 )
             findNavController().navigate(action)
         }

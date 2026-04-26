@@ -55,9 +55,10 @@ object RetrofitClient {
                 if (user != null) {
                     try {
                         // Intentar con token en caché primero; forzar refresh si el token es nulo
-                        var tokenResult = Tasks.await(user.getIdToken(false))
+                        // Timeout de 10s para evitar bloquear el hilo indefinidamente
+                        var tokenResult = Tasks.await(user.getIdToken(false), 10, TimeUnit.SECONDS)
                         if (tokenResult.token == null) {
-                            tokenResult = Tasks.await(user.getIdToken(true))
+                            tokenResult = Tasks.await(user.getIdToken(true), 10, TimeUnit.SECONDS)
                         }
                         tokenResult.token?.let { token ->
                             builder.header("Authorization", "Bearer $token")

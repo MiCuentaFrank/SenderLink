@@ -33,8 +33,9 @@ async function sendMessage(req, res) {
     const { uid, text } = req.body;
 
     // 1️⃣ VALIDACIONES BÁSICAS
-    if (!chatId) {
-      return fail(res, 400, "chatId es obligatorio");
+    if (!chatId || typeof chatId !== "string" || chatId.length > 200 ||
+        !/^[a-zA-Z0-9_-]+$/.test(chatId)) {
+      return fail(res, 400, "chatId inválido");
     }
 
     if (!uid || !text) {
@@ -110,8 +111,9 @@ async function getMessages(req, res) {
     const limit = Math.min(parseInt(req.query.limit || "50", 10), 100);
 
     // 1️⃣ VALIDAR CHAT ID
-    if (!chatId) {
-      return fail(res, 400, "chatId es obligatorio");
+    if (!chatId || typeof chatId !== "string" || chatId.length > 200 ||
+        !/^[a-zA-Z0-9_-]+$/.test(chatId)) {
+      return fail(res, 400, "chatId inválido");
     }
 
     // 2️⃣ VERIFICAR QUE EL EVENTO (CHAT) EXISTE

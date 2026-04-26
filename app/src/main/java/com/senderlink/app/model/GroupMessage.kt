@@ -40,9 +40,10 @@ data class GroupMessage(
 
     fun getFormattedTime(): String {
         return try {
+            if (createdAt.length < 16) return ""
             createdAt.substring(11, 16) // "2026-01-21T14:30:00.000Z" → "14:30"
         } catch (e: Exception) {
-            "00:00"
+            ""
         }
     }
 

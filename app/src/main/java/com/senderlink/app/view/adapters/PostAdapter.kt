@@ -3,6 +3,7 @@ package com.senderlink.app.view.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.signature.ObjectKey
@@ -86,8 +87,16 @@ class PostAdapter(
     override fun getItemCount() = items.size
 
     fun submitList(newItems: List<Post>) {
+        val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize() = items.size
+            override fun getNewListSize() = newItems.size
+            override fun areItemsTheSame(oldPos: Int, newPos: Int) =
+                items[oldPos].id == newItems[newPos].id
+            override fun areContentsTheSame(oldPos: Int, newPos: Int) =
+                items[oldPos] == newItems[newPos]
+        })
         items = newItems
-        notifyDataSetChanged()
+        diffResult.dispatchUpdatesTo(this)
     }
 
     /**
@@ -97,6 +106,9 @@ class PostAdapter(
     fun setCurrentUserPhotoUrl(url: String?, uid: String? = null) {
         currentUserPhotoUrl = url?.trim()
         if (uid != null) currentUserUid = uid
-        notifyDataSetChanged()
+        // Solo rebindear los posts del usuario actual, no toda la lista
+        items.forEachIndexed { index, post ->
+            if (post.uid == currentUserUid) notifyItemChanged(index)
+        }
     }
 }

@@ -468,21 +468,23 @@ async function getRoutesNearMe(req, res) {
       .limit(limitFinal)
       .lean();
 
-    const routesForClient = nearbyRoutes.map((r) => {
-      const out = { ...r };
+    const routesForClient = nearbyRoutes
+      .filter(r => r.startPointGeo && r.endPointGeo) // omitir rutas con coordenadas nulas
+      .map((r) => {
+        const out = { ...r };
 
-      // Android espera startPoint/endPoint
-      out.startPoint = out.startPointGeo || null;
-      out.endPoint = out.endPointGeo || null;
+        // Android espera startPoint/endPoint
+        out.startPoint = out.startPointGeo;
+        out.endPoint = out.endPointGeo;
 
-      delete out.startPointGeo;
-      delete out.endPointGeo;
+        delete out.startPointGeo;
+        delete out.endPointGeo;
 
-      // ✅ Resolver imágenes también aquí
-      resolveRouteImages(req, out);
+        // ✅ Resolver imágenes también aquí
+        resolveRouteImages(req, out);
 
-      return out;
-    });
+        return out;
+      });
 
     console.log(`✅ Encontradas: ${routesForClient.length} rutas`);
 

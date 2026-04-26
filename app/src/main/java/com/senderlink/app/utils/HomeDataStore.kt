@@ -1,6 +1,7 @@
 package com.senderlink.app.utils
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -72,7 +73,8 @@ object HomeDataStore {
             val json = loadRecentsJson(context)
             val type = object : TypeToken<List<Route>>() {}.type
             gson.fromJson<List<Route>>(json, type) ?: emptyList()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("HomeDataStore", "Error leyendo rutas recientes: ${e.message}")
             emptyList()
         }
     }
@@ -87,8 +89,8 @@ object HomeDataStore {
             // Limitar tamaño
             val trimmed = current.take(MAX_RECENTS)
             saveRecentsJson(context, gson.toJson(trimmed))
-        } catch (_: Exception) {
-            // Silenciar errores de serialización
+        } catch (e: Exception) {
+            Log.w("HomeDataStore", "Error guardando ruta reciente: ${e.message}")
         }
     }
 
