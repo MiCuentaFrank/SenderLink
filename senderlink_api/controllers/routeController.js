@@ -50,12 +50,18 @@ function resolveImageUrl(req, img) {
     return toProxyUrl(req, ref, 1200);
   }
 
-  // 3) URL local del servidor
+  // 3) URL local del servidor (ruta relativa)
   if (img.startsWith("/uploads/")) {
     return `${buildBaseUrl(req)}${img}`;
   }
 
-  // 4) Cualquier otra URL (Unsplash, etc.)
+  // 4) URL http:// propia del servidor → forzar https://
+  const host = req.get("host");
+  if (img.startsWith(`http://${host}`)) {
+    return img.replace("http://", "https://");
+  }
+
+  // 5) Cualquier otra URL (Unsplash, Firebase Storage, etc.)
   return img;
 }
 
@@ -246,6 +252,11 @@ async function getRoutes(req, res) {
     const skip = (pageFinal - 1) * limitFinal;
 
     let routes = await Route.find(filtro)
+      .select(
+        "_id type source name description coverImage images distanceKm durationMin difficulty " +
+        "startLocality comunidad provincia parqueNacional featured startPoint endPoint " +
+        "startPointGeo endPointGeo code externalId uid createdAt updatedAt"
+      )
       .sort({ featured: -1, createdAt: -1 })
       .skip(skip)
       .limit(limitFinal)
@@ -328,6 +339,11 @@ async function getAllRoutesForMap(req, res) {
     const skip = (pageFinal - 1) * limitFinal;
 
     let routes = await Route.find(filtro)
+      .select(
+        "_id type source name description coverImage images distanceKm durationMin difficulty " +
+        "startLocality comunidad provincia parqueNacional featured startPoint endPoint " +
+        "startPointGeo endPointGeo code externalId uid createdAt updatedAt"
+      )
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitFinal)

@@ -264,9 +264,8 @@ async function deletePost(req, res) {
 // POST /api/community/posts/upload-image  (multipart: field "image")
 async function uploadPostImage(req, res) {
   try {
-    if (!req.file) return fail(res, 400, "No se recibió ninguna imagen");
-    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/posts/${req.file.filename}`;
-    return ok(res, { imageUrl }, "Imagen subida");
+    if (!req.firebaseImageUrl) return fail(res, 400, "No se recibió ninguna imagen");
+    return ok(res, { imageUrl: req.firebaseImageUrl }, "Imagen subida");
   } catch (e) {
     console.error("uploadPostImage error:", e.message);
     return fail(res, 500, "Error subiendo imagen");

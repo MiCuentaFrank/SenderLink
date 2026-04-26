@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
+const { uploadToFirebase } = require("../utils/firebaseStorage");
 
 const {
   listPosts,
@@ -17,17 +18,10 @@ const {
 // Extensiones de imagen permitidas
 const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
 
-// Multer para fotos de posts
-const postImageStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/posts"),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname || ".jpg").toLowerCase();
-    cb(null, `post_${Date.now()}${ext}`);
-  }
-});
+// Multer — memoria (Firebase Storage)
 const uploadPostMulter = multer({
-  storage: postImageStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB máximo
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (!file.mimetype || !file.mimetype.startsWith("image/")) {
       return cb(new Error("Solo se permiten imágenes"));
@@ -40,10 +34,24 @@ const uploadPostMulter = multer({
   }
 });
 
+async function uploadPostToFirebase(req, res, next) {
+  if (!req.file) return next();
+  try {
+    const ext = path.extname(req.file.originalname || ".jpg").toLowerCase() || ".jpg";
+    const destPath = `uploads/posts/post_${Date.now()}${ext}`;
+    const url = await uploadToFirebase(req.file.buffer, destPath, req.file.mimetype);
+    req.firebaseImageUrl = url;
+    next();
+  } catch (err) {
+    console.error("Error subiendo imagen de post a Firebase:", err.message);
+    res.status(500).json({ ok: false, message: "Error al subir la imagen" });
+  }
+}
+
 // Posts
 router.get("/posts", listPosts);
 router.get("/posts/user/:uid", listPostsByUser);
-router.post("/posts/upload-image", uploadPostMulter.single("image"), uploadPostImage);
+router.post("/posts/upload-image", uploadPostMulter.single("image"), uploadPostToFirebase, uploadPostImage);
 router.post("/posts", createPost);
 router.post("/posts/:postId/like", toggleLike);
 router.delete("/posts/:postId", deletePost);

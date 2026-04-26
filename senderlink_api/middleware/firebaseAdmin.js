@@ -10,11 +10,16 @@ if (!admin.apps.length) {
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     const privateKey  = process.env.FIREBASE_PRIVATE_KEY;
 
+    const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
+
     if (b64) {
       const serviceAccount = JSON.parse(
         Buffer.from(b64.replace(/\s+/g, ""), "base64").toString("utf8")
       );
-      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        ...(storageBucket && { storageBucket })
+      });
       console.log("✅ Firebase Admin inicializado (B64)");
 
     } else if (projectId && clientEmail && privateKey) {
@@ -24,7 +29,8 @@ if (!admin.apps.length) {
           clientEmail,
           // Railway escapa los \n como \\n — los restauramos
           privateKey: privateKey.replace(/\\n/g, "\n")
-        })
+        }),
+        ...(storageBucket && { storageBucket })
       });
       console.log("✅ Firebase Admin inicializado (variables individuales)");
 

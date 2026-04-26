@@ -213,12 +213,11 @@ async function uploadUserPhoto(req, res) {
       return res.status(403).json({ ok: false, message: "No autorizado" });
     }
 
-    if (!req.file) {
+    if (!req.firebasePhotoUrl) {
       return res.status(400).json({ ok: false, message: "No se recibió ninguna imagen" });
     }
 
-    // URL pública del archivo
-    const photoUrl = `${req.protocol}://${req.get("host")}/uploads/users/${req.file.filename}`;
+    const photoUrl = req.firebasePhotoUrl;
 
     const user = await User.findOneAndUpdate(
       { uid },
