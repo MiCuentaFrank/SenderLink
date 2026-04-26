@@ -379,7 +379,7 @@ class RouteDetailFragment : Fragment() {
                 putFloat("endLng", route.getEndLng().toFloat())
                 putFloat("distanceKm", route.distanceKm.toFloat())
                 putString("difficulty", route.difficulty)
-                routePointsArray?.let { putDoubleArray("routePoints", it) }
+                routePointsArray?.let { putFloatArray("routePoints", it.map { v -> v.toFloat() }.toFloatArray()) }
             }
 
             findNavController().navigate(R.id.nav_maps, bundle)

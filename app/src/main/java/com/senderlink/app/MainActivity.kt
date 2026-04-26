@@ -45,6 +45,9 @@ class MainActivity : AppCompatActivity() {
             }
             .addOnFailureListener { e ->
                 Log.e("MainActivity", "❌ Error refrescando token Firebase: ${e.message}")
+                // Intentar con el token en caché aunque el refresh haya fallado
+                UserManager.getInstance().loadCurrentUser()
+                SyncChecker.verifyAndFixIfNeeded()
             }
     }
 

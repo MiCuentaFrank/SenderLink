@@ -801,20 +801,20 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
     private fun getArgumentsData() {
         arguments?.let { args ->
             routeName = args.getString("routeName")
-            startLat = args.getDouble("startLat", 0.0)
-            startLng = args.getDouble("startLng", 0.0)
-            endLat = args.getDouble("endLat", 0.0)
-            endLng = args.getDouble("endLng", 0.0)
+            startLat = args.getFloat("startLat", 0f).toDouble()
+            startLng = args.getFloat("startLng", 0f).toDouble()
+            endLat = args.getFloat("endLat", 0f).toDouble()
+            endLng = args.getFloat("endLng", 0f).toDouble()
             difficultyFromArgs = args.getString("difficulty")
 
-            val pointsArray = args.getDoubleArray("routePoints")
+            val pointsArray = args.getFloatArray("routePoints")
             if (pointsArray != null && pointsArray.size >= 2) {
                 routePoints = ArrayList()
                 for (i in pointsArray.indices step 2) {
                     routePoints?.add(
                         LatLng(
-                            pointsArray[i],
-                            pointsArray[i + 1]
+                            pointsArray[i].toDouble(),
+                            pointsArray[i + 1].toDouble()
                         )
                     )
                 }
