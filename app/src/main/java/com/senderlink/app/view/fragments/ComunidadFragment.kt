@@ -18,12 +18,16 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
+import com.senderlink.app.network.UploadPostImageResponse
+import com.senderlink.app.repository.CommunityRepository
 import com.yalantis.ucrop.UCrop
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.io.File
 import com.senderlink.app.R
 import com.senderlink.app.databinding.FragmentComunidadBinding
+import com.senderlink.app.view.FixedUCropActivity
 import com.senderlink.app.model.Post
 import com.senderlink.app.repository.UserRepository
 import com.senderlink.app.utils.UserManager
@@ -38,6 +42,8 @@ class ComunidadFragment : Fragment() {
 
     private val viewModel: ComunidadViewModel by viewModels()
     private lateinit var adapter: PostAdapter
+    private val communityRepo = CommunityRepository()
+    private val userRepo = UserRepository()
 
     // ✅ Foto seleccionada para el post
     private var selectedImageUri: Uri? = null
@@ -63,9 +69,11 @@ class ComunidadFragment : Fragment() {
                 val destUri = Uri.fromFile(
                     File(requireContext().cacheDir, "crop_post_${System.currentTimeMillis()}.jpg")
                 )
+                val ctx = requireContext()
                 val intent = UCrop.of(uri, destUri)
                     .withMaxResultSize(1080, 1080)
-                    .getIntent(requireContext())
+                    .getIntent(ctx)
+                intent.setClass(ctx, FixedUCropActivity::class.java)
                 cropPostLauncher.launch(intent)
             }
         }
@@ -125,6 +133,7 @@ class ComunidadFragment : Fragment() {
         val et = dialogView.findViewById<EditText>(R.id.etPostText)
         val btnAddPhoto = dialogView.findViewById<TextView>(R.id.btnAddPhoto)
         val ivPreview = dialogView.findViewById<ImageView>(R.id.ivPostPreview)
+        val layoutUploadLoading = dialogView.findViewById<View>(R.id.layoutUploadLoading)
 
         ivPreview?.isVisible = false
 
@@ -170,15 +179,17 @@ class ComunidadFragment : Fragment() {
                 if (uri != null) {
                     positiveBtn.isEnabled = false
                     btnAddPhoto?.isEnabled = false
+                    layoutUploadLoading?.visibility = View.VISIBLE
 
-                    uploadPostImageToFirebase(
-                        uid = uid,
+                    uploadPostImageToBackend(
                         imageUri = uri,
                         onSuccess = { imageUrl ->
+                            layoutUploadLoading?.visibility = View.GONE
                             viewModel.createPost(text, imageUrl)
                             dialog.dismiss()
                         },
                         onError = {
+                            layoutUploadLoading?.visibility = View.GONE
                             positiveBtn.isEnabled = true
                             btnAddPhoto?.isEnabled = true
                             Toast.makeText(requireContext(), "Error subiendo foto", Toast.LENGTH_LONG).show()
@@ -199,22 +210,33 @@ class ComunidadFragment : Fragment() {
         }
     }
 
-    private fun uploadPostImageToFirebase(
-        uid: String,
+    private fun uploadPostImageToBackend(
         imageUri: Uri,
         onSuccess: (String) -> Unit,
         onError: () -> Unit
     ) {
-        val storageRef = Firebase.storage.reference
-        val fileRef = storageRef.child("posts/$uid/${System.currentTimeMillis()}.jpg")
+        val imagePart = try {
+            userRepo.buildPhotoPartFromUri(requireContext(), imageUri, fieldName = "image")
+        } catch (e: Exception) {
+            onError()
+            return
+        }
 
-        fileRef.putFile(imageUri)
-            .continueWithTask { task ->
-                if (!task.isSuccessful) throw task.exception ?: RuntimeException("Upload failed")
-                fileRef.downloadUrl
+        communityRepo.uploadPostImage(imagePart).enqueue(object : Callback<UploadPostImageResponse> {
+            override fun onResponse(call: Call<UploadPostImageResponse>, response: Response<UploadPostImageResponse>) {
+                if (!isAdded) return
+                val url = response.body()?.data?.imageUrl
+                if (response.isSuccessful && response.body()?.ok == true && url != null) {
+                    onSuccess(url)
+                } else {
+                    onError()
+                }
             }
-            .addOnSuccessListener { downloadUri -> onSuccess(downloadUri.toString()) }
-            .addOnFailureListener { onError() }
+            override fun onFailure(call: Call<UploadPostImageResponse>, t: Throwable) {
+                if (!isAdded) return
+                onError()
+            }
+        })
     }
 
     private fun showCommentsBottomSheet(post: Post) {
@@ -230,6 +252,7 @@ class ComunidadFragment : Fragment() {
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = commentAdapter
 
+        viewModel.comments.removeObservers(viewLifecycleOwner)
         viewModel.comments.observe(viewLifecycleOwner) { comments ->
             commentAdapter.submitList(comments)
         }

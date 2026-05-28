@@ -165,25 +165,33 @@ class ActiveTrackingFragment : Fragment(), OnMapReadyCallback {
             return
         }
 
-        val endLat = r.getEndLat()
-        val endLng = r.getEndLng()
+        // Si empieza al revés, el "final" es el punto de inicio original (y viceversa)
+        val checkLat: Double
+        val checkLng: Double
+        if (args.reversed) {
+            checkLat = r.getStartLat()
+            checkLng = r.getStartLng()
+        } else {
+            checkLat = r.getEndLat()
+            checkLng = r.getEndLng()
+        }
 
-        // Si la ruta no tiene punto final definido, terminar sin verificar
-        if (endLat == 0.0 && endLng == 0.0) {
+        // Si la ruta no tiene punto de destino definido, terminar sin XP
+        if (checkLat == 0.0 && checkLng == 0.0) {
             finishRoute(verified = false)
             return
         }
 
         val dist = FloatArray(1)
-        Location.distanceBetween(pos.latitude, pos.longitude, endLat, endLng, dist)
+        Location.distanceBetween(pos.latitude, pos.longitude, checkLat, checkLng, dist)
 
         if (dist[0] <= 200f) {
             finishRoute(verified = true)
         } else {
             AlertDialog.Builder(requireContext())
                 .setTitle("¿Terminar ruta?")
-                .setMessage("Estás a ${dist[0].toInt()} m del final de la ruta.\n¿Seguro que quieres terminar?")
-                .setPositiveButton("Sí, terminar") { _, _ -> finishRoute(verified = false) }
+                .setMessage("Estás a ${dist[0].toInt()} m del final de la ruta.\n¿Seguro que quieres terminar sin completarla?")
+                .setPositiveButton("Sí, salir") { _, _ -> finishRoute(verified = false) }
                 .setNegativeButton("Cancelar", null)
                 .show()
         }
@@ -191,11 +199,11 @@ class ActiveTrackingFragment : Fragment(), OnMapReadyCallback {
 
     private fun finishRoute(verified: Boolean) {
         trackingViewModel.stopTracking(requireContext())
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
-
         if (verified) {
+            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
             trackingViewModel.completeRoute(uid, args.routeId)
         } else {
+            // Salida anticipada: no se registra ni se dan XP
             findNavController().popBackStack()
         }
     }

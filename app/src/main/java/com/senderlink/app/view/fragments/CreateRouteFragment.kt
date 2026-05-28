@@ -186,9 +186,10 @@ class CreateRouteFragment : Fragment(), OnMapReadyCallback {
         ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
     private fun formatTime(seconds: Long): String {
-        val m = seconds / 60
+        val h = seconds / 3600
+        val m = (seconds % 3600) / 60
         val s = seconds % 60
-        return "%02d:%02d".format(m, s)
+        return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%02d:%02d".format(m, s)
     }
 
     override fun onDestroyView() {

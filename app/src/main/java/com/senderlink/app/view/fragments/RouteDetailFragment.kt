@@ -1,11 +1,18 @@
 package com.senderlink.app.view.fragments
 
+import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -14,6 +21,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
+import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.senderlink.app.R
@@ -70,11 +78,9 @@ class RouteDetailFragment : Fragment() {
         routeDetailViewModel.loadRouteById(routeId)
         refreshEventosState(routeId)
 
-        // Botón "Iniciar ruta" → ActiveTrackingFragment
+        // Botón "Iniciar ruta" → verifica proximidad antes de navegar
         binding.btnIniciarRuta.setOnClickListener {
-            val action = RouteDetailFragmentDirections
-                .actionRouteDetailFragmentToActiveTrackingFragment(routeId)
-            findNavController().navigate(action)
+            checkProximityAndStart()
         }
     }
 
@@ -475,6 +481,119 @@ class RouteDetailFragment : Fragment() {
         }
 
         dialog.show()
+    }
+
+    // ===========================
+    // INICIO DE RUTA CON VERIFICACIÓN DE PROXIMIDAD
+    // ===========================
+
+    @SuppressLint("MissingPermission")
+    private fun checkProximityAndStart() {
+        val route = routeDetailViewModel.route.value
+        if (route == null) {
+            Toast.makeText(requireContext(), "Cargando datos de la ruta...", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Si la ruta no tiene GPS válido, permitir iniciar sin verificar
+        if (!route.hasValidGPS()) {
+            navigateToTracking(args.routeId, reversed = false)
+            return
+        }
+
+        val hasPermission = ContextCompat.checkSelfPermission(
+            requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasPermission) {
+            Toast.makeText(
+                requireContext(),
+                "Se necesita permiso de ubicación para iniciar la ruta",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        val fusedClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+        fusedClient.lastLocation.addOnSuccessListener { location ->
+            if (location == null) {
+                Toast.makeText(requireContext(), "Esperando señal GPS...", Toast.LENGTH_SHORT).show()
+                return@addOnSuccessListener
+            }
+
+            val distToStart = FloatArray(1)
+            Location.distanceBetween(
+                location.latitude, location.longitude,
+                route.getStartLat(), route.getStartLng(),
+                distToStart
+            )
+
+            val distToEnd = FloatArray(1)
+            Location.distanceBetween(
+                location.latitude, location.longitude,
+                route.getEndLat(), route.getEndLng(),
+                distToEnd
+            )
+
+            val threshold = 200f
+
+            when {
+                distToStart[0] <= threshold -> {
+                    navigateToTracking(args.routeId, reversed = false)
+                }
+                distToEnd[0] <= threshold -> {
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("Estás en el punto final")
+                        .setMessage("Estás cerca del final de la ruta. ¿Quieres empezarla al revés?")
+                        .setPositiveButton("Sí, al revés") { _, _ ->
+                            navigateToTracking(args.routeId, reversed = true)
+                        }
+                        .setNegativeButton("Cancelar", null)
+                        .show()
+                }
+                else -> {
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("No estás en la ruta")
+                        .setMessage(
+                            "Estás a ${distToStart[0].toInt()} m del inicio " +
+                            "y a ${distToEnd[0].toInt()} m del final.\n\n" +
+                            "¿Quieres que te lleve al punto de inicio?"
+                        )
+                        .setPositiveButton("Ir al inicio") { _, _ ->
+                            openGoogleMapsNavigation(route.getStartLat(), route.getStartLng())
+                        }
+                        .setNeutralButton("Ir al final") { _, _ ->
+                            openGoogleMapsNavigation(route.getEndLat(), route.getEndLng())
+                        }
+                        .setNegativeButton("Cancelar", null)
+                        .show()
+                }
+            }
+        }
+    }
+
+    private fun navigateToTracking(routeId: String, reversed: Boolean) {
+        val action = RouteDetailFragmentDirections
+            .actionRouteDetailFragmentToActiveTrackingFragment(routeId, reversed)
+        findNavController().navigate(action)
+    }
+
+    private fun openGoogleMapsNavigation(lat: Double, lng: Double) {
+        try {
+            val uri = Uri.parse("google.navigation:q=$lat,$lng")
+            val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                setPackage("com.google.android.apps.maps")
+            }
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            // Google Maps no instalado → abrir con cualquier app de navegación
+            try {
+                val uri = Uri.parse("geo:$lat,$lng?q=$lat,$lng")
+                startActivity(Intent(Intent.ACTION_VIEW, uri))
+            } catch (e2: ActivityNotFoundException) {
+                Toast.makeText(requireContext(), "No se encontró ninguna app de navegación", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     override fun onDestroyView() {

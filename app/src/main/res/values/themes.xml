@@ -15,7 +15,7 @@
 
         <!-- NAV BAR (opcional, pero recomendable si el bottom es blanco) -->
         <item name="android:navigationBarColor">@android:color/white</item>
-        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
 
         <!-- Fondo -->
         <item name="android:windowBackground">@color/bg_app</item>
@@ -46,5 +46,8 @@
     </style>
 
     <style name="ShapeAppearance.SenderLink" parent="ShapeAppearance.SenderLink.Circle"/>
+
+    <!-- uCrop: el solapamiento se maneja en código (FixedUCropActivity) via insets manuales -->
+    <style name="Theme.UCrop" parent="Theme.AppCompat.Light.NoActionBar"/>
 
 </resources>

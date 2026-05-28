@@ -112,42 +112,74 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Perfil completado"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/txtProfileCompletion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0%"
+                            android:textColor="@color/sl_primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <ProgressBar
+                        android:id="@+id/progressPerfil"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp"
+                        android:layout_marginTop="4dp"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressTint="@color/sl_primary"
+                        android:progressBackgroundTint="@color/bg_divider" />
+
+                    <!-- DIVISOR -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="14dp"
+                        android:background="@color/bg_divider" />
+
+                    <!-- NIVEL Y XP -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/txtProfileCompletion"
+                            android:id="@+id/txtNivel"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Perfil 0%"
+                            android:text="Nivel 1 · Explorer"
+                            android:textColor="@color/sl_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/txtXp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 / 100 XP"
                             android:textColor="@color/text_secondary"
                             android:textSize="12sp" />
 
-                        <ProgressBar
-                            android:id="@+id/progressPerfil"
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="120dp"
-                            android:layout_height="6dp"
-                            android:max="100"
-                            android:progress="0"
-                            android:progressTint="@color/sl_primary"
-                            android:progressBackgroundTint="@color/bg_divider" />
-
                     </LinearLayout>
-
-                    <!-- NIVEL Y XP -->
-                    <TextView
-                        android:id="@+id/txtNivel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="10dp"
-                        android:text="Nivel 1 · Explorer"
-                        android:textColor="@color/sl_primary"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
 
                     <ProgressBar
                         android:id="@+id/progressXp"
@@ -159,16 +191,6 @@
                         android:progress="0"
                         android:progressTint="@color/sl_primary"
                         android:progressBackgroundTint="@color/bg_divider" />
-
-                    <TextView
-                        android:id="@+id/txtXp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="4dp"
-                        android:text="0 / 100 XP"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
 
                     <!-- BOTONES DE ACCIÓN -->
                     <LinearLayout

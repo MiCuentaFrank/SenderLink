@@ -13,7 +13,8 @@ import com.senderlink.app.model.Post
 
 class PostAdapter(
     private val onLike: (Post) -> Unit,
-    private val onComments: (Post) -> Unit
+    private val onComments: (Post) -> Unit,
+    private val onDelete: ((Post) -> Unit)? = null
 ) : RecyclerView.Adapter<PostAdapter.VH>() {
 
     private var items: List<Post> = emptyList()
@@ -71,7 +72,7 @@ class PostAdapter(
                 .signature(ObjectKey(imageUrl))
                 .placeholder(R.drawable.rutas1)
                 .error(R.drawable.rutas1)
-                .centerCrop()
+                .fitCenter()
                 .into(b.imgPost)
         } else {
             b.imgPost.visibility = View.GONE
@@ -82,6 +83,13 @@ class PostAdapter(
 
         b.btnLike.setOnClickListener { onLike(post) }
         b.tvCommentsCount.setOnClickListener { onComments(post) }
+
+        if (onDelete != null) {
+            b.btnDelete.visibility = View.VISIBLE
+            b.btnDelete.setOnClickListener { onDelete.invoke(post) }
+        } else {
+            b.btnDelete.visibility = View.GONE
+        }
     }
 
     override fun getItemCount() = items.size

@@ -44,6 +44,12 @@
             </intent-filter>
         </activity>
 
+        <!-- uCrop: actividad de recorte de imagen (subclase que corrige edge-to-edge en Android 15+) -->
+        <activity
+            android:name=".view.FixedUCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.UCrop" />
+
         <!-- Servicio de rastreo GPS en primer plano -->
         <service
             android:name=".service.LocationTrackingService"

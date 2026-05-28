@@ -24,13 +24,6 @@ object RetrofitClient {
         }
     }
 
-    // TODO: Configurar certificate pinning con el dominio y SHA-256 del certificado real
-    // Para obtener los hashes, ejecutar:
-    //   openssl s_client -connect TU_DOMINIO:443 | openssl x509 -pubkey -noout |
-    //   openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | openssl enc -base64
-    // Ejemplo:
-    //   .add("tu-dominio.com", "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
-    //   .add("tu-dominio.com", "sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=")
     private val certificatePinner: CertificatePinner by lazy {
         CertificatePinner.Builder()
             // .add("api.senderlink.com", "sha256/YOUR_PIN_HASH_HERE")

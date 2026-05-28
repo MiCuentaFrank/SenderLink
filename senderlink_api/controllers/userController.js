@@ -171,7 +171,7 @@ async function updateUserProfile(req, res) {
 
     const allowedFields = [
       "nombre",
-      "foto",
+      // "foto" se gestiona exclusivamente mediante POST /:uid/photo
       "bio",
       "comunidad",
       "provincia",
@@ -233,9 +233,16 @@ async function uploadUserPhoto(req, res) {
 
     const photoUrl = req.firebasePhotoUrl;
 
+    // Recalcular profileCompletion incluyendo la nueva foto
+    const currentUser = await User.findOne({ uid }).lean();
+    if (!currentUser) {
+      return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
+    }
+    const completion = calculateProfileCompletion({ ...currentUser, foto: photoUrl });
+
     const user = await User.findOneAndUpdate(
       { uid },
-      { $set: { foto: photoUrl } },
+      { $set: { foto: photoUrl, profileCompletion: completion } },
       { new: true }
     ).select("-__v");
 

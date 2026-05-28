@@ -59,9 +59,11 @@
         <ImageView
             android:id="@+id/imgPost"
             android:layout_width="match_parent"
-            android:layout_height="170dp"
+            android:layout_height="wrap_content"
+            android:maxHeight="360dp"
+            android:adjustViewBounds="true"
             android:layout_marginTop="12dp"
-            android:scaleType="centerCrop"
+            android:scaleType="fitCenter"
             android:contentDescription="post"
             android:background="@drawable/bg_card"
             android:visibility="gone"/>

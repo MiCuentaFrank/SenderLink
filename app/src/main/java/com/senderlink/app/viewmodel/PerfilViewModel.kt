@@ -7,6 +7,7 @@ import androidx.lifecycle.switchMap
 import com.google.firebase.auth.FirebaseAuth
 import com.senderlink.app.model.User
 import com.senderlink.app.repository.UserRepository
+import okhttp3.MultipartBody
 
 /**
  * ViewModel para la pantalla de Perfil
@@ -34,16 +35,16 @@ class PerfilViewModel : ViewModel() {
     private val _userData = MutableLiveData<User?>()
     val userData: LiveData<User?> get() = _userData
 
-    // Trigger para actualizar URL de foto tras subida a Firebase Storage
-    private val _photoUrlTrigger = MutableLiveData<String>()
+    // Trigger para subir foto de perfil vía backend (multer + Firebase Admin)
+    private val _photoPartTrigger = MutableLiveData<MultipartBody.Part>()
 
     val updatePhotoResult: LiveData<UserRepository.Result<User>> =
-        _photoUrlTrigger.switchMap { url ->
+        _photoPartTrigger.switchMap { part ->
             val uid = firebaseAuth.currentUser?.uid
                 ?: return@switchMap MutableLiveData<UserRepository.Result<User>>().apply {
                     value = UserRepository.Result.Error("No hay usuario autenticado")
                 }
-            userRepository.updateUserPhotoUrl(uid, url)
+            userRepository.uploadUserPhoto(uid, part)
         }
 
     fun loadUserData() {
@@ -70,11 +71,11 @@ class PerfilViewModel : ViewModel() {
     }
 
     /**
-     * Llama esto desde el Fragment con la URL de Firebase Storage ya obtenida.
+     * Sube la foto de perfil via el backend (PUT /api/users/{uid}/photo).
      */
-    fun updateProfilePhotoUrl(url: String) {
+    fun uploadProfilePhoto(part: MultipartBody.Part) {
         _isLoading.value = true
-        _photoUrlTrigger.value = url
+        _photoPartTrigger.value = part
     }
 
     /**

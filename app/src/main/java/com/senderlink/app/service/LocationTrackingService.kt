@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.location.Location
 import android.os.Build
 import android.os.IBinder
@@ -77,7 +78,7 @@ class LocationTrackingService : Service() {
             ACTION_START_TRACKING   -> startTracking()
             ACTION_STOP_TRACKING    -> stopTracking()
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     // ─────────────────────────────────────────
@@ -89,7 +90,7 @@ class LocationTrackingService : Service() {
         isRunning.value      = true
         isPaused.value       = false
 
-        startForeground(NOTIFICATION_ID, buildNotification("Grabando ruta..."))
+        startForegroundCompat(buildNotification("Grabando ruta..."))
         startLocationUpdates()
         startTimer()
     }
@@ -124,7 +125,7 @@ class LocationTrackingService : Service() {
         isRunning.value      = true
         isPaused.value       = false
 
-        startForeground(NOTIFICATION_ID, buildNotification("Siguiendo ruta..."))
+        startForegroundCompat(buildNotification("Siguiendo ruta..."))
         startLocationUpdates()
         startTimer()
     }
@@ -226,6 +227,20 @@ class LocationTrackingService : Service() {
                 NotificationManager.IMPORTANCE_LOW
             ).apply { description = "Notificación activa mientras se graba o sigue una ruta" }
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        }
+    }
+
+    private fun startForegroundCompat(notification: Notification) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (e: Exception) {
+            // La app estaba en background (Android 12+) → no arrancamos el servicio
+            isRunning.value = false
+            stopSelf()
         }
     }
 

@@ -87,9 +87,18 @@
             app:tabSelectedTextColor="@color/sl_primary"
             app:tabTextColor="@color/text_secondary">
 
-            <com.google.android.material.tabs.TabItem android:text="@string/tab_disponibles" />
-            <com.google.android.material.tabs.TabItem android:text="@string/tab_mis_eventos" />
-            <com.google.android.material.tabs.TabItem android:text="@string/tab_participo" />
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tab_disponibles" />
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tab_mis_eventos" />
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tab_participo" />
 
         </com.google.android.material.tabs.TabLayout>
 
@@ -133,27 +142,22 @@
 
         </LinearLayout>
 
-        <!-- LISTA EVENTOS (SCROLL REAL AQUÍ) -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvEventos"
+        <!-- LISTA EVENTOS CON PULL-TO-REFRESH -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefresh"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:clipToPadding="false"
-            tools:listitem="@layout/item_evento" />
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvEventos"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                tools:listitem="@layout/item_evento" />
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     </LinearLayout>
-
-    <!-- FAB REFRESH -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabRefresh"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:contentDescription="@string/actualizar_lista"
-        app:backgroundTint="@color/sl_primary"
-        app:srcCompat="@drawable/ic_refresh_24"
-        app:tint="@color/text_on_dark" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

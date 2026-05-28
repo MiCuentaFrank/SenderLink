@@ -144,7 +144,7 @@ class UserRepository {
      * Helper: convierte un Uri (galería/cámara) a MultipartBody.Part
      * - Copia a cache porque Retrofit/OkHttp trabajan mejor con File real.
      */
-    fun buildPhotoPartFromUri(context: Context, uri: Uri): MultipartBody.Part {
+    fun buildPhotoPartFromUri(context: Context, uri: Uri, fieldName: String = "photo"): MultipartBody.Part {
         val contentResolver = context.contentResolver
 
         val inputStream = contentResolver.openInputStream(uri)
@@ -162,9 +162,11 @@ class UserRepository {
         val mime = contentResolver.getType(uri) ?: "image/*"
         val requestBody = tempFile.asRequestBody(mime.toMediaTypeOrNull())
 
-        // ✅ IMPORTANTE: el nombre del campo ("photo") debe coincidir con tu backend (multer)
+        // ✅ IMPORTANTE: el nombre del campo debe coincidir con el backend (multer)
+        // "photo" → subida de foto de perfil (PUT /:uid/photo)
+        // "image" → subida de imagen de post (POST /community/posts/upload-image)
         return MultipartBody.Part.createFormData(
-            "photo",
+            fieldName,
             tempFile.name,
             requestBody
         )
@@ -172,7 +174,7 @@ class UserRepository {
 
     /**
      * Sube la foto al backend:
-     * PUT /api/users/{uid}/photo
+     * POST /api/users/{uid}/photo
      */
     fun uploadUserPhoto(uid: String, photo: MultipartBody.Part): LiveData<Result<User>> {
         val result = MutableLiveData<Result<User>>()

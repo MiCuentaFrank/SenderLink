@@ -1,5 +1,6 @@
 package com.senderlink.app.view.fragments
 
+import android.annotation.SuppressLint
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -32,6 +33,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -171,10 +174,10 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         setupChips()
         observeViewModel()
 
-        val mapFragment = SupportMapFragment.newInstance()
-        childFragmentManager.beginTransaction()
-            .replace(R.id.mapContainer, mapFragment)
-            .commit()
+        val mapFragment = childFragmentManager.findFragmentById(R.id.mapContainer) as SupportMapFragment?
+            ?: SupportMapFragment.newInstance().also {
+                childFragmentManager.beginTransaction().add(R.id.mapContainer, it).commit()
+            }
         mapFragment.getMapAsync(this)
 
         val cached = viewModel.allRoutes.value.orEmpty()
@@ -217,7 +220,7 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
 
         outState.putBoolean(KEY_HAS_TRIGGERED_INITIAL_NEARBY, hasTriggeredInitialNearby)
         outState.putFloat(KEY_MAX_DISTANCE, maxDistanceKm)
-        outState.putString(KEY_SEARCH, binding.etSearch.text?.toString() ?: "")
+        outState.putString(KEY_SEARCH, _binding?.etSearch?.text?.toString() ?: "")
 
         outState.putStringArray(KEY_SELECTED_TYPES, selectedTypes.toTypedArray())
         outState.putStringArray(KEY_SELECTED_DIFFS, selectedDifficulties.toTypedArray())
@@ -353,7 +356,9 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         isLoadingMore = true
         binding.progressBarLoadMore.visibility = View.VISIBLE
 
-        binding.root.postDelayed({
+        val rootView = binding.root
+        rootView.postDelayed({
+            if (_binding == null) return@postDelayed
             currentDisplayCount += PAGE_SIZE
             updateDisplayedRoutes()
 
@@ -562,6 +567,7 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
     // =========================================================
 // FILTRADO por cercanía - SIEMPRE usa el centro seleccionado
 // =========================================================
+    @SuppressLint("MissingPermission") // permisos verificados en hasLocationPermission() línea ~591
     private fun filterRoutesByDistance() {
         // 1) Centro de referencia para los filtros:
         //    - Primero: el punto seleccionado en el mapa (currentCenterLatLng)
@@ -584,26 +590,36 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
             )
         } else {
             // 3) No tenemos ni currentCenterLatLng ni userLocation todavía
-            Toast.makeText(
-                requireContext(),
-                "Obteniendo tu ubicación...",
-                Toast.LENGTH_SHORT
-            ).show()
+            if (!hasLocationPermission()) {
+                Toast.makeText(requireContext(), "Activa el permiso de ubicación.", Toast.LENGTH_LONG).show()
+                return
+            }
+            Toast.makeText(requireContext(), "Obteniendo tu ubicación...", Toast.LENGTH_SHORT).show()
 
-            getUserLocation()  // esto rellenará userLocation y, si hace falta, currentCenterLatLng
-
-            binding.root.postDelayed({
-                if (userLocation != null) {
-                    // Reintentamos, ahora ya debería haber centro
+            // Intentamos lastLocation primero, si es null usamos getCurrentLocation
+            fusedLocationClient.lastLocation.addOnSuccessListener { last ->
+                if (last != null) {
+                    userLocation = last
+                    currentCenterLatLng = LatLng(last.latitude, last.longitude)
                     filterRoutesByDistance()
                 } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "No se pudo obtener tu ubicación. Activa el GPS.",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    val cts = CancellationTokenSource()
+                    fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cts.token)
+                        .addOnSuccessListener { fresh ->
+                            if (fresh != null) {
+                                userLocation = fresh
+                                currentCenterLatLng = LatLng(fresh.latitude, fresh.longitude)
+                                filterRoutesByDistance()
+                            } else {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "No se pudo obtener tu ubicación. Activa el GPS.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
                 }
-            }, 1200)
+            }
         }
     }
 
@@ -1043,28 +1059,35 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
             Log.d(TAG, "📹 Calculando bounds para ${points.size} puntos...")
 
             val boundsBuilder = LatLngBounds.Builder()
-            points.forEach { point ->
-                boundsBuilder.include(point)
-            }
+            points.forEach { point -> boundsBuilder.include(point) }
             val bounds = boundsBuilder.build()
 
             Log.d(TAG, "📹 Bounds: NE=${bounds.northeast}, SW=${bounds.southwest}")
 
-            val padding = 200
+            // 1) Mover cámara inmediatamente al centro (síncrono, no requiere layout del mapa)
+            googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(bounds.center, 13f))
+            Log.d(TAG, "📹 Cámara centrada en ruta (moveCamera)")
 
-            googleMap?.animateCamera(
-                CameraUpdateFactory.newLatLngBounds(bounds, padding),
-                1500,
-                object : GoogleMap.CancelableCallback {
-                    override fun onFinish() {
-                        Log.d(TAG, "✅✅✅ CÁMARA AJUSTADA A LA RUTA")
-                    }
-
-                    override fun onCancel() {
-                        Log.w(TAG, "⚠️ Animación cancelada")
-                    }
+            // 2) Luego animar con los bounds exactos usando post() para garantizar
+            //    que el mapa ya tiene sus dimensiones calculadas
+            _binding?.root?.post {
+                try {
+                    googleMap?.animateCamera(
+                        CameraUpdateFactory.newLatLngBounds(bounds, 200),
+                        1200,
+                        object : GoogleMap.CancelableCallback {
+                            override fun onFinish() {
+                                Log.d(TAG, "✅✅✅ CÁMARA AJUSTADA A LA RUTA")
+                            }
+                            override fun onCancel() {
+                                Log.w(TAG, "⚠️ Animación cancelada")
+                            }
+                        }
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "❌ Error al animar cámara (post): ${e.message}", e)
                 }
-            )
+            }
 
         } catch (e: Exception) {
             Log.e(TAG, "❌ Error al ajustar cámara: ${e.message}", e)
@@ -1072,10 +1095,8 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
             if (startLat != 0.0 && startLng != 0.0) {
                 Log.d(TAG, "🔄 Usando fallback: centrar en inicio")
                 try {
-                    googleMap?.animateCamera(
-                        CameraUpdateFactory.newLatLngZoom(LatLng(startLat, startLng), 13f),
-                        1500,
-                        null
+                    googleMap?.moveCamera(
+                        CameraUpdateFactory.newLatLngZoom(LatLng(startLat, startLng), 13f)
                     )
                 } catch (e2: Exception) {
                     Log.e(TAG, "❌ Fallback también falló: ${e2.message}")
@@ -1189,22 +1210,28 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         if (!hasLocationPermission()) return
         try {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                location?.let {
-                    userLocation = it
-
-                    // ✅ Si aún no hay centro, usamos tu ubicación como centro inicial
+                if (location != null) {
+                    userLocation = location
                     if (currentCenterLatLng == null) {
-                        currentCenterLatLng = LatLng(it.latitude, it.longitude)
-                        Log.d(
-                            TAG,
-                            "📍 getUserLocation -> centro inicial fijado en tu ubicación: $currentCenterLatLng"
-                        )
+                        currentCenterLatLng = LatLng(location.latitude, location.longitude)
+                        Log.d(TAG, "📍 getUserLocation -> centro inicial fijado en tu ubicación: $currentCenterLatLng")
                     } else {
-                        Log.d(
-                            TAG,
-                            "📍 getUserLocation -> userLocation actualizada, pero se mantiene center=$currentCenterLatLng"
-                        )
+                        Log.d(TAG, "📍 getUserLocation -> userLocation actualizada, se mantiene center=$currentCenterLatLng")
                     }
+                } else {
+                    // lastLocation null (GPS recién activado o sin caché) → pedimos ubicación activa
+                    Log.d(TAG, "📍 lastLocation null, solicitando getCurrentLocation...")
+                    val cts = CancellationTokenSource()
+                    fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cts.token)
+                        .addOnSuccessListener { fresh ->
+                            fresh?.let {
+                                userLocation = it
+                                if (currentCenterLatLng == null) {
+                                    currentCenterLatLng = LatLng(it.latitude, it.longitude)
+                                    Log.d(TAG, "📍 getCurrentLocation -> centro inicial: $currentCenterLatLng")
+                                }
+                            }
+                        }
                 }
             }
         } catch (_: SecurityException) {}
@@ -1225,15 +1252,22 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
         if (!fineGranted && !coarseGranted) return
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            location?.let {
-                userLocation = it
-                val latLng = LatLng(it.latitude, it.longitude)
-
-                // ✅ En lugar de solo mover cámara, usamos el flujo estándar:
-                // - actualiza currentCenterLatLng
-                // - limpia buscador
-                // - carga rutas cerca de ese punto
-                moveCenterAndLoadNearby(latLng, label = "Tu ubicación")
+            if (location != null) {
+                userLocation = location
+                moveCenterAndLoadNearby(LatLng(location.latitude, location.longitude), label = "Tu ubicación")
+            } else {
+                // lastLocation null → forzamos ubicación fresca
+                Log.d(TAG, "📍 centerOnCurrentLocation: lastLocation null, solicitando getCurrentLocation...")
+                val cts = CancellationTokenSource()
+                fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cts.token)
+                    .addOnSuccessListener { fresh ->
+                        if (fresh != null) {
+                            userLocation = fresh
+                            moveCenterAndLoadNearby(LatLng(fresh.latitude, fresh.longitude), label = "Tu ubicación")
+                        } else {
+                            Toast.makeText(requireContext(), "No se pudo obtener tu ubicación. Activa el GPS.", Toast.LENGTH_LONG).show()
+                        }
+                    }
             }
         }
     }

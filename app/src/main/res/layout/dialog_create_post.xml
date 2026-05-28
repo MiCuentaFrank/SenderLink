@@ -38,13 +38,40 @@
         android:textStyle="bold"
         android:textColor="@color/sl_primary"/>
 
+    <!-- ESTADO DE CARGA DURANTE SUBIDA DE IMAGEN -->
+    <LinearLayout
+        android:id="@+id/layoutUploadLoading"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:indeterminateTint="@color/sl_primary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Subiendo imagen..."
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
+
+    </LinearLayout>
+
     <!-- PREVIEW DE LA FOTO -->
     <ImageView
         android:id="@+id/ivPostPreview"
         android:layout_width="match_parent"
-        android:layout_height="180dp"
+        android:layout_height="wrap_content"
+        android:maxHeight="300dp"
+        android:adjustViewBounds="true"
         android:layout_marginTop="12dp"
-        android:scaleType="centerCrop"
+        android:scaleType="fitCenter"
         android:visibility="gone"
         android:background="@drawable/bg_image_preview"/>
 

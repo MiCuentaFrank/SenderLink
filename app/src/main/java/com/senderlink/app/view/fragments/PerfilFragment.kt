@@ -25,8 +25,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import android.app.Activity
 import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
+import com.senderlink.app.view.FixedUCropActivity
 import com.yalantis.ucrop.UCrop
 import java.io.File
 import com.senderlink.app.R
@@ -61,9 +60,10 @@ class PerfilFragment : Fragment() {
     private var isRoutesGridMode = false
 
     private val communityRepo = CommunityRepository()
+    private val userRepo = UserRepository()
     private lateinit var achievementAdapter: AchievementAdapter
 
-    // Recibe el resultado del crop y sube a Firebase Storage
+    // Recibe el resultado del crop y sube al backend
     private val cropProfileLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -74,7 +74,12 @@ class PerfilFragment : Fragment() {
                     .placeholder(R.drawable.bg_avatar_circle)
                     .error(R.drawable.bg_avatar_circle)
                     .into(binding.imgFotoPerfil)
-                uploadProfilePhotoToFirebase(croppedUri)
+                try {
+                    val photoPart = userRepo.buildPhotoPartFromUri(requireContext(), croppedUri)
+                    viewModel.uploadProfilePhoto(photoPart)
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Error preparando imagen", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -85,10 +90,12 @@ class PerfilFragment : Fragment() {
                 val destUri = Uri.fromFile(
                     File(requireContext().cacheDir, "crop_profile_${System.currentTimeMillis()}.jpg")
                 )
+                val ctx = requireContext()
                 val intent = UCrop.of(uri, destUri)
                     .withAspectRatio(1f, 1f)
                     .withMaxResultSize(512, 512)
-                    .getIntent(requireContext())
+                    .getIntent(ctx)
+                intent.setClass(ctx, FixedUCropActivity::class.java)
                 cropProfileLauncher.launch(intent)
             }
         }
@@ -215,7 +222,7 @@ class PerfilFragment : Fragment() {
 
                 // Perfil completado
                 val completion = user.profileCompletion
-                binding.txtProfileCompletion.text = "Perfil $completion%"
+                binding.txtProfileCompletion.text = "$completion%"
                 binding.progressPerfil.progress = completion
 
                 // Imagen de fondo del perfil (foto del usuario con alpha)
@@ -266,11 +273,15 @@ class PerfilFragment : Fragment() {
 
                     viewModel.handleUpdatePhotoResult(result)
 
-                    // ✅ refresca cards inmediatamente
+                    // Actualiza el caché global → ComunidadFragment y cualquier observer
+                    // de UserManager.currentUser reciben la nueva foto automáticamente
+                    com.senderlink.app.utils.UserManager.getInstance().updateCache(result.data)
+
+                    // Refresca cards inmediatamente
                     val uid = FirebaseAuth.getInstance().currentUser?.uid
                     myPostsAdapter.setCurrentUserPhotoUrl(result.data.foto, uid)
 
-                    // ✅ refresca posts desde backend
+                    // Refresca posts desde backend
                     postsViewModel.loadMyPosts()
                 }
 
@@ -504,26 +515,6 @@ class PerfilFragment : Fragment() {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         activity?.finish()
-    }
-
-    private fun uploadProfilePhotoToFirebase(uri: android.net.Uri) {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val storageRef = Firebase.storage.reference
-        val fileRef = storageRef.child("profiles/$uid/photo_${System.currentTimeMillis()}.jpg")
-
-        fileRef.putFile(uri)
-            .continueWithTask { task ->
-                if (!task.isSuccessful) throw task.exception ?: RuntimeException("Upload failed")
-                fileRef.downloadUrl
-            }
-            .addOnSuccessListener { downloadUri ->
-                viewModel.updateProfilePhotoUrl(downloadUri.toString())
-            }
-            .addOnFailureListener {
-                if (!isAdded) return@addOnFailureListener
-                Toast.makeText(requireContext(), "Error subiendo foto", Toast.LENGTH_LONG).show()
-                viewModel.loadUserData() // revert preview
-            }
     }
 
     override fun onDestroyView() {

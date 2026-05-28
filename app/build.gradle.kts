@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -24,7 +26,11 @@ android {
         buildConfigField("String", "BASE_URL", "\"https://senderlink-production.up.railway.app/\"")
 
         // Google Maps API Key desde local.properties (no hardcodear en manifest)
-        val mapsKey = project.findProperty("GOOGLE_MAPS_API_KEY") as? String ?: ""
+        val localProps = Properties().apply {
+            val f = rootProject.file("local.properties")
+            if (f.exists()) f.inputStream().use { load(it) }
+        }
+        val mapsKey = localProps.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
         manifestPlaceholders["MAPS_API_KEY"] = mapsKey
     }
 

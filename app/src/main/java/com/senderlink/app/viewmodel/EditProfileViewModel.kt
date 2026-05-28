@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.switchMap
 import com.google.firebase.auth.FirebaseAuth
 import com.senderlink.app.model.User
+import com.senderlink.app.network.PreferenciasRequest
 import com.senderlink.app.network.UpdateUserProfileRequest
 import com.senderlink.app.repository.UserRepository
 
@@ -83,6 +84,7 @@ class EditProfileViewModel : ViewModel() {
         bio: String,
         comunidad: String,
         provincia: String,
+        preferencias: PreferenciasRequest = PreferenciasRequest(),
         onFirebaseSyncNeeded: (String) -> Unit
     ) {
         val currentUser = firebaseAuth.currentUser
@@ -105,7 +107,8 @@ class EditProfileViewModel : ViewModel() {
             nombre = nombre,
             bio = bio,
             comunidad = comunidad,
-            provincia = provincia
+            provincia = provincia,
+            preferencias = preferencias
         )
 
         // Eliminar observer anterior de update
