@@ -41,10 +41,10 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="84dp"
+            android:layout_height="84dp"
             android:layout_marginBottom="14dp"
-            android:src="@drawable/ic_logosenderlink" />
+            android:src="@mipmap/ic_launcher_round" />
 
         <TextView
             android:layout_width="wrap_content"
