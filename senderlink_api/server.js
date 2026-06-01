@@ -115,11 +115,11 @@ const groupChatRoutes = require("./routes/GroupChatRoutes");
 // Comunidad: GETs públicos, escritura protegida (token + writeLimiter)
 app.use("/api/community", protectWrites, communityRoutes);
 
-// Usuarios: registro (POST /) con rate limit propio; GET y escrituras requieren token
+// Usuarios: registro (POST /) con rate limit + token; GET y escrituras requieren token
 app.use("/api/users", (req, res, next) => {
-  // Registro público con rate limit específico
+  // Registro: rate limit específico + token (para que createUser pueda validar req.uid)
   if (req.method === "POST" && req.path === "/") {
-    return registrationLimiter(req, res, next);
+    return registrationLimiter(req, res, () => verifyToken(req, res, next));
   }
   // Todos los demás requests (GET, PUT, DELETE) requieren token
   return verifyToken(req, res, (err) => {
