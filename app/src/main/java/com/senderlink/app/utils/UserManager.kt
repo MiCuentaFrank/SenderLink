@@ -119,14 +119,55 @@ class UserManager private constructor() {
                 }
                 is UserRepository.Result.Error -> {
                     _isLoading.value = false
-                    _error.value = result.message
-                    Log.e(TAG, "Error cargando usuario")
+                    if (result.message?.contains("404") == true) {
+                        Log.w(TAG, "⚠️ Usuario no encontrado en MongoDB, creando automáticamente...")
+                        autoCreateUser(uid)
+                    } else {
+                        _error.value = result.message
+                        Log.e(TAG, "Error cargando usuario: ${result.message}")
+                    }
                 }
             }
         }
 
         activeLiveData = liveData
         activeObserver = observer
+        liveData.observeForever(observer)
+    }
+
+    private fun autoCreateUser(uid: String) {
+        val email = auth.currentUser?.email ?: run {
+            Log.e(TAG, "❌ No se pudo obtener email para crear usuario")
+            _error.value = "No se pudo obtener información del usuario"
+            return
+        }
+        val nombre = auth.currentUser?.displayName ?: ""
+        val foto = auth.currentUser?.photoUrl?.toString() ?: ""
+
+        val newUser = com.senderlink.app.model.User(uid = uid, email = email, nombre = nombre, foto = foto)
+        Log.d(TAG, "Creando usuario en MongoDB: $uid / $email")
+        _isLoading.value = true
+
+        val liveData = repository.createUser(newUser)
+        val observer = object : Observer<UserRepository.Result<com.senderlink.app.model.User>> {
+            override fun onChanged(result: UserRepository.Result<com.senderlink.app.model.User>) {
+                when (result) {
+                    is UserRepository.Result.Loading -> {}
+                    is UserRepository.Result.Success -> {
+                        liveData.removeObserver(this)
+                        _isLoading.value = false
+                        _currentUser.value = result.data
+                        Log.d(TAG, "✅ Usuario creado automáticamente en MongoDB")
+                    }
+                    is UserRepository.Result.Error -> {
+                        liveData.removeObserver(this)
+                        _isLoading.value = false
+                        _error.value = "Error al crear perfil de usuario"
+                        Log.e(TAG, "❌ Error creando usuario automáticamente: ${result.message}")
+                    }
+                }
+            }
+        }
         liveData.observeForever(observer)
     }
 
