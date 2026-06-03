@@ -291,6 +291,14 @@ class MapasFragment : Fragment(), OnMapReadyCallback {
                 return@observe
             }
 
+            // Si las rutas entrantes son distintas a las que hay pintadas en el mapa,
+            // resetear hasAdjustedCameraOnce para que la cámara se reajuste e incluya
+            // todos los nuevos marcadores (evita que queden fuera del viewport).
+            val incomingIds = allRoutes.map { it.id }.toSet()
+            if (incomingIds != lastWantedIds) {
+                hasAdjustedCameraOnce = false
+            }
+
             currentDisplayCount = PAGE_SIZE
             applyActiveFilters(adjustCamera = !hasAdjustedCameraOnce)
 
