@@ -19,6 +19,14 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Ajustar padding superior del logo para no solaparse con la barra de estado
+        val logoBasePaddingTop = binding.logoGroup.paddingTop
+        ViewCompat.setOnApplyWindowInsetsListener(binding.logoGroup) { view, insets ->
+            val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
+            view.updatePadding(top = logoBasePaddingTop + statusBarHeight)
+            insets
+        }
+
         // Ajustar padding inferior del card para no solaparse con la barra de navegación
         val cardBasePaddingBottom = binding.loginFormCard.paddingBottom
         ViewCompat.setOnApplyWindowInsetsListener(binding.loginFormCard) { view, insets ->

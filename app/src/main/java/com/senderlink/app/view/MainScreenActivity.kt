@@ -3,6 +3,7 @@ package com.senderlink.app.view
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.fragment.NavHostFragment
@@ -15,6 +16,7 @@ class MainScreenActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainScreenBinding
     private val userManager = UserManager.getInstance()
+    private var statusBarHeight = 0
 
     // Destinos donde el AppBar debe ser visible
     private val appBarDestinations = setOf(
@@ -45,16 +47,20 @@ class MainScreenActivity : AppCompatActivity() {
 
         // 4) Mostrar/ocultar AppBar según el destino activo
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            binding.appBarLayout.visibility = if (destination.id in appBarDestinations) {
-                View.VISIBLE
-            } else {
-                View.GONE
+            val showAppBar = destination.id in appBarDestinations
+            binding.appBarLayout.visibility = if (showAppBar) View.VISIBLE else View.GONE
+            binding.statusBarScrim.visibility = if (showAppBar) View.GONE else View.VISIBLE
+            (binding.navHostFragment.layoutParams as? ConstraintLayout.LayoutParams)?.let {
+                it.topMargin = if (showAppBar) 0 else statusBarHeight
+                binding.navHostFragment.requestLayout()
             }
         }
 
-        // 5) Edge-to-edge: padding del bottom nav para no quedar detrás de la barra del sistema
+        // 5) Edge-to-edge: ajustar tamaño del scrim y padding del bottom nav
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
             val bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            statusBarHeight = bars.top
+            binding.statusBarScrim.layoutParams.height = statusBarHeight
             binding.bottomNavigationView.setPadding(0, 0, 0, bars.bottom)
             windowInsets
         }

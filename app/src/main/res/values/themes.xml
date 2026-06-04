@@ -7,7 +7,15 @@
         <item name="colorPrimary">@color/sl_primary</item>
         <item name="colorPrimaryVariant">@color/sl_primary_dark</item>
         <item name="colorOnPrimary">@color/text_on_dark</item>
+        <item name="colorPrimaryContainer">@color/sl_secondary</item>
+        <item name="colorOnPrimaryContainer">@color/sl_primary_dark</item>
         <item name="colorSecondary">@color/sl_accent</item>
+        <item name="colorSecondaryContainer">@color/green_forest_light</item>
+        <item name="colorOnSecondaryContainer">@color/sl_primary_dark</item>
+        <item name="colorTertiary">@color/sl_accent</item>
+        <item name="colorTertiaryContainer">#FFF8E1</item>
+        <item name="colorOnTertiary">@color/text_primary</item>
+        <item name="colorOnTertiaryContainer">@color/text_primary</item>
 
         <!-- STATUS BAR: verde + iconos blancos -->
         <item name="android:statusBarColor">@color/sl_primary</item>
