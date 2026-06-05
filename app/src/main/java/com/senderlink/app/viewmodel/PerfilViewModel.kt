@@ -1,7 +1,5 @@
 package com.senderlink.app.viewmodel
 
-import android.content.Context
-import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -37,21 +35,16 @@ class PerfilViewModel : ViewModel() {
     private val _userData = MutableLiveData<User?>()
     val userData: LiveData<User?> get() = _userData
 
-    // ✅ Trigger PRO para subida de foto (sin observeForever)
-    private data class UploadPhotoParams(
-        val uid: String,
-        val context: Context,
-        val photoUri: Uri
-    )
-
-    private val _uploadPhotoTrigger = MutableLiveData<UploadPhotoParams>()
+    // Trigger para subir foto de perfil vía backend (multer + Firebase Admin)
+    private val _photoPartTrigger = MutableLiveData<MultipartBody.Part>()
 
     val updatePhotoResult: LiveData<UserRepository.Result<User>> =
-        _uploadPhotoTrigger.switchMap { params ->
-            val part: MultipartBody.Part =
-                userRepository.buildPhotoPartFromUri(params.context, params.photoUri)
-
-            userRepository.uploadUserPhoto(params.uid, part)
+        _photoPartTrigger.switchMap { part ->
+            val uid = firebaseAuth.currentUser?.uid
+                ?: return@switchMap MutableLiveData<UserRepository.Result<User>>().apply {
+                    value = UserRepository.Result.Error("No hay usuario autenticado")
+                }
+            userRepository.uploadUserPhoto(uid, part)
         }
 
     fun loadUserData() {
@@ -72,27 +65,17 @@ class PerfilViewModel : ViewModel() {
             }
             is UserRepository.Result.Error -> {
                 _isLoading.value = false
-                _errorMessage.value = result.message
+                _errorMessage.value = "Error de conexión. Intenta de nuevo."
             }
         }
     }
 
     /**
-     * ✅ Dispara la subida de foto (el Fragment pasa context)
+     * Sube la foto de perfil via el backend (PUT /api/users/{uid}/photo).
      */
-    fun updateProfilePhoto(context: Context, photoUri: Uri) {
-        val currentUser = firebaseAuth.currentUser
-        if (currentUser == null) {
-            _errorMessage.value = "No hay usuario autenticado"
-            return
-        }
-
+    fun uploadProfilePhoto(part: MultipartBody.Part) {
         _isLoading.value = true
-        _uploadPhotoTrigger.value = UploadPhotoParams(
-            uid = currentUser.uid,
-            context = context.applicationContext,
-            photoUri = photoUri
-        )
+        _photoPartTrigger.value = part
     }
 
     /**
@@ -107,7 +90,7 @@ class PerfilViewModel : ViewModel() {
             }
             is UserRepository.Result.Error -> {
                 _isLoading.value = false
-                _errorMessage.value = result.message
+                _errorMessage.value = "Error de conexión. Intenta de nuevo."
             }
         }
     }

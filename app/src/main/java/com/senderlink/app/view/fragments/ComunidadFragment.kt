@@ -1,5 +1,6 @@
 package com.senderlink.app.view.fragments
 
+import android.app.Activity
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -17,12 +18,19 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
+import com.senderlink.app.network.UploadPostImageResponse
+import com.senderlink.app.repository.CommunityRepository
+import com.yalantis.ucrop.UCrop
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.io.File
 import com.senderlink.app.R
 import com.senderlink.app.databinding.FragmentComunidadBinding
+import com.senderlink.app.view.FixedUCropActivity
 import com.senderlink.app.model.Post
 import com.senderlink.app.repository.UserRepository
+import com.senderlink.app.utils.UserManager
 import com.senderlink.app.view.adapters.CommentAdapter
 import com.senderlink.app.view.adapters.PostAdapter
 import com.senderlink.app.viewmodel.ComunidadViewModel
@@ -34,17 +42,40 @@ class ComunidadFragment : Fragment() {
 
     private val viewModel: ComunidadViewModel by viewModels()
     private lateinit var adapter: PostAdapter
-
-    // ✅ Para refrescar avatar del usuario actual
+    private val communityRepo = CommunityRepository()
     private val userRepo = UserRepository()
 
     // ✅ Foto seleccionada para el post
     private var selectedImageUri: Uri? = null
 
-    // ✅ Selector de imagen (galería)
+    // Callback para actualizar el preview del diálogo cuando se selecciona imagen
+    private var onImagePicked: ((Uri?) -> Unit)? = null
+
+    // Recibe el resultado del crop y actualiza el preview del diálogo
+    private val cropPostLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val croppedUri = UCrop.getOutput(result.data ?: return@registerForActivityResult)
+                    ?: return@registerForActivityResult
+                selectedImageUri = croppedUri
+                onImagePicked?.invoke(croppedUri)
+            }
+        }
+
+    // Abre galería → lanza uCrop (libre, sin ratio fijo)
     private val pickImage =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            selectedImageUri = uri
+            if (uri != null) {
+                val destUri = Uri.fromFile(
+                    File(requireContext().cacheDir, "crop_post_${System.currentTimeMillis()}.jpg")
+                )
+                val ctx = requireContext()
+                val intent = UCrop.of(uri, destUri)
+                    .withMaxResultSize(1080, 1080)
+                    .getIntent(ctx)
+                intent.setClass(ctx, FixedUCropActivity::class.java)
+                cropPostLauncher.launch(intent)
+            }
         }
 
     override fun onCreateView(
@@ -85,33 +116,12 @@ class ComunidadFragment : Fragment() {
         // ✅ 1) Carga posts
         viewModel.loadPosts()
 
-        // ✅ 2) Aplica foto actual del usuario al adapter (para refrescar cards)
-        refreshCurrentUserAvatar()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // ✅ Cuando vuelves desde Perfil tras cambiar foto, aquí se refresca
-        refreshCurrentUserAvatar()
-    }
-
-    /**
-     * ✅ Pide el usuario actual al backend y fuerza el avatar en las cards de comunidad
-     */
-    private fun refreshCurrentUserAvatar() {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
-
-        userRepo.getUserByUid(uid).observe(viewLifecycleOwner) { result ->
-            when (result) {
-                is UserRepository.Result.Success -> {
-                    val photoUrl = result.data.foto
-                    // ✅ esto hace que todas las cards usen la foto nueva
-                    adapter.setCurrentUserPhotoUrl(photoUrl)
-                }
-                is UserRepository.Result.Error -> {
-                    // Silencioso para no molestar; si quieres lo mostramos.
-                }
-                is UserRepository.Result.Loading -> { }
+        // ✅ 2) Aplica foto actual del usuario al adapter — usa caché de UserManager,
+        //    se actualiza automáticamente si el usuario cambia su foto en otro fragment.
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid != null) {
+            UserManager.getInstance().currentUser.observe(viewLifecycleOwner) { user ->
+                adapter.setCurrentUserPhotoUrl(user?.foto, uid)
             }
         }
     }
@@ -123,6 +133,7 @@ class ComunidadFragment : Fragment() {
         val et = dialogView.findViewById<EditText>(R.id.etPostText)
         val btnAddPhoto = dialogView.findViewById<TextView>(R.id.btnAddPhoto)
         val ivPreview = dialogView.findViewById<ImageView>(R.id.ivPostPreview)
+        val layoutUploadLoading = dialogView.findViewById<View>(R.id.layoutUploadLoading)
 
         ivPreview?.isVisible = false
 
@@ -136,23 +147,20 @@ class ComunidadFragment : Fragment() {
             .setPositiveButton("Publicar", null)
             .create()
 
-        dialog.setOnShowListener {
-            val positiveBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-
-            fun refreshPreview() {
-                val uri = selectedImageUri
-                if (ivPreview != null) {
-                    if (uri != null) {
-                        ivPreview.isVisible = true
-                        ivPreview.setImageURI(uri)
-                    } else {
-                        ivPreview.isVisible = false
-                    }
+        // Callback que se invoca desde pickImage cuando el usuario selecciona imagen
+        onImagePicked = { uri ->
+            if (ivPreview != null) {
+                if (uri != null) {
+                    ivPreview.isVisible = true
+                    ivPreview.setImageURI(uri)
+                } else {
+                    ivPreview.isVisible = false
                 }
             }
+        }
 
-            refreshPreview()
-            dialog.window?.decorView?.postDelayed({ refreshPreview() }, 200)
+        dialog.setOnShowListener {
+            val positiveBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
 
             positiveBtn.setOnClickListener {
                 val text = et.text.toString().trim()
@@ -171,22 +179,20 @@ class ComunidadFragment : Fragment() {
                 if (uri != null) {
                     positiveBtn.isEnabled = false
                     btnAddPhoto?.isEnabled = false
+                    layoutUploadLoading?.visibility = View.VISIBLE
 
-                    uploadPostImageToFirebase(
-                        uid = uid,
+                    uploadPostImageToBackend(
                         imageUri = uri,
                         onSuccess = { imageUrl ->
+                            layoutUploadLoading?.visibility = View.GONE
                             viewModel.createPost(text, imageUrl)
                             dialog.dismiss()
                         },
-                        onError = { e ->
+                        onError = {
+                            layoutUploadLoading?.visibility = View.GONE
                             positiveBtn.isEnabled = true
                             btnAddPhoto?.isEnabled = true
-                            Toast.makeText(
-                                requireContext(),
-                                "Error subiendo foto: ${e.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
+                            Toast.makeText(requireContext(), "Error subiendo foto", Toast.LENGTH_LONG).show()
                         }
                     )
                 } else {
@@ -200,50 +206,37 @@ class ComunidadFragment : Fragment() {
 
         dialog.setOnDismissListener {
             selectedImageUri = null
+            onImagePicked = null
         }
-
-        dialog.window?.decorView?.postDelayed(object : Runnable {
-            override fun run() {
-                val iv = dialogView.findViewById<ImageView>(R.id.ivPostPreview)
-                val uri = selectedImageUri
-                if (iv != null) {
-                    if (uri != null && !iv.isVisible) {
-                        iv.isVisible = true
-                        iv.setImageURI(uri)
-                    } else if (uri != null) {
-                        iv.setImageURI(uri)
-                    }
-                }
-                if (dialog.isShowing) {
-                    dialog.window?.decorView?.postDelayed(this, 350)
-                }
-            }
-        }, 350)
     }
 
-    private fun uploadPostImageToFirebase(
-        uid: String,
+    private fun uploadPostImageToBackend(
         imageUri: Uri,
         onSuccess: (String) -> Unit,
-        onError: (Exception) -> Unit
+        onError: () -> Unit
     ) {
-        val storageRef = Firebase.storage.reference
-        val filePath = "posts/$uid/${System.currentTimeMillis()}.jpg"
-        val fileRef = storageRef.child(filePath)
+        val imagePart = try {
+            userRepo.buildPhotoPartFromUri(requireContext(), imageUri, fieldName = "image")
+        } catch (e: Exception) {
+            onError()
+            return
+        }
 
-        fileRef.putFile(imageUri)
-            .continueWithTask { task ->
-                if (!task.isSuccessful) {
-                    throw task.exception ?: RuntimeException("Upload failed")
+        communityRepo.uploadPostImage(imagePart).enqueue(object : Callback<UploadPostImageResponse> {
+            override fun onResponse(call: Call<UploadPostImageResponse>, response: Response<UploadPostImageResponse>) {
+                if (!isAdded) return
+                val url = response.body()?.data?.imageUrl
+                if (response.isSuccessful && response.body()?.ok == true && url != null) {
+                    onSuccess(url)
+                } else {
+                    onError()
                 }
-                fileRef.downloadUrl
             }
-            .addOnSuccessListener { downloadUri ->
-                onSuccess(downloadUri.toString())
+            override fun onFailure(call: Call<UploadPostImageResponse>, t: Throwable) {
+                if (!isAdded) return
+                onError()
             }
-            .addOnFailureListener { e ->
-                onError(e)
-            }
+        })
     }
 
     private fun showCommentsBottomSheet(post: Post) {
@@ -259,6 +252,7 @@ class ComunidadFragment : Fragment() {
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = commentAdapter
 
+        viewModel.comments.removeObservers(viewLifecycleOwner)
         viewModel.comments.observe(viewLifecycleOwner) { comments ->
             commentAdapter.submitList(comments)
         }
@@ -277,6 +271,7 @@ class ComunidadFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        onImagePicked = null
         _binding = null
     }
 }

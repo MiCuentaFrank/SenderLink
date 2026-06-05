@@ -3,6 +3,7 @@ package com.senderlink.app.view.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.signature.ObjectKey
@@ -12,13 +13,15 @@ import com.senderlink.app.model.Post
 
 class PostAdapter(
     private val onLike: (Post) -> Unit,
-    private val onComments: (Post) -> Unit
+    private val onComments: (Post) -> Unit,
+    private val onDelete: ((Post) -> Unit)? = null
 ) : RecyclerView.Adapter<PostAdapter.VH>() {
 
     private var items: List<Post> = emptyList()
 
-    // ✅ Foto “fresca” del usuario actual (para refrescar cards al cambiar avatar)
+    // Foto “fresca” del usuario actual (para refrescar cards al cambiar avatar)
     private var currentUserPhotoUrl: String? = null
+    private var currentUserUid: String? = null
 
     inner class VH(val binding: ItemPostBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -36,11 +39,14 @@ class PostAdapter(
         b.tvText.text = post.text
 
         // =========================
-        // ✅ Avatar (userPhoto)
+        // Avatar (userPhoto)
         // =========================
-        // Si hemos actualizado la foto del usuario actual recientemente,
-        // la usamos para refrescar las cards sin depender del backend.
-        val avatarUrl = (currentUserPhotoUrl ?: post.userPhoto)?.trim().orEmpty()
+        // Solo usar la foto fresca si el post pertenece al usuario actual
+        val avatarUrl = if (currentUserUid != null && post.uid == currentUserUid) {
+            (currentUserPhotoUrl ?: post.userPhoto)?.trim().orEmpty()
+        } else {
+            post.userPhoto?.trim().orEmpty()
+        }
 
         if (avatarUrl.isNotBlank()) {
             Glide.with(b.imgAvatar)
@@ -66,7 +72,7 @@ class PostAdapter(
                 .signature(ObjectKey(imageUrl))
                 .placeholder(R.drawable.rutas1)
                 .error(R.drawable.rutas1)
-                .centerCrop()
+                .fitCenter()
                 .into(b.imgPost)
         } else {
             b.imgPost.visibility = View.GONE
@@ -77,21 +83,40 @@ class PostAdapter(
 
         b.btnLike.setOnClickListener { onLike(post) }
         b.tvCommentsCount.setOnClickListener { onComments(post) }
+
+        if (onDelete != null) {
+            b.btnDelete.visibility = View.VISIBLE
+            b.btnDelete.setOnClickListener { onDelete.invoke(post) }
+        } else {
+            b.btnDelete.visibility = View.GONE
+        }
     }
 
     override fun getItemCount() = items.size
 
     fun submitList(newItems: List<Post>) {
+        val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize() = items.size
+            override fun getNewListSize() = newItems.size
+            override fun areItemsTheSame(oldPos: Int, newPos: Int) =
+                items[oldPos].id == newItems[newPos].id
+            override fun areContentsTheSame(oldPos: Int, newPos: Int) =
+                items[oldPos] == newItems[newPos]
+        })
         items = newItems
-        notifyDataSetChanged()
+        diffResult.dispatchUpdatesTo(this)
     }
 
     /**
-     * ✅ Llamar cuando el usuario cambie su foto.
-     * Esto refresca el avatar de todas las cards.
+     * Llamar cuando el usuario cambie su foto.
+     * Solo refresca el avatar de los posts del usuario actual.
      */
-    fun setCurrentUserPhotoUrl(url: String?) {
+    fun setCurrentUserPhotoUrl(url: String?, uid: String? = null) {
         currentUserPhotoUrl = url?.trim()
-        notifyDataSetChanged()
+        if (uid != null) currentUserUid = uid
+        // Solo rebindear los posts del usuario actual, no toda la lista
+        items.forEachIndexed { index, post ->
+            if (post.uid == currentUserUid) notifyItemChanged(index)
+        }
     }
 }

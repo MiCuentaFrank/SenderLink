@@ -5,13 +5,18 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.senderlink.app.R
 import com.senderlink.app.databinding.FragmentEditProfileBinding
+import com.senderlink.app.network.PreferenciasRequest
+import com.senderlink.app.utils.ProvinciasUtils
 import com.senderlink.app.viewmodel.EditProfileViewModel
 
 class EditProfileFragment : Fragment() {
@@ -47,6 +52,30 @@ class EditProfileFragment : Fragment() {
         binding.toolbarEditProfile.setNavigationOnClickListener {
             findNavController().navigateUp()
         }
+
+        // Limpiar error del nombre en tiempo real cuando el usuario escribe
+        binding.etNombre.addTextChangedListener {
+            if (!it.isNullOrBlank()) {
+                binding.tilNombre.error = null
+            }
+        }
+
+        // Autocompletado de provincias españolas
+        val provinciaAdapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_dropdown_item_1line,
+            ProvinciasUtils.provincias
+        )
+        binding.etProvincia.setAdapter(provinciaAdapter)
+
+        // Auto-rellenar comunidad al seleccionar una provincia del desplegable
+        binding.etProvincia.setOnItemClickListener { _, _, _, _ ->
+            val provinciaSeleccionada = binding.etProvincia.text.toString()
+            val comunidad = ProvinciasUtils.getComunidad(provinciaSeleccionada)
+            if (comunidad != null && binding.etComunidad.text.isNullOrBlank()) {
+                binding.etComunidad.setText(comunidad)
+            }
+        }
     }
 
     private fun observeViewModel() {
@@ -56,6 +85,35 @@ class EditProfileFragment : Fragment() {
                 binding.etBio.setText(it.bio)
                 binding.etComunidad.setText(it.comunidad)
                 binding.etProvincia.setText(it.provincia)
+
+                // Populate preferences chips from saved user data
+                val prefs = it.preferencias
+                if (prefs != null) {
+                    // Nivel (single-select)
+                    val nivelChipId = when (prefs.nivel) {
+                        "INTERMEDIATE" -> R.id.chipIntermediate
+                        "ADVANCED"     -> R.id.chipAdvanced
+                        "EXPERT"       -> R.id.chipExpert
+                        else           -> R.id.chipBeginner
+                    }
+                    binding.chipGroupNivel.check(nivelChipId)
+
+                    // Tipos (multi-select)
+                    binding.chipMontana.isChecked = prefs.tipos.contains("MONTAÑA")
+                    binding.chipBosque.isChecked  = prefs.tipos.contains("BOSQUE")
+                    binding.chipCosta.isChecked   = prefs.tipos.contains("COSTA")
+                    binding.chipUrbano.isChecked  = prefs.tipos.contains("URBANO")
+                    binding.chipRural.isChecked   = prefs.tipos.contains("RURAL")
+
+                    // Distancia
+                    if (prefs.distanciaKm > 0) {
+                        val kmText = if (prefs.distanciaKm % 1.0 == 0.0)
+                            prefs.distanciaKm.toInt().toString()
+                        else
+                            prefs.distanciaKm.toString()
+                        binding.etDistancia.setText(kmText)
+                    }
+                }
             }
         }
 
@@ -79,7 +137,6 @@ class EditProfileFragment : Fragment() {
         }
     }
 
-
     private fun saveProfile() {
         val nombre = binding.etNombre.text.toString().trim()
         val bio = binding.etBio.text.toString().trim()
@@ -87,26 +144,50 @@ class EditProfileFragment : Fragment() {
         val provincia = binding.etProvincia.text.toString().trim()
 
         if (nombre.isEmpty()) {
-            Toast.makeText(requireContext(), "El nombre es obligatorio", Toast.LENGTH_SHORT).show()
+            binding.tilNombre.error = "El nombre es obligatorio"
+            binding.etNombre.requestFocus()
             return
         }
 
-        Log.d(TAG, "💾 Guardando perfil: nombre='$nombre'")
+        // Read nivel chip
+        val nivel = when (binding.chipGroupNivel.checkedChipId) {
+            R.id.chipIntermediate -> "INTERMEDIATE"
+            R.id.chipAdvanced     -> "ADVANCED"
+            R.id.chipExpert       -> "EXPERT"
+            else                  -> "BEGINNER"
+        }
 
-        // ✅ Actualizar perfil en MongoDB Y Firebase
+        // Read tipos chips (multi-select)
+        val tipos = mutableListOf<String>()
+        if (binding.chipMontana.isChecked) tipos.add("MONTAÑA")
+        if (binding.chipBosque.isChecked)  tipos.add("BOSQUE")
+        if (binding.chipCosta.isChecked)   tipos.add("COSTA")
+        if (binding.chipUrbano.isChecked)  tipos.add("URBANO")
+        if (binding.chipRural.isChecked)   tipos.add("RURAL")
+
+        // Read distancia
+        val distanciaKm = binding.etDistancia.text.toString().toDoubleOrNull() ?: 0.0
+
+        val preferencias = PreferenciasRequest(
+            nivel = nivel,
+            tipos = tipos,
+            distanciaKm = distanciaKm
+        )
+
+        Log.d(TAG, "💾 Guardando perfil: nombre='$nombre' nivel=$nivel tipos=$tipos km=$distanciaKm")
+
         viewModel.updateProfile(
             nombre = nombre,
             bio = bio,
             comunidad = comunidad,
             provincia = provincia,
+            preferencias = preferencias,
             onFirebaseSyncNeeded = { nombreParaFirebase ->
-                // ✅ Callback para sincronizar Firebase displayName
                 syncFirebaseDisplayName(nombreParaFirebase)
             }
         )
     }
 
-    // ✅ NUEVA FUNCIÓN: Sincronizar displayName en Firebase Auth
     private fun syncFirebaseDisplayName(nombre: String) {
         Log.d(TAG, "🔄 Sincronizando Firebase displayName='$nombre'")
 
@@ -125,7 +206,6 @@ class EditProfileFragment : Fragment() {
                 if (task.isSuccessful) {
                     Log.d(TAG, "✅ Firebase displayName actualizado correctamente")
 
-                    // ✅ Verificar que se guardó
                     val currentDisplayName = FirebaseAuth.getInstance().currentUser?.displayName
                     Log.d(TAG, "   displayName actual en Firebase: '$currentDisplayName'")
                 } else {

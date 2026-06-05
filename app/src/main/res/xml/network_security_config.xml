@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+    <!-- Cleartext solo permitido para desarrollo local -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+    <!-- Solo emulador Android (10.0.2.2) en desarrollo; 192.168.x.x no debe estar en producción -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">192.168.1.20</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
     </domain-config>
+    <!-- En producción, solo HTTPS -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
 </network-security-config>

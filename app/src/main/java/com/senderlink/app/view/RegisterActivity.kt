@@ -53,11 +53,19 @@ class RegisterActivity : AppCompatActivity() {
             return
         }
 
-        // Validar que la contraseña tenga al menos 6 caracteres
-        if (password.length < 6) {
+        // Validar contraseña: mínimo 8 caracteres, al menos una mayúscula, una minúscula y un número
+        if (password.length < 8) {
             Toast.makeText(
                 this,
-                "La contraseña debe tener al menos 6 caracteres",
+                "La contraseña debe tener al menos 8 caracteres",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        if (!password.any { it.isUpperCase() } || !password.any { it.isLowerCase() } || !password.any { it.isDigit() }) {
+            Toast.makeText(
+                this,
+                "La contraseña debe incluir mayúsculas, minúsculas y números",
                 Toast.LENGTH_SHORT
             ).show()
             return
@@ -77,7 +85,7 @@ class RegisterActivity : AppCompatActivity() {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    Log.d(TAG, "✅ Usuario registrado en Firebase correctamente")
+                    Log.d(TAG, "Usuario registrado en Firebase correctamente")
 
                     // Obtener el UID del usuario creado
                     val firebaseUser = auth.currentUser
@@ -96,12 +104,19 @@ class RegisterActivity : AppCompatActivity() {
                 } else {
                     binding.btnRegister.isEnabled = true
                     binding.btnRegister.text = "Registrarse"
-                    Log.e(TAG, "❌ Error en Firebase Auth: ${task.exception?.message}")
-                    Toast.makeText(
-                        this,
-                        "Error en el registro: ${task.exception?.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    val errorMsg = task.exception?.message ?: "Error desconocido"
+                    Log.e(TAG, "Error en Firebase Auth: $errorMsg", task.exception)
+                    val userMsg = when {
+                        errorMsg.contains("email address is already in use", ignoreCase = true) ->
+                            "Ese email ya está registrado. Prueba a iniciar sesión."
+                        errorMsg.contains("badly formatted", ignoreCase = true) ->
+                            "El email no tiene un formato válido."
+                        errorMsg.contains("network", ignoreCase = true) ||
+                        errorMsg.contains("unable to resolve", ignoreCase = true) ->
+                            "Sin conexión. Comprueba tu internet."
+                        else -> "Error: $errorMsg"
+                    }
+                    Toast.makeText(this, userMsg, Toast.LENGTH_LONG).show()
                 }
             }
     }
@@ -113,7 +128,7 @@ class RegisterActivity : AppCompatActivity() {
      * @param email - Email del usuario
      */
     private fun createUserInBackend(uid: String, email: String) {
-        Log.d(TAG, "📤 Creando usuario en MongoDB con UID: $uid")
+        Log.d(TAG, "Creando usuario en MongoDB")
 
         // Crear el objeto User con los datos mínimos
         val newUser = User(
@@ -127,10 +142,10 @@ class RegisterActivity : AppCompatActivity() {
         userRepository.createUser(newUser).observe(this) { result ->
             when (result) {
                 is UserRepository.Result.Loading -> {
-                    Log.d(TAG, "⏳ Creando usuario en backend...")
+                    Log.d(TAG, "Creando usuario en backend...")
                 }
                 is UserRepository.Result.Success -> {
-                    Log.d(TAG, "✅ Usuario creado en MongoDB correctamente")
+                    Log.d(TAG, "Usuario creado en MongoDB correctamente")
 
                     binding.btnRegister.isEnabled = true
                     binding.btnRegister.text = "Registrarse"
@@ -142,7 +157,7 @@ class RegisterActivity : AppCompatActivity() {
                     finish()
                 }
                 is UserRepository.Result.Error -> {
-                    Log.e(TAG, "❌ Error al crear usuario en MongoDB: ${result.message}")
+                    Log.e(TAG, "Error al crear usuario en MongoDB")
 
                     binding.btnRegister.isEnabled = true
                     binding.btnRegister.text = "Registrarse"

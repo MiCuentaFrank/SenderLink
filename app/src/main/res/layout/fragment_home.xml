@@ -45,22 +45,37 @@
                 android:paddingBottom="32dp">
 
                 <!-- ⭐ RUTAS DESTACADAS -->
-                <TextView
-                    android:id="@+id/tvFeaturedTitle"
+                <LinearLayout
+                    android:id="@+id/featuredTitleContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Rutas destacadas"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.02"
-                    android:textColor="@color/sl_primary"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <View
+                        android:layout_width="4dp"
+                        android:layout_height="26dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="@color/sl_primary" />
+
+                    <TextView
+                        android:id="@+id/tvFeaturedTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Rutas destacadas"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.02"
+                        android:textColor="@color/text_primary" />
+
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvFeaturedRoutes"
                     android:layout_width="0dp"
-                    android:layout_height="210dp"
+                    android:layout_height="250dp"
                     android:layout_marginTop="12dp"
                     android:clipToPadding="false"
                     android:paddingStart="4dp"
@@ -69,7 +84,7 @@
                     android:nestedScrollingEnabled="false"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/tvFeaturedTitle"
+                    app:layout_constraintTop_toBottomOf="@id/featuredTitleContainer"
                     tools:listitem="@layout/item_featured_route"
                     tools:itemCount="3" />
 
@@ -91,9 +106,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Rutas recientes"
-                    android:textSize="20sp"
+                    android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/text_primary"
+                    android:textColor="@color/text_secondary"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/dividerHome" />
 

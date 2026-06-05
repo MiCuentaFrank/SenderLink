@@ -1,4 +1,9 @@
 const User = require("../models/User");
+const Post = require("../models/Post");
+const Comment = require("../models/Comment");
+const Message = require("../models/Message");
+const EventoGrupal = require("../models/EventoGrupal");
+const { sanitizeText } = require("../utils/sanitize");
 
 // CREAR USUARIO
 async function createUser(req, res) {
@@ -12,10 +17,18 @@ async function createUser(req, res) {
       });
     }
 
+    // Auth: solo puedes crear tu propio documento de usuario
+    if (req.uid !== uid) {
+      return res.status(403).json({
+        ok: false,
+        message: "No autorizado: no puedes crear un usuario con un UID ajeno"
+      });
+    }
+
     const newUser = await User.create({
       uid,
       email,
-      nombre: nombre || "",
+      nombre: nombre ? sanitizeText(nombre, 100) : "",
       foto: foto || ""
     });
 
@@ -33,17 +46,20 @@ async function createUser(req, res) {
       });
     }
 
+    console.error("createUser error:", err.message);
     res.status(500).json({
       ok: false,
-      message: err.message
+      message: "Error interno al crear usuario"
     });
   }
 }
 
-// OBTENER TODOS LOS USUARIOS
+// OBTENER TODOS LOS USUARIOS (solo campos públicos)
 async function getUsers(req, res) {
   try {
-    const users = await User.find().select("-__v").sort({ createdAt: -1 });
+    const users = await User.find()
+      .select("uid nombre foto comunidad provincia progreso badges stats createdAt")
+      .sort({ createdAt: -1 });
 
     res.json({
       ok: true,
@@ -51,9 +67,10 @@ async function getUsers(req, res) {
       users
     });
   } catch (err) {
+    console.error("getUsers error:", err.message);
     res.status(500).json({
       ok: false,
-      message: err.message
+      message: "Error interno"
     });
   }
 }
@@ -77,21 +94,43 @@ async function getUserByUid(req, res) {
       user
     });
   } catch (err) {
+    console.error("getUserByUid error:", err.message);
     res.status(500).json({
       ok: false,
-      message: err.message
+      message: "Error interno"
     });
   }
 }
 
-// ACTUALIZAR USUARIO
+// ACTUALIZAR USUARIO (filtrar campos permitidos)
 async function updateUser(req, res) {
   try {
     const { uid } = req.params;
 
+    // Auth: solo puedes actualizar tu propio usuario
+    if (req.uid !== uid) {
+      return res.status(403).json({
+        ok: false,
+        message: "No autorizado: no puedes modificar otro usuario"
+      });
+    }
+
+    // Filtrar campos permitidos (evitar inyección de campos como role, isAdmin, etc.)
+    const allowedFields = [
+      "nombre", "foto", "bio", "comunidad", "provincia",
+      "preferencias", "profileCompletion"
+    ];
+    const safeBody = {};
+    for (const key of allowedFields) {
+      if (req.body[key] !== undefined) safeBody[key] = req.body[key];
+    }
+
+    if (safeBody.nombre) safeBody.nombre = sanitizeText(safeBody.nombre, 100);
+    if (safeBody.bio) safeBody.bio = sanitizeText(safeBody.bio, 500);
+
     const user = await User.findOneAndUpdate(
       { uid },
-      req.body,
+      safeBody,
       { new: true, runValidators: true }
     );
 
@@ -109,9 +148,10 @@ async function updateUser(req, res) {
     });
 
   } catch (err) {
+    console.error("updateUser error:", err.message);
     res.status(500).json({
       ok: false,
-      message: err.message
+      message: "Error interno al actualizar usuario"
     });
   }
 }
@@ -121,9 +161,17 @@ async function updateUserProfile(req, res) {
   try {
     const { uid } = req.params;
 
+    // Auth: solo puedes actualizar tu propio perfil
+    if (req.uid !== uid) {
+      return res.status(403).json({
+        ok: false,
+        message: "No autorizado: no puedes modificar el perfil de otro usuario"
+      });
+    }
+
     const allowedFields = [
       "nombre",
-      "foto",
+      // "foto" se gestiona exclusivamente mediante POST /:uid/photo
       "bio",
       "comunidad",
       "provincia",
@@ -135,7 +183,16 @@ async function updateUserProfile(req, res) {
       if (req.body[key] !== undefined) safeBody[key] = req.body[key];
     }
 
-    const completion = calculateProfileCompletion(safeBody);
+    if (safeBody.nombre) safeBody.nombre = sanitizeText(safeBody.nombre, 100);
+    if (safeBody.bio) safeBody.bio = sanitizeText(safeBody.bio, 500);
+
+    // Obtener datos actuales para calcular profileCompletion con datos completos
+    const currentUser = await User.findOne({ uid }).lean();
+    if (!currentUser) {
+      return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
+    }
+    const mergedData = { ...currentUser, ...safeBody };
+    const completion = calculateProfileCompletion(mergedData);
     safeBody.profileCompletion = completion;
 
     const user = await User.findOneAndUpdate(
@@ -155,25 +212,37 @@ async function updateUserProfile(req, res) {
     });
 
   } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
+    console.error("updateUserProfile error:", err.message);
+    res.status(500).json({ ok: false, message: "Error interno al actualizar perfil" });
   }
 }
 
-// ✅ NUEVO: SUBIR FOTO DE PERFIL (multipart)
+// SUBIR FOTO DE PERFIL (multipart)
 async function uploadUserPhoto(req, res) {
   try {
     const { uid } = req.params;
 
-    if (!req.file) {
+    // Auth: solo puedes subir tu propia foto
+    if (req.uid !== uid) {
+      return res.status(403).json({ ok: false, message: "No autorizado" });
+    }
+
+    if (!req.firebasePhotoUrl) {
       return res.status(400).json({ ok: false, message: "No se recibió ninguna imagen" });
     }
 
-    // URL pública del archivo (requiere app.use("/uploads", express.static("uploads")) en server.js)
-    const photoUrl = `${req.protocol}://${req.get("host")}/uploads/users/${req.file.filename}`;
+    const photoUrl = req.firebasePhotoUrl;
+
+    // Recalcular profileCompletion incluyendo la nueva foto
+    const currentUser = await User.findOne({ uid }).lean();
+    if (!currentUser) {
+      return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
+    }
+    const completion = calculateProfileCompletion({ ...currentUser, foto: photoUrl });
 
     const user = await User.findOneAndUpdate(
       { uid },
-      { $set: { foto: photoUrl } },
+      { $set: { foto: photoUrl, profileCompletion: completion } },
       { new: true }
     ).select("-__v");
 
@@ -189,8 +258,56 @@ async function uploadUserPhoto(req, res) {
     });
 
   } catch (err) {
-    console.error("❌ Error subiendo foto:", err.message);
-    res.status(500).json({ ok: false, message: err.message });
+    console.error("Error subiendo foto:", err.message);
+    res.status(500).json({ ok: false, message: "Error interno al subir foto" });
+  }
+}
+
+// Rangos por nivel
+const RANK_TITLES = [
+  { minLevel: 50, title: "Trail Master" },
+  { minLevel: 35, title: "Adventurer" },
+  { minLevel: 20, title: "Mountaineer" },
+  { minLevel: 10, title: "Trekker" },
+  { minLevel: 5, title: "Hiker" },
+  { minLevel: 1, title: "Explorer" }
+];
+
+function getRankTitle(level) {
+  for (const rank of RANK_TITLES) {
+    if (level >= rank.minLevel) return rank.title;
+  }
+  return "Explorer";
+}
+
+// AÑADIR XP y recalcular nivel (función interna, no expuesta como endpoint directo)
+async function addXp(uid, amount) {
+  try {
+    const user = await User.findOne({ uid });
+    if (!user) return;
+    const newXp = ((user.progreso && user.progreso.xp) || 0) + amount;
+    const newLevel = Math.floor(newXp / 100) + 1;
+    const newRankTitle = getRankTitle(newLevel);
+    await User.updateOne({ uid }, {
+      $set: {
+        "progreso.xp": newXp,
+        "progreso.level": newLevel,
+        "progreso.rankTitle": newRankTitle
+      }
+    });
+  } catch (err) {
+    console.error("addXp error:", err.message);
+  }
+}
+
+// AÑADIR BADGE si el usuario no lo tiene ya (función interna)
+async function addBadge(uid, badge) {
+  try {
+    await User.updateOne({ uid }, {
+      $addToSet: { badges: badge }
+    });
+  } catch (err) {
+    console.error("addBadge error:", err.message);
   }
 }
 
@@ -223,6 +340,14 @@ async function deleteUser(req, res) {
   try {
     const { uid } = req.params;
 
+    // Auth: solo puedes eliminar tu propia cuenta
+    if (req.uid !== uid) {
+      return res.status(403).json({
+        ok: false,
+        message: "No autorizado: no puedes eliminar otro usuario"
+      });
+    }
+
     const deleted = await User.findOneAndDelete({ uid });
 
     if (!deleted) {
@@ -232,15 +357,52 @@ async function deleteUser(req, res) {
       });
     }
 
+    // Limpiar datos asociados al usuario eliminado
+    // 1. Comentarios en posts de otros → decrementar commentsCount antes de borrar
+    const commentsOnOthers = await Comment.find({ uid }).select("postId").lean();
+    if (commentsOnOthers.length > 0) {
+      const countByPost = {};
+      for (const c of commentsOnOthers) {
+        const id = c.postId.toString();
+        countByPost[id] = (countByPost[id] || 0) + 1;
+      }
+      await Promise.all(
+        Object.entries(countByPost).map(([postId, count]) =>
+          Post.updateOne({ _id: postId }, { $inc: { commentsCount: -count } })
+        )
+      );
+      await Comment.deleteMany({ uid });
+    }
+
+    // 2. Posts propios y sus comentarios
+    const userPostIds = await Post.find({ uid }).distinct("_id");
+    if (userPostIds.length > 0) {
+      await Comment.deleteMany({ postId: { $in: userPostIds } });
+      await Post.deleteMany({ uid });
+    }
+
+    // 3. Mensajes directos (enviados y recibidos)
+    await Message.deleteMany({ $or: [{ remitenteUid: uid }, { destinatarioUid: uid }] });
+
+    // 4. Eliminar de eventos grupales como participante (no como organizador;
+    //    los eventos organizados quedan visibles con los participantes restantes)
+    await EventoGrupal.updateMany(
+      { "participantes.uid": uid, organizadorUid: { $ne: uid } },
+      { $pull: { participantes: { uid } } }
+    );
+
+    // Nota: las rutas creadas por el usuario se conservan (contenido de la comunidad)
+
     res.json({
       ok: true,
       message: "Usuario eliminado correctamente"
     });
 
   } catch (err) {
+    console.error("deleteUser error:", err.message);
     res.status(500).json({
       ok: false,
-      message: err.message
+      message: "Error interno al eliminar usuario"
     });
   }
 }
@@ -252,5 +414,7 @@ module.exports = {
   updateUser,
   updateUserProfile,
   uploadUserPhoto,
-  deleteUser
+  deleteUser,
+  addXp,
+  addBadge
 };

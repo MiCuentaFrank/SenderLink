@@ -135,45 +135,61 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvParticipantes" />
 
-        <!-- ✅ NUEVO: Botón Ver Ruta -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnVerRuta"
+        <!-- FILA SUPERIOR: Ver ruta + Chat lado a lado -->
+        <LinearLayout
+            android:id="@+id/layoutBotonesTop"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="Ver ruta"
-            android:visibility="visible"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            app:cornerRadius="8dp"
-            app:icon="@android:drawable/ic_menu_mapmode"
-            app:iconGravity="textStart"
+            android:orientation="horizontal"
             app:layout_constraintTop_toBottomOf="@id/progressParticipantes"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:visibility="visible" />
+            app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Botón Unirse/Salir -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnVerRuta"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="Ver ruta"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                app:cornerRadius="8dp"
+                app:icon="@android:drawable/ic_menu_mapmode"
+                app:iconGravity="textStart" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnChat"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="💬 Chat"
+                android:visibility="gone"
+                app:cornerRadius="8dp" />
+
+        </LinearLayout>
+
+        <!-- Botón Unirse - ancho completo debajo -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnJoin"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
             android:text="@string/unirse"
             android:visibility="gone"
             app:cornerRadius="8dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnVerRuta"
-            tools:visibility="visible" />
+            app:layout_constraintTop_toBottomOf="@id/layoutBotonesTop"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
-        <!-- Botón Cancelar -->
+        <!-- Botón Cancelar evento - ancho completo debajo -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
             android:text="Cancelar"
             android:visibility="gone"
             style="@style/Widget.Material3.Button.OutlinedButton"
@@ -182,30 +198,8 @@
             android:textColor="@color/error"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnVerRuta"
-            tools:visibility="visible" />
-
-        <!-- Barrier para que Chat vaya debajo del botón visible -->
-        <androidx.constraintlayout.widget.Barrier
-            android:id="@+id/barrierButtons"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:barrierDirection="bottom"
-            app:constraint_referenced_ids="btnVerRuta,btnJoin,btnCancel" />
-
-        <!-- Botón Chat -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnChat"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="💬 Chat"
-            android:visibility="gone"
-            app:cornerRadius="8dp"
-            app:layout_constraintTop_toBottomOf="@id/barrierButtons"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:visibility="visible" />
+            app:layout_constraintTop_toBottomOf="@id/layoutBotonesTop"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

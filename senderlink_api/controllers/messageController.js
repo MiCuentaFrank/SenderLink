@@ -1,5 +1,6 @@
 const Message = require("../models/Message");
 const User = require("../models/User");
+const { sanitizeText } = require("../utils/sanitize");
 
 // Enviar mensaje
 async function sendMessage(req, res) {
@@ -13,11 +14,24 @@ async function sendMessage(req, res) {
       });
     }
 
+    // Auth: solo el remitente puede enviar mensajes en su nombre
+    if (req.uid !== remitenteUid) {
+      return res.status(403).json({
+        ok: false,
+        message: "No autorizado: no puedes enviar mensajes en nombre de otro usuario"
+      });
+    }
+
+    const textoSanitizado = sanitizeText(texto, 2000);
+    if (textoSanitizado.trim().length === 0) {
+      return res.status(400).json({ ok: false, message: "El mensaje no puede estar vacío" });
+    }
+
     const newMessage = await Message.create({
       chatId,
       remitenteUid,
       destinatarioUid,
-      texto
+      texto: textoSanitizado
     });
 
     res.status(201).json({
@@ -27,9 +41,10 @@ async function sendMessage(req, res) {
     });
 
   } catch (err) {
+    console.error("sendMessage error:", err.message);
     res.status(500).json({
       ok: false,
-      message: err.message
+      message: "Error interno al enviar mensaje"
     });
   }
 }
@@ -38,6 +53,23 @@ async function sendMessage(req, res) {
 async function getMessages(req, res) {
   try {
     const { chatId } = req.params;
+
+    // Auth: verificar que el usuario pertenece al chat por el formato del chatId (uid1_uid2)
+    // El chatId debe ser exactamente dos UIDs separados por "_"; ningún UID contiene "_".
+    if (!chatId || typeof chatId !== "string" || chatId.length > 200) {
+      return res.status(400).json({ ok: false, message: "chatId inválido" });
+    }
+    const parts = chatId.split("_");
+    if (
+      parts.length !== 2 ||
+      !parts.every(p => /^[a-zA-Z0-9]{20,40}$/.test(p)) ||
+      !parts.includes(req.uid)
+    ) {
+      return res.status(403).json({
+        ok: false,
+        message: "No autorizado: no perteneces a este chat"
+      });
+    }
 
     const messages = await Message.find({ chatId }).sort({ createdAt: 1 });
 
@@ -48,9 +80,10 @@ async function getMessages(req, res) {
     });
 
   } catch (err) {
+    console.error("getMessages error:", err.message);
     res.status(500).json({
       ok: false,
-      message: err.message
+      message: "Error interno al obtener mensajes"
     });
   }
 }
@@ -69,6 +102,14 @@ async function markAsRead(req, res) {
       });
     }
 
+    // Auth: solo el destinatario puede marcar como leído
+    if (req.uid !== message.destinatarioUid) {
+      return res.status(403).json({
+        ok: false,
+        message: "No autorizado"
+      });
+    }
+
     message.leido = true;
     message.fechaLectura = new Date();
 
@@ -81,15 +122,76 @@ async function markAsRead(req, res) {
     });
 
   } catch (err) {
+    console.error("markAsRead error:", err.message);
     res.status(500).json({
       ok: false,
-      message: err.message
+      message: "Error interno"
     });
+  }
+}
+
+// Obtener conversaciones de un usuario (último mensaje por chatId)
+async function getConversations(req, res) {
+  try {
+    const { uid } = req.params;
+
+    if (!uid) {
+      return res.status(400).json({ ok: false, message: "uid requerido" });
+    }
+
+    // Auth: solo puedes ver tus propias conversaciones
+    if (req.uid !== uid) {
+      return res.status(403).json({
+        ok: false,
+        message: "No autorizado: no puedes ver conversaciones de otro usuario"
+      });
+    }
+
+    // Aggregation: obtener solo el último mensaje por chatId (evita cargar todos en memoria)
+    const latestMessages = await Message.aggregate([
+      { $match: { $or: [{ remitenteUid: uid }, { destinatarioUid: uid }] } },
+      { $sort: { createdAt: -1 } },
+      { $group: { _id: "$chatId", msg: { $first: "$$ROOT" } } },
+      { $replaceRoot: { newRoot: "$msg" } },
+      { $sort: { createdAt: -1 } }
+    ]);
+
+    // Obtener todos los otros UIDs de una vez (evita N+1 queries)
+    const otherUids = latestMessages.map(msg =>
+      msg.remitenteUid === uid ? msg.destinatarioUid : msg.remitenteUid
+    );
+    const otherUsers = await User.find({ uid: { $in: otherUids } })
+      .select("uid nombre foto").lean();
+    const usersMap = {};
+    for (const u of otherUsers) { usersMap[u.uid] = u; }
+
+    const conversations = latestMessages.map(msg => {
+      const otherUid = msg.remitenteUid === uid ? msg.destinatarioUid : msg.remitenteUid;
+      const otherUser = usersMap[otherUid];
+      return {
+        chatId: msg.chatId,
+        lastMessage: msg.texto,
+        lastMessageAt: msg.createdAt,
+        otherUid,
+        otherNombre: otherUser?.nombre || "Usuario",
+        otherFoto: otherUser?.foto || ""
+      };
+    });
+
+    // Ordenar por más reciente
+    conversations.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
+
+    res.json({ ok: true, data: conversations });
+
+  } catch (err) {
+    console.error("getConversations error:", err.message);
+    res.status(500).json({ ok: false, message: "Error interno" });
   }
 }
 
 module.exports = {
   sendMessage,
   getMessages,
-  markAsRead
+  markAsRead,
+  getConversations
 };

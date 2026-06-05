@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.senderlink.app.model.Route
 import com.senderlink.app.repository.RouteRepository
+import com.senderlink.app.utils.HomeDataStore
 import kotlinx.coroutines.launch
 
 /**
@@ -60,7 +61,7 @@ class HomeViewModel : ViewModel() {
                 loadFeaturedRoutesInternal()
 
                 Log.d(TAG, "⚡ Cargando recientes...")
-                loadRecentRoutesInternal(limit = 10)
+                loadRecentRoutesInternal(context, limit = 10)
 
                 Log.d(TAG, "✅ Carga completa")
             } catch (e: Exception) {
@@ -96,14 +97,21 @@ class HomeViewModel : ViewModel() {
     // ==============================
     // RECIENTES (interno)
     // ==============================
-    private suspend fun loadRecentRoutesInternal(limit: Int = 10) {
-        // En tu API: getAllRoutes(page, limit)
+    private suspend fun loadRecentRoutesInternal(context: Context? = null, limit: Int = 10) {
+        // Mostrar caché inmediatamente si hay datos, pero siempre refrescar desde la API
+        if (context != null) {
+            val stored = HomeDataStore.getRecentRoutes(context)
+            if (stored.isNotEmpty()) {
+                _routes.value = stored
+                Log.d(TAG, "📦 Mostrando recientes desde caché: ${stored.size} rutas")
+            }
+        }
         val response = repository.getAllRoutes(page = 1, limit = limit)
-
         val list = response.routes ?: emptyList()
-        _routes.value = list
-
-        Log.d(TAG, "✅ Recientes cargadas: ${list.size} rutas")
+        if (list.isNotEmpty()) {
+            _routes.value = list
+            Log.d(TAG, "✅ Recientes desde API: ${list.size} rutas")
+        }
     }
 
     // ==============================
@@ -146,9 +154,22 @@ class HomeViewModel : ViewModel() {
     // ==============================
     // OTROS
     // ==============================
+
     fun markRouteAsRecent(context: Context, route: Route) {
-        Log.d(TAG, "📍 Ruta marcada como reciente: ${route.name}")
-        // Aquí luego metes persistencia si quieres
+        viewModelScope.launch {
+            HomeDataStore.addRecentRoute(context, route)
+            _routes.value = HomeDataStore.getRecentRoutes(context)
+        }
+    }
+
+    fun refreshRecentRoutes(context: Context) {
+        viewModelScope.launch {
+            val stored = HomeDataStore.getRecentRoutes(context)
+            if (stored.isNotEmpty()) {
+                _routes.value = stored
+                Log.d(TAG, "🔄 Recientes refrescadas: ${stored.size} rutas")
+            }
+        }
     }
 
     fun refresh(context: Context) {

@@ -3,6 +3,7 @@ package com.senderlink.app.utils
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.google.firebase.auth.FirebaseAuth
 import com.senderlink.app.model.User
 import com.senderlink.app.repository.UserRepository
@@ -54,6 +55,10 @@ class UserManager private constructor() {
     private val _error = MutableLiveData<String?>(null)
     val error: LiveData<String?> = _error
 
+    // Referencia al observer activo para evitar memory leaks
+    private var activeObserver: Observer<UserRepository.Result<User>>? = null
+    private var activeLiveData: LiveData<UserRepository.Result<User>>? = null
+
     companion object {
         @Volatile
         private var INSTANCE: UserManager? = null
@@ -92,10 +97,16 @@ class UserManager private constructor() {
             return
         }
 
-        Log.d(TAG, "🔄 Cargando usuario desde backend: $uid")
+        Log.d(TAG, "Cargando usuario desde backend")
         _isLoading.value = true
 
-        repository.getUserByUid(uid).observeForever { result ->
+        // Eliminar observer anterior para evitar memory leak
+        activeObserver?.let { obs ->
+            activeLiveData?.removeObserver(obs)
+        }
+
+        val liveData = repository.getUserByUid(uid)
+        val observer = Observer<UserRepository.Result<User>> { result ->
             when (result) {
                 is UserRepository.Result.Loading -> {
                     _isLoading.value = true
@@ -104,15 +115,60 @@ class UserManager private constructor() {
                     _isLoading.value = false
                     _currentUser.value = result.data
                     _error.value = null
-                    Log.d(TAG, "✅ Usuario cargado: ${result.data.nombre}")
+                    Log.d(TAG, "Usuario cargado: ${result.data.nombre}")
                 }
                 is UserRepository.Result.Error -> {
                     _isLoading.value = false
-                    _error.value = result.message
-                    Log.e(TAG, "❌ Error cargando usuario: ${result.message}")
+                    if (result.message?.contains("404") == true) {
+                        Log.w(TAG, "⚠️ Usuario no encontrado en MongoDB, creando automáticamente...")
+                        autoCreateUser(uid)
+                    } else {
+                        _error.value = result.message
+                        Log.e(TAG, "Error cargando usuario: ${result.message}")
+                    }
                 }
             }
         }
+
+        activeLiveData = liveData
+        activeObserver = observer
+        liveData.observeForever(observer)
+    }
+
+    private fun autoCreateUser(uid: String) {
+        val email = auth.currentUser?.email ?: run {
+            Log.e(TAG, "❌ No se pudo obtener email para crear usuario")
+            _error.value = "No se pudo obtener información del usuario"
+            return
+        }
+        val nombre = auth.currentUser?.displayName ?: ""
+        val foto = auth.currentUser?.photoUrl?.toString() ?: ""
+
+        val newUser = com.senderlink.app.model.User(uid = uid, email = email, nombre = nombre, foto = foto)
+        Log.d(TAG, "Creando usuario en MongoDB: $uid / $email")
+        _isLoading.value = true
+
+        val liveData = repository.createUser(newUser)
+        val observer = object : Observer<UserRepository.Result<com.senderlink.app.model.User>> {
+            override fun onChanged(result: UserRepository.Result<com.senderlink.app.model.User>) {
+                when (result) {
+                    is UserRepository.Result.Loading -> {}
+                    is UserRepository.Result.Success -> {
+                        liveData.removeObserver(this)
+                        _isLoading.value = false
+                        _currentUser.value = result.data
+                        Log.d(TAG, "✅ Usuario creado automáticamente en MongoDB")
+                    }
+                    is UserRepository.Result.Error -> {
+                        liveData.removeObserver(this)
+                        _isLoading.value = false
+                        _error.value = "Error al crear perfil de usuario"
+                        Log.e(TAG, "❌ Error creando usuario automáticamente: ${result.message}")
+                    }
+                }
+            }
+        }
+        liveData.observeForever(observer)
     }
 
     /**
@@ -198,9 +254,14 @@ class UserManager private constructor() {
      * Útil al hacer logout
      */
     fun clearCache() {
+        activeObserver?.let { obs ->
+            activeLiveData?.removeObserver(obs)
+        }
+        activeObserver = null
+        activeLiveData = null
         _currentUser.value = null
         _error.value = null
-        Log.d(TAG, "🗑️ Caché limpiado")
+        Log.d(TAG, "Cache limpiado")
     }
 
     /**

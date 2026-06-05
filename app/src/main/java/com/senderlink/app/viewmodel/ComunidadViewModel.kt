@@ -45,7 +45,7 @@ class ComunidadViewModel : ViewModel() {
 
             override fun onFailure(call: Call<CommunityPostsResponse>, t: Throwable) {
                 _isLoading.value = false
-                _error.value = t.message ?: "Error de red"
+                _error.value = "Error de conexión. Intenta de nuevo."
             }
         })
     }
@@ -78,9 +78,34 @@ class ComunidadViewModel : ViewModel() {
 
                 override fun onFailure(call: Call<CreatePostResponse>, t: Throwable) {
                     _isLoading.value = false
-                    _error.value = t.message ?: "Error de red"
+                    _error.value = "Error de conexión. Intenta de nuevo."
                 }
             })
+    }
+
+    fun deletePost(postId: String) {
+        val user = FirebaseAuth.getInstance().currentUser
+        val uid = user?.uid ?: run {
+            _error.value = "No hay usuario autenticado"
+            return
+        }
+
+        repo.deletePost(postId, uid).enqueue(object : Callback<DeletePostResponse> {
+            override fun onResponse(
+                call: Call<DeletePostResponse>,
+                response: Response<DeletePostResponse>
+            ) {
+                if (response.isSuccessful && response.body()?.ok == true) {
+                    loadPosts()
+                } else {
+                    _error.value = "No se pudo eliminar el post"
+                }
+            }
+
+            override fun onFailure(call: Call<DeletePostResponse>, t: Throwable) {
+                _error.value = "Error de conexión. Intenta de nuevo."
+            }
+        })
     }
 
     fun toggleLike(postId: String) {
@@ -103,7 +128,7 @@ class ComunidadViewModel : ViewModel() {
             }
 
             override fun onFailure(call: Call<LikePostResponse>, t: Throwable) {
-                _error.value = t.message ?: "Error de red"
+                _error.value = "Error de conexión. Intenta de nuevo."
             }
         })
     }
@@ -122,7 +147,7 @@ class ComunidadViewModel : ViewModel() {
             }
 
             override fun onFailure(call: Call<CommentsResponse>, t: Throwable) {
-                _error.value = t.message ?: "Error de red"
+                _error.value = "Error de conexión. Intenta de nuevo."
             }
         })
     }
@@ -153,7 +178,7 @@ class ComunidadViewModel : ViewModel() {
                 }
 
                 override fun onFailure(call: Call<CreateCommentResponse>, t: Throwable) {
-                    _error.value = t.message ?: "Error de red"
+                    _error.value = "Error de conexión. Intenta de nuevo."
                 }
             })
     }

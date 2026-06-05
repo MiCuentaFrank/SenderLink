@@ -60,39 +60,48 @@ class RutasGrupalesViewModel : ViewModel() {
         userManager.loadCurrentUser()
     }
 
-    // ✅ OPTIMIZADO: Filtrar eventos cancelados con límite de 7 días
+    // Parsea fechas ISO 8601 con o sin milisegundos (2025-04-15T09:00:00.000Z o 2025-04-15T09:00:00Z)
+    private fun parseIsoDate(dateStr: String?): Date? {
+        if (dateStr.isNullOrBlank()) return null
+        val formats = listOf(
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss"
+        )
+        for (fmt in formats) {
+            try {
+                val sdf = SimpleDateFormat(fmt, Locale.US)
+                sdf.timeZone = TimeZone.getTimeZone("UTC")
+                return sdf.parse(dateStr)
+            } catch (_: Exception) { }
+        }
+        return null
+    }
+
+    // ✅ Filtrar eventos cancelados con límite de 7 días
     private fun shouldShowCancelledEvent(evento: EventoGrupal): Boolean {
-        // Si NO está cancelado, siempre mostrar
         if (!evento.isCancelado()) return true
 
         return try {
-            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-            sdf.timeZone = TimeZone.getTimeZone("UTC")
-
-            val fechaEvento = sdf.parse(evento.fecha) ?: return true
+            val fechaEvento = parseIsoDate(evento.fecha) ?: return true
             val hoy = Date()
 
-            // ✅ CLAVE: Usar updatedAt (fecha de cancelación) si existe
             val fechaCancelacion = if (!evento.updatedAt.isNullOrBlank()) {
-                sdf.parse(evento.updatedAt) ?: fechaEvento
+                parseIsoDate(evento.updatedAt) ?: fechaEvento
             } else {
                 fechaEvento
             }
 
-            // Calcular límites
             val calendar = Calendar.getInstance()
 
-            // Opción 1: Fecha evento + 7 días
             calendar.time = fechaEvento
             calendar.add(Calendar.DAY_OF_YEAR, 7)
             val limiteDesdeEvento = calendar.time
 
-            // Opción 2: Fecha cancelación + 7 días
             calendar.time = fechaCancelacion
             calendar.add(Calendar.DAY_OF_YEAR, 7)
             val limiteDesdeCancelacion = calendar.time
 
-            // ✅ Usar EL MENOR de los dos límites
             val fechaLimite = if (limiteDesdeCancelacion.before(limiteDesdeEvento)) {
                 limiteDesdeCancelacion
             } else {
@@ -102,14 +111,13 @@ class RutasGrupalesViewModel : ViewModel() {
             val mostrar = hoy.before(fechaLimite)
 
             if (!mostrar) {
-                Log.d(TAG, "🗑️ Evento cancelado oculto: ${evento.id.take(8)} " +
-                        "(cancelado hace más de 7 días)")
+                Log.d(TAG, "🗑️ Evento cancelado oculto: ${evento.id.take(8)}")
             }
 
             mostrar
         } catch (e: Exception) {
             Log.e(TAG, "Error parseando fecha: ${evento.fecha}", e)
-            true // En caso de error, mostrar el evento
+            true
         }
     }
 
@@ -171,7 +179,6 @@ class RutasGrupalesViewModel : ViewModel() {
                     val disponibles = list.filter { ev ->
                         ev.isOrganizer != true && ev.isParticipant != true
                     }
-
                     _eventos.value = disponibles
                     Log.d(TAG, "✅ Disponibles globales: ${disponibles.size}")
                 } else {
@@ -232,12 +239,7 @@ class RutasGrupalesViewModel : ViewModel() {
                 val response = repository.getEventosByUser(uid)
                 if (response.ok) {
                     val todosLosEventos = response.data ?: emptyList()
-
-                    // ✅ Filtrar eventos cancelados antiguos
-                    val eventosFiltrados = todosLosEventos.filter { evento ->
-                        shouldShowCancelledEvent(evento)
-                    }
-
+                    val eventosFiltrados = todosLosEventos.filter { shouldShowCancelledEvent(it) }
                     _misEventos.value = eventosFiltrados
 
                     val canceladosOcultos = todosLosEventos.size - eventosFiltrados.size
@@ -269,12 +271,7 @@ class RutasGrupalesViewModel : ViewModel() {
                 val response = repository.getEventosParticipando(uid)
                 if (response.ok) {
                     val todosLosEventos = response.data ?: emptyList()
-
-                    // ✅ Filtrar eventos cancelados antiguos
-                    val eventosFiltrados = todosLosEventos.filter { evento ->
-                        shouldShowCancelledEvent(evento)
-                    }
-
+                    val eventosFiltrados = todosLosEventos.filter { shouldShowCancelledEvent(it) }
                     _eventosParticipando.value = eventosFiltrados
 
                     val canceladosOcultos = todosLosEventos.size - eventosFiltrados.size
@@ -326,15 +323,13 @@ class RutasGrupalesViewModel : ViewModel() {
                     val soyOrganizador = eventos.any { it.isOrganizer == true }
                     val participo = eventos.any { it.isParticipant == true }
 
-                    val targetTab = when {
+                    _navPreferredTab.value = when {
                         soyOrganizador -> 1
                         participo -> 2
                         else -> 0
                     }
 
-                    _navPreferredTab.value = targetTab
-
-                    Log.d(TAG, "✅ openFromRouteDetail: tab=$targetTab showAll=false")
+                    Log.d(TAG, "✅ openFromRouteDetail: tab=${_navPreferredTab.value}")
                 } else {
                     _navPreferredTab.value = 0
                     loadEventosPorRuta(routeId)
@@ -353,7 +348,6 @@ class RutasGrupalesViewModel : ViewModel() {
         _navPreferredTab.value = null
         _selectedEventId.value = null
         lastRouteIdRequested = null
-
         Log.d(TAG, "✅ openFromNavComunidad: showAll=true")
     }
 
@@ -369,6 +363,10 @@ class RutasGrupalesViewModel : ViewModel() {
         }
     }
 
+    // ========================================
+    // ACCIONES — coroutines limpias sin polling
+    // ========================================
+
     fun joinEvento(evento: EventoGrupal) {
         val uid = requireUidOrError() ?: return
         val nombre = userManager.getUserName()
@@ -376,31 +374,19 @@ class RutasGrupalesViewModel : ViewModel() {
 
         viewModelScope.launch {
             _isLoading.value = true
-
-            val liveData = repository.joinEvento(evento.id, uid, nombre, foto)
-
-            var result: EventRepository.Result<EventoGrupal>? = null
-            liveData.observeForever { res ->
-                result = res
-            }
-
-            while (result == null || result is EventRepository.Result.Loading) {
-                kotlinx.coroutines.delay(50)
-            }
-
-            when (result) {
-                is EventRepository.Result.Success -> {
-                    _isLoading.value = false
+            try {
+                val response = repository.joinEvento(evento.id, uid, nombre, foto)
+                if (response.ok) {
                     _successMessage.value = "Te has unido al evento"
                     refreshAfterAction()
+                } else {
+                    _error.value = response.message ?: "Error al unirse al evento"
                 }
-                is EventRepository.Result.Error -> {
-                    _isLoading.value = false
-                    _error.value = (result as EventRepository.Result.Error).message
-                }
-                else -> {
-                    _isLoading.value = false
-                }
+            } catch (e: Exception) {
+                Log.e(TAG, "joinEvento error", e)
+                _error.value = e.message ?: "Error de conexión"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -412,31 +398,19 @@ class RutasGrupalesViewModel : ViewModel() {
 
         viewModelScope.launch {
             _isLoading.value = true
-
-            val liveData = repository.leaveEvento(evento.id, uid, nombre, foto)
-
-            var result: EventRepository.Result<EventoGrupal>? = null
-            liveData.observeForever { res ->
-                result = res
-            }
-
-            while (result == null || result is EventRepository.Result.Loading) {
-                kotlinx.coroutines.delay(50)
-            }
-
-            when (result) {
-                is EventRepository.Result.Success -> {
-                    _isLoading.value = false
+            try {
+                val response = repository.leaveEvento(evento.id, uid, nombre, foto)
+                if (response.ok) {
                     _successMessage.value = "Has salido del evento"
                     refreshAfterAction()
+                } else {
+                    _error.value = response.message ?: "Error al salir del evento"
                 }
-                is EventRepository.Result.Error -> {
-                    _isLoading.value = false
-                    _error.value = (result as EventRepository.Result.Error).message
-                }
-                else -> {
-                    _isLoading.value = false
-                }
+            } catch (e: Exception) {
+                Log.e(TAG, "leaveEvento error", e)
+                _error.value = e.message ?: "Error de conexión"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -446,31 +420,19 @@ class RutasGrupalesViewModel : ViewModel() {
 
         viewModelScope.launch {
             _isLoading.value = true
-
-            val liveData = repository.cancelEvento(evento.id, uid)
-
-            var result: EventRepository.Result<EventoGrupal>? = null
-            liveData.observeForever { res ->
-                result = res
-            }
-
-            while (result == null || result is EventRepository.Result.Loading) {
-                kotlinx.coroutines.delay(50)
-            }
-
-            when (result) {
-                is EventRepository.Result.Success -> {
-                    _isLoading.value = false
+            try {
+                val response = repository.cancelEvento(evento.id, uid)
+                if (response.ok) {
                     _successMessage.value = "Evento cancelado"
                     refreshAfterAction()
+                } else {
+                    _error.value = response.message ?: "Error al cancelar el evento"
                 }
-                is EventRepository.Result.Error -> {
-                    _isLoading.value = false
-                    _error.value = (result as EventRepository.Result.Error).message
-                }
-                else -> {
-                    _isLoading.value = false
-                }
+            } catch (e: Exception) {
+                Log.e(TAG, "cancelEvento error", e)
+                _error.value = e.message ?: "Error de conexión"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -489,42 +451,30 @@ class RutasGrupalesViewModel : ViewModel() {
 
         viewModelScope.launch {
             _isLoading.value = true
-
-            val liveData = repository.createEvento(
-                routeId = routeId,
-                organizadorUid = uid,
-                organizadorNombre = nombre,
-                organizadorFoto = foto,
-                fecha = fecha,
-                maxParticipantes = maxParticipantes,
-                descripcion = descripcion,
-                nivelRecomendado = nivelRecomendado,
-                horaEncuentro = horaEncuentro
-            )
-
-            var result: EventRepository.Result<EventoGrupal>? = null
-            liveData.observeForever { res ->
-                result = res
-            }
-
-            while (result == null || result is EventRepository.Result.Loading) {
-                kotlinx.coroutines.delay(50)
-            }
-
-            when (result) {
-                is EventRepository.Result.Success -> {
-                    _isLoading.value = false
+            try {
+                val response = repository.createEvento(
+                    routeId = routeId,
+                    organizadorUid = uid,
+                    organizadorNombre = nombre,
+                    organizadorFoto = foto,
+                    fecha = fecha,
+                    maxParticipantes = maxParticipantes,
+                    descripcion = descripcion,
+                    nivelRecomendado = nivelRecomendado,
+                    horaEncuentro = horaEncuentro
+                )
+                if (response.ok) {
                     _successMessage.value = "Evento creado correctamente"
                     lastRouteIdRequested = routeId
                     refreshAfterAction()
+                } else {
+                    _error.value = response.message ?: "Error al crear el evento"
                 }
-                is EventRepository.Result.Error -> {
-                    _isLoading.value = false
-                    _error.value = (result as EventRepository.Result.Error).message
-                }
-                else -> {
-                    _isLoading.value = false
-                }
+            } catch (e: Exception) {
+                Log.e(TAG, "createEvento error", e)
+                _error.value = e.message ?: "Error de conexión"
+            } finally {
+                _isLoading.value = false
             }
         }
     }

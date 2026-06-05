@@ -91,7 +91,7 @@ interface UserService {
     /**
      * Subir / actualizar foto de perfil
      *
-     * ENDPOINT: PUT /api/users/:uid/photo
+     * ENDPOINT: POST /api/users/:uid/photo
      * CONTENT-TYPE: multipart/form-data
      *
      * @param uid UID del usuario
@@ -121,7 +121,6 @@ interface UserService {
  */
 data class UpdateUserProfileRequest(
     val nombre: String = "",
-    val foto: String = "",
     val bio: String = "",
     val comunidad: String = "",
     val provincia: String = "",

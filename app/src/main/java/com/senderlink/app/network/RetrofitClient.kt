@@ -1,6 +1,11 @@
 package com.senderlink.app.network
 
+import android.util.Log
+import com.google.android.gms.tasks.Tasks
+import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.GsonBuilder
+import com.senderlink.app.BuildConfig
+import okhttp3.CertificatePinner
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -9,58 +14,75 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
-    private const val BASE_URL = "http://192.168.1.20:3000/"  // ✅ Con / al final
-
-    // ✅ Gson configurado para ser más permisivo
     private val gson = GsonBuilder()
         .setLenient()
         .create()
 
-    // ✅ Logging interceptor
     private val loggingInterceptor: HttpLoggingInterceptor by lazy {
         HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BASIC
-
         }
     }
 
-    // ✅ Cliente HTTP mejorado
+    private val certificatePinner: CertificatePinner by lazy {
+        CertificatePinner.Builder()
+            // .add("api.senderlink.com", "sha256/YOUR_PIN_HASH_HERE")
+            .build()
+    }
+
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
-            .addInterceptor(loggingInterceptor)
-            // ✅ NUEVO: Interceptor para asegurar headers JSON
+            .certificatePinner(certificatePinner)
+            .apply {
+                if (BuildConfig.DEBUG) {
+                    addInterceptor(loggingInterceptor)
+                }
+            }
+            // Interceptor de autenticación Firebase
             .addInterceptor { chain ->
-                val original = chain.request()
-
-                val contentType = original.body?.contentType()?.toString().orEmpty()
-                val isMultipart = contentType.startsWith("multipart/")
-
-                val builder = original.newBuilder()
-
-                // Solo forzar JSON si NO es multipart y no viene ya definido
-                builder.header("Accept", "application/json")
-
-                if (!isMultipart) {
-                    if (original.header("Content-Type") == null) {
-                        builder.header("Content-Type", "application/json")
+                val builder = chain.request().newBuilder()
+                val user = FirebaseAuth.getInstance().currentUser
+                if (user != null) {
+                    try {
+                        // Intentar con token en caché primero; forzar refresh si el token es nulo
+                        // Timeout de 10s para evitar bloquear el hilo indefinidamente
+                        var tokenResult = Tasks.await(user.getIdToken(false), 10, TimeUnit.SECONDS)
+                        if (tokenResult.token == null) {
+                            tokenResult = Tasks.await(user.getIdToken(true), 10, TimeUnit.SECONDS)
+                        }
+                        tokenResult.token?.let { token ->
+                            builder.header("Authorization", "Bearer $token")
+                        } ?: Log.w("RetrofitClient", "No se pudo obtener token de Firebase")
+                    } catch (e: Exception) {
+                        Log.w("RetrofitClient", "Error obteniendo token Firebase: ${e.message}")
+                        // Continuar sin token; el servidor responderá 401 si el endpoint requiere auth
                     }
                 }
-
-
                 chain.proceed(builder.build())
             }
-
+            // Interceptor de headers JSON
+            .addInterceptor { chain ->
+                val original = chain.request()
+                val contentType = original.body?.contentType()?.toString().orEmpty()
+                val isMultipart = contentType.startsWith("multipart/")
+                val builder = original.newBuilder()
+                builder.header("Accept", "application/json")
+                if (!isMultipart && original.header("Content-Type") == null) {
+                    builder.header("Content-Type", "application/json")
+                }
+                chain.proceed(builder.build())
+            }
             .build()
     }
 
     val instance: Retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(BuildConfig.BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create(gson))  // ✅ Usa Gson configurado
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 }

@@ -32,6 +32,10 @@ class RutasGrupalesFragment : Fragment() {
     // ✅ NUEVO: Para evitar múltiples llamadas durante inicialización
     private var isInitialized = false
 
+    // Evitar que el listener del TabLayout dispare refreshCurrentTab cuando
+    // la selección es programática (desde selectTab con fromUser=false)
+    private var suppressTabRefresh = false
+
     // ✅ NUEVO: Para scroll automático
     private var pendingScrollToEventId: String? = null
 
@@ -58,7 +62,7 @@ class RutasGrupalesFragment : Fragment() {
 
         setupRecyclerView()
         setupTabs()
-        setupButtons()
+        setupSwipeRefresh()
 
         // ✅ IMPORTANTE: Observar PRIMERO antes de cargar datos
         observeViewModel()
@@ -143,15 +147,15 @@ class RutasGrupalesFragment : Fragment() {
         binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 val position = tab?.position ?: TAB_DISPONIBLES
-
-                // ✅ Solo refrescar si ya estamos inicializados y el usuario cambió el tab
-                if (isInitialized) {
-                    selectTab(position, fromUser = true)
+                // Solo refrescar si ya estamos inicializados Y la selección fue del usuario
+                if (isInitialized && !suppressTabRefresh) {
+                    currentTab = position
+                    refreshCurrentTab()
                 }
             }
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {
-                if (isInitialized) {
+                if (isInitialized && !suppressTabRefresh) {
                     refreshCurrentTab()
                 }
             }
@@ -160,15 +164,19 @@ class RutasGrupalesFragment : Fragment() {
 
     private fun selectTab(position: Int, fromUser: Boolean) {
         currentTab = position
+        // Suprimir el listener mientras seleccionamos programáticamente
+        // para evitar que dispare una segunda llamada a refreshCurrentTab
+        suppressTabRefresh = true
         binding.tabLayout.getTabAt(position)?.select()
+        suppressTabRefresh = false
 
         if (fromUser) {
             refreshCurrentTab()
         }
     }
 
-    private fun setupButtons() {
-        binding.fabRefresh.setOnClickListener {
+    private fun setupSwipeRefresh() {
+        binding.swipeRefresh.setOnRefreshListener {
             refreshCurrentTab()
         }
     }
@@ -291,13 +299,13 @@ class RutasGrupalesFragment : Fragment() {
         viewModel.navPreferredTab.observe(viewLifecycleOwner) { tabIndex ->
             if (tabIndex != null && isInitialized) {
                 Log.d(TAG, "✅ Cambio automático a tab $tabIndex")
-                selectTab(tabIndex, fromUser = false)
-                refreshCurrentTab()
+                selectTab(tabIndex, fromUser = true)  // fromUser=true para que incluya el refresh
             }
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { loading ->
             binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+            if (!loading) binding.swipeRefresh.isRefreshing = false
         }
 
         viewModel.error.observe(viewLifecycleOwner) { err ->

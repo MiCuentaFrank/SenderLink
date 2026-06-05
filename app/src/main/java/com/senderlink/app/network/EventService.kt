@@ -1,5 +1,9 @@
 package com.senderlink.app.network
 
+import com.senderlink.app.model.CreateEventoBody
+import com.senderlink.app.model.JoinLeaveEventoBody
+import com.senderlink.app.model.SimpleUidBody
+import com.senderlink.app.model.UpdateEventoBody
 import retrofit2.Call
 import retrofit2.http.*
 
@@ -30,9 +34,13 @@ interface EventService {
 
     /**
      * 🆔 Obtener evento por ID
+     * ✅ uid opcional: si se pasa, backend devuelve isParticipant / isOrganizer
      */
     @GET("api/events/{id}")
-    fun getEventoById(@Path("id") eventoId: String): Call<EventoDetailResponse>
+    fun getEventoById(
+        @Path("id") eventoId: String,
+        @Query("uid") uid: String? = null
+    ): Call<EventoDetailResponse>
 
     /**
      * 👤 Mis eventos (organizados por mí)

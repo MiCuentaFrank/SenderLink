@@ -52,7 +52,6 @@ class RouteAdapter(
 
             // (Opcional) si quieres más fino: String.format("%.1f km", route.distanceKm)
             tvDistanciaRuta.text = "${route.distanceKm} km"
-            tvDistanceOverlay.text = "${route.distanceKm} km"
 
             // ✅ Color del chip según NORMALIZED (no el crudo)
             val chipColor = when (normalized) {

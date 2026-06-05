@@ -10,6 +10,7 @@ import com.senderlink.app.network.CreateUserResponse
 import com.senderlink.app.network.RetrofitClient
 import com.senderlink.app.network.UserResponse
 import com.senderlink.app.network.UserService
+import com.senderlink.app.network.UpdateUserResponse
 import com.senderlink.app.network.UploadUserPhotoResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -29,14 +30,14 @@ class UserRepository {
         val result = MutableLiveData<Result<User>>()
         result.value = Result.Loading
 
-        Log.d(TAG, "Obteniendo usuario con UID: $uid")
+        Log.d(TAG, "Obteniendo usuario")
 
         userService.getUserByUid(uid).enqueue(object : Callback<UserResponse> {
             override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
                 if (response.isSuccessful) {
                     val userResponse = response.body()
                     if (userResponse?.ok == true) {
-                        Log.d(TAG, "Usuario obtenido: ${userResponse.user.email}")
+                        Log.d(TAG, "Usuario obtenido correctamente")
                         result.value = Result.Success(userResponse.user)
                     } else {
                         val error = userResponse?.message ?: "Error desconocido"
@@ -63,7 +64,7 @@ class UserRepository {
         val result = MutableLiveData<Result<User>>()
         result.value = Result.Loading
 
-        Log.d(TAG, "Creando usuario: ${user.email}")
+        Log.d(TAG, "Creando usuario")
 
         userService.createUser(user).enqueue(object : Callback<CreateUserResponse> {
             override fun onResponse(call: Call<CreateUserResponse>, response: Response<CreateUserResponse>) {
@@ -98,7 +99,7 @@ class UserRepository {
         val result = MutableLiveData<Result<User>>()
         result.value = Result.Loading
 
-        Log.d(TAG, "Actualizando perfil de UID: $uid")
+        Log.d(TAG, "Actualizando perfil")
 
         userService.updateUserProfile(uid, req)
             .enqueue(object : Callback<com.senderlink.app.network.UpdateUserProfileResponse> {
@@ -143,13 +144,14 @@ class UserRepository {
      * Helper: convierte un Uri (galería/cámara) a MultipartBody.Part
      * - Copia a cache porque Retrofit/OkHttp trabajan mejor con File real.
      */
-    fun buildPhotoPartFromUri(context: Context, uri: Uri): MultipartBody.Part {
+    fun buildPhotoPartFromUri(context: Context, uri: Uri, fieldName: String = "photo"): MultipartBody.Part {
         val contentResolver = context.contentResolver
 
         val inputStream = contentResolver.openInputStream(uri)
             ?: throw IllegalArgumentException("No se pudo abrir el Uri de la imagen")
 
-        val tempFile = File(context.cacheDir, "profile_${System.currentTimeMillis()}.jpg")
+        // Nombre fijo para que no se acumulen archivos temporales en cache
+        val tempFile = File(context.cacheDir, "profile_upload_temp.jpg")
 
         FileOutputStream(tempFile).use { output ->
             inputStream.use { input ->
@@ -160,9 +162,11 @@ class UserRepository {
         val mime = contentResolver.getType(uri) ?: "image/*"
         val requestBody = tempFile.asRequestBody(mime.toMediaTypeOrNull())
 
-        // ✅ IMPORTANTE: el nombre del campo ("photo") debe coincidir con tu backend (multer)
+        // ✅ IMPORTANTE: el nombre del campo debe coincidir con el backend (multer)
+        // "photo" → subida de foto de perfil (PUT /:uid/photo)
+        // "image" → subida de imagen de post (POST /community/posts/upload-image)
         return MultipartBody.Part.createFormData(
-            "photo",
+            fieldName,
             tempFile.name,
             requestBody
         )
@@ -170,13 +174,13 @@ class UserRepository {
 
     /**
      * Sube la foto al backend:
-     * PUT /api/users/{uid}/photo
+     * POST /api/users/{uid}/photo
      */
     fun uploadUserPhoto(uid: String, photo: MultipartBody.Part): LiveData<Result<User>> {
         val result = MutableLiveData<Result<User>>()
         result.value = Result.Loading
 
-        Log.d(TAG, "Subiendo foto para UID: $uid")
+        Log.d(TAG, "Subiendo foto de perfil")
 
         userService.uploadUserPhoto(uid, photo).enqueue(object : Callback<UploadUserPhotoResponse> {
             override fun onResponse(
@@ -205,6 +209,36 @@ class UserRepository {
                 result.value = Result.Error(t.message ?: "Error de conexión")
             }
         })
+
+        return result
+    }
+
+    /**
+     * Actualiza solo el campo `foto` en MongoDB con la URL de Firebase Storage.
+     * Se usa tras subir la imagen a Firebase desde el Fragment.
+     */
+    fun updateUserPhotoUrl(uid: String, photoUrl: String): LiveData<Result<User>> {
+        val result = MutableLiveData<Result<User>>()
+        result.value = Result.Loading
+
+        userService.updateUser(uid, mapOf("foto" to photoUrl))
+            .enqueue(object : Callback<UpdateUserResponse> {
+                override fun onResponse(
+                    call: Call<UpdateUserResponse>,
+                    response: Response<UpdateUserResponse>
+                ) {
+                    if (response.isSuccessful && response.body()?.ok == true) {
+                        Log.d(TAG, "Foto URL guardada en MongoDB OK")
+                        result.value = Result.Success(response.body()!!.user)
+                    } else {
+                        result.value = Result.Error("Error al guardar la foto")
+                    }
+                }
+                override fun onFailure(call: Call<UpdateUserResponse>, t: Throwable) {
+                    Log.e(TAG, "Error guardando foto URL: ${t.message}")
+                    result.value = Result.Error(t.message ?: "Error de conexión")
+                }
+            })
 
         return result
     }

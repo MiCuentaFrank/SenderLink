@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="16dp"
+    android:layout_margin="6dp"
     app:cardCornerRadius="16dp"
     app:cardElevation="2dp"
     app:cardBackgroundColor="@color/white">
@@ -18,7 +18,7 @@
         <!-- Imagen de la ruta -->
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="220dp">
+            android:layout_height="130dp">
 
             <ImageView
                 android:id="@+id/imgRoute"
@@ -41,22 +41,6 @@
                 tools:text="Difícil"
                 app:chipBackgroundColor="@color/sl_primary"/>
 
-            <!-- Distancia (abajo izquierda) -->
-            <TextView
-                android:id="@+id/tvDistanceOverlay"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="start|bottom"
-                android:layout_margin="12dp"
-                android:background="@drawable/rounded_white_bg"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp"
-                android:textStyle="bold"
-                android:textSize="14sp"
-                android:textColor="@color/text_primary"
-                tools:text="14.5 km"/>
         </FrameLayout>
 
         <!-- Información de la ruta -->

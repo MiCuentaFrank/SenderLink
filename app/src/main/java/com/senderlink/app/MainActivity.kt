@@ -28,19 +28,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initializeUserManager() {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-
-        if (currentUser != null) {
-            Log.d("MainActivity", "🔄 Usuario autenticado: ${currentUser.email}")
-
-            // ✅ Solo si hay usuario
-            SyncChecker.verifyAndFixIfNeeded()
-
-            // ✅ Cargar datos del usuario
-            UserManager.getInstance().loadCurrentUser()
-        } else {
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: run {
             Log.d("MainActivity", "⚠️ No hay usuario autenticado")
+            return
         }
+
+        Log.d("MainActivity", "🔄 Usuario autenticado: ${currentUser.email}")
+
+        // Forzar refresco del token antes de cualquier llamada a la API.
+        // getIdToken(false) puede devolver un token expirado en arranque en frío;
+        // con true el token se cachea y el interceptor de Retrofit lo reutiliza.
+        currentUser.getIdToken(true)
+            .addOnSuccessListener {
+                UserManager.getInstance().loadCurrentUser()
+                SyncChecker.verifyAndFixIfNeeded()
+            }
+            .addOnFailureListener { e ->
+                Log.e("MainActivity", "❌ Error refrescando token Firebase: ${e.message}")
+                // Intentar con el token en caché aunque el refresh haya fallado
+                UserManager.getInstance().loadCurrentUser()
+                SyncChecker.verifyAndFixIfNeeded()
+            }
     }
 
     private fun logout() {

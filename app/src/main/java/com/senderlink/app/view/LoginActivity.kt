@@ -4,6 +4,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import com.google.firebase.auth.FirebaseAuth
 import com.senderlink.app.databinding.ActivityLoginBinding
 
@@ -13,9 +16,24 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding= ActivityLoginBinding.inflate(layoutInflater)
+        binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Ajustar padding superior del logo para no solaparse con la barra de estado
+        val logoBasePaddingTop = binding.logoGroup.paddingTop
+        ViewCompat.setOnApplyWindowInsetsListener(binding.logoGroup) { view, insets ->
+            val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
+            view.updatePadding(top = logoBasePaddingTop + statusBarHeight)
+            insets
+        }
+
+        // Ajustar padding inferior del card para no solaparse con la barra de navegación
+        val cardBasePaddingBottom = binding.loginFormCard.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(binding.loginFormCard) { view, insets ->
+            val navBarHeight = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+            view.updatePadding(bottom = cardBasePaddingBottom + navBarHeight)
+            insets
+        }
 
         auth = FirebaseAuth.getInstance()
 
@@ -43,7 +61,7 @@ class LoginActivity : AppCompatActivity() {
                 startActivity(Intent(this, MainScreenActivity::class.java))
                 finish()
             }else{
-                Toast.makeText(this, "Error en el inicio de sesión: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Email o contraseña incorrectos", Toast.LENGTH_SHORT).show()
             }
         }
 

@@ -59,9 +59,11 @@
         <ImageView
             android:id="@+id/imgPost"
             android:layout_width="match_parent"
-            android:layout_height="170dp"
+            android:layout_height="wrap_content"
+            android:maxHeight="360dp"
+            android:adjustViewBounds="true"
             android:layout_marginTop="12dp"
-            android:scaleType="centerCrop"
+            android:scaleType="fitCenter"
             android:contentDescription="post"
             android:background="@drawable/bg_card"
             android:visibility="gone"/>
@@ -99,6 +101,16 @@
                 android:layout_marginStart="14dp"
                 android:text="12 comentarios"
                 android:textColor="@color/text_secondary"/>
+
+            <TextView
+                android:id="@+id/btnDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:text="Eliminar"
+                android:textColor="@color/error"
+                android:padding="8dp"
+                android:visibility="gone"/>
         </LinearLayout>
 
     </LinearLayout>

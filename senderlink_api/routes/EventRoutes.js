@@ -12,7 +12,7 @@ const {
   cancelEvento,
   finishEvento,
   updateEvento
-} = require("../controllers/eventController");
+} = require("../controllers/EventController");
 
 // ===============================
 // POST - Crear evento

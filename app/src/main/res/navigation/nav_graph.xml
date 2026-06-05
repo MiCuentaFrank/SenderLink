@@ -10,6 +10,9 @@
     <action
         android:id="@+id/action_global_routeDetailFragment"
         app:destination="@id/routeDetailFragment" />
+    <action
+        android:id="@+id/action_global_directChatFragment"
+        app:destination="@id/directChatFragment" />
 
 
     <!-- ========================= -->
@@ -55,11 +58,71 @@
             android:id="@+id/action_routeDetailFragment_to_nav_maps"
             app:destination="@id/nav_maps" />
 
-        <!-- ✅ MODIFICADO: Ahora navega a nav_comunidad en vez de rutasGrupalesFragment -->
         <action
             android:id="@+id/action_routeDetailFragment_to_nav_comunidad"
             app:destination="@id/nav_comunidad" />
 
+        <action
+            android:id="@+id/action_routeDetailFragment_to_activeTrackingFragment"
+            app:destination="@id/activeTrackingFragment"
+            app:enterAnim="@android:anim/slide_in_left"
+            app:exitAnim="@android:anim/slide_out_right"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
+
+    </fragment>
+
+    <!-- ========================= -->
+    <!-- SEGUIR RUTA (GPS activo) -->
+    <!-- ========================= -->
+    <fragment
+        android:id="@+id/activeTrackingFragment"
+        android:name="com.senderlink.app.view.fragments.ActiveTrackingFragment"
+        android:label="Siguiendo ruta"
+        tools:layout="@layout/fragment_active_tracking">
+
+        <argument
+            android:name="routeId"
+            app:argType="string" />
+
+        <argument
+            android:name="reversed"
+            app:argType="boolean"
+            android:defaultValue="false" />
+    </fragment>
+
+    <!-- ========================= -->
+    <!-- GRABAR NUEVA RUTA -->
+    <!-- ========================= -->
+    <fragment
+        android:id="@+id/createRouteFragment"
+        android:name="com.senderlink.app.view.fragments.CreateRouteFragment"
+        android:label="Grabar ruta"
+        tools:layout="@layout/fragment_create_route">
+
+        <action
+            android:id="@+id/action_createRouteFragment_to_saveRouteFragment"
+            app:destination="@id/saveRouteFragment"
+            app:enterAnim="@android:anim/slide_in_left"
+            app:exitAnim="@android:anim/slide_out_right"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
+    </fragment>
+
+    <!-- ========================= -->
+    <!-- GUARDAR RUTA GRABADA -->
+    <!-- ========================= -->
+    <fragment
+        android:id="@+id/saveRouteFragment"
+        android:name="com.senderlink.app.view.fragments.SaveRouteFragment"
+        android:label="Guardar ruta"
+        tools:layout="@layout/fragment_save_route">
+
+        <action
+            android:id="@+id/action_saveRouteFragment_to_nav_perfil"
+            app:destination="@id/nav_perfil"
+            app:popUpTo="@id/nav_home"
+            app:popUpToInclusive="false" />
     </fragment>
 
 
@@ -166,6 +229,27 @@
         <action
             android:id="@+id/action_perfilFragment_to_editProfileFragment"
             app:destination="@id/editProfileFragment" />
+
+        <action
+            android:id="@+id/action_perfilFragment_to_conversationsFragment"
+            app:destination="@id/conversationsFragment" />
+
+        <action
+            android:id="@+id/action_perfilFragment_to_routeDetailFragment"
+            app:destination="@id/routeDetailFragment" />
+
+        <action
+            android:id="@+id/action_perfilFragment_to_misPublicacionesFragment"
+            app:destination="@id/misPublicacionesFragment" />
+
+        <action
+            android:id="@+id/action_perfilFragment_to_createRouteFragment"
+            app:destination="@id/createRouteFragment"
+            app:enterAnim="@android:anim/slide_in_left"
+            app:exitAnim="@android:anim/slide_out_right"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
+
     </fragment>
 
     <fragment
@@ -221,6 +305,59 @@
 
         <argument
             android:name="eventoId"
+            app:argType="string"
+            android:defaultValue="" />
+
+    </fragment>
+
+    <!-- ========================= -->
+    <!-- MIS PUBLICACIONES -->
+    <!-- ========================= -->
+    <fragment
+        android:id="@+id/misPublicacionesFragment"
+        android:name="com.senderlink.app.view.fragments.MisPublicacionesFragment"
+        android:label="Mis publicaciones"
+        tools:layout="@layout/fragment_mis_publicaciones" />
+
+    <!-- ========================= -->
+    <!-- CONVERSACIONES (DM) -->
+    <!-- ========================= -->
+    <fragment
+        android:id="@+id/conversationsFragment"
+        android:name="com.senderlink.app.view.fragments.ConversationsFragment"
+        android:label="Mensajes"
+        tools:layout="@layout/fragment_conversations">
+
+        <action
+            android:id="@+id/action_conversationsFragment_to_directChatFragment"
+            app:destination="@id/directChatFragment" />
+
+    </fragment>
+
+    <!-- ========================= -->
+    <!-- CHAT DIRECTO (DM) -->
+    <!-- ========================= -->
+    <fragment
+        android:id="@+id/directChatFragment"
+        android:name="com.senderlink.app.view.fragments.DirectChatFragment"
+        android:label="Chat"
+        tools:layout="@layout/fragment_direct_chat">
+
+        <argument
+            android:name="chatId"
+            app:argType="string" />
+
+        <argument
+            android:name="otherUid"
+            app:argType="string" />
+
+        <argument
+            android:name="otherNombre"
+            app:argType="string"
+            android:defaultValue="" />
+
+        <argument
+            android:name="otherFoto"
             app:argType="string"
             android:defaultValue="" />
 

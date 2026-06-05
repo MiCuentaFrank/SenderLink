@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -20,15 +22,28 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // TODO: Configurar URL de producción real (HTTPS) antes de release
+        buildConfigField("String", "BASE_URL", "\"https://senderlink-production.up.railway.app/\"")
+
+        // Google Maps API Key desde local.properties (no hardcodear en manifest)
+        val localProps = Properties().apply {
+            val f = rootProject.file("local.properties")
+            if (f.exists()) f.inputStream().use { load(it) }
+        }
+        val mapsKey = localProps.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
+        manifestPlaceholders["MAPS_API_KEY"] = mapsKey
     }
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            buildConfigField("String", "BASE_URL", "\"https://senderlink-production.up.railway.app/\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -57,7 +72,7 @@ dependencies {
     // Firebase BOM (gestiona versiones)
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     // Firebase
-    implementation(libs.firebase.auth.ktx)
+    implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-storage-ktx")
 
 
@@ -85,11 +100,21 @@ dependencies {
     // Glide para imágenes
     implementation("com.github.bumptech.glide:glide:4.16.0")
     kapt("com.github.bumptech.glide:compiler:4.16.0")
+    // uCrop - cropping interactivo de imágenes
+    implementation("com.github.yalantis:ucrop:2.2.9")
+
+
+    // Room - base de datos local (caché offline + grabación de rutas)
+    val roomVersion = "2.6.1"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    kapt("androidx.room:room-compiler:$roomVersion")
     // CircleImageView
     implementation("de.hdodenhof:circleimageview:3.1.0")
     //dataStore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     implementation("androidx.viewpager2:viewpager2:1.1.0")

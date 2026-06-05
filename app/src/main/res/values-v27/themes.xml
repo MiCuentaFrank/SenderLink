@@ -1,0 +1,23 @@
+<resources>
+    <style name="BaseThemeSenderLink" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- Colores -->
+        <item name="colorPrimary">@color/sl_primary</item>
+        <item name="colorPrimaryVariant">@color/sl_primary_dark</item>
+        <item name="colorOnPrimary">@color/text_on_dark</item>
+        <item name="colorSecondary">@color/sl_accent</item>
+
+        <!-- STATUS BAR -->
+        <item name="android:statusBarColor">@color/sl_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+
+        <!-- NAV BAR (característica específica de API 27+) -->
+        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="android:windowLightNavigationBar">true</item>
+
+        <!-- Fondo -->
+        <item name="android:windowBackground">@color/bg_app</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+
+    <style name="Theme.SenderLink" parent="BaseThemeSenderLink"/>
+</resources>

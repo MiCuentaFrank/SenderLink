@@ -1,6 +1,7 @@
 const GroupMessage = require("../models/GroupMessage");
 const User = require("../models/User");
 const EventoGrupal = require("../models/EventoGrupal");
+const { sanitizeText } = require("../utils/sanitize");
 
 /**
  * ===========================================
@@ -32,20 +33,26 @@ async function sendMessage(req, res) {
     const { uid, text } = req.body;
 
     // 1️⃣ VALIDACIONES BÁSICAS
-    if (!chatId) {
-      return fail(res, 400, "chatId es obligatorio");
+    if (!chatId || typeof chatId !== "string" || chatId.length > 200 ||
+        !/^[a-zA-Z0-9_-]+$/.test(chatId)) {
+      return fail(res, 400, "chatId inválido");
     }
 
     if (!uid || !text) {
       return fail(res, 400, "uid y text son obligatorios");
     }
 
-    const textTrimmed = text.trim();
-    if (textTrimmed.length === 0) {
+    // Auth: solo puedes enviar mensajes como tú mismo
+    if (req.uid !== uid) {
+      return fail(res, 403, "No autorizado: no puedes enviar mensajes en nombre de otro usuario");
+    }
+
+    const textSanitized = sanitizeText(text.trim(), 500);
+    if (textSanitized.length === 0) {
       return fail(res, 400, "El mensaje no puede estar vacío");
     }
 
-    if (textTrimmed.length > 500) {
+    if (textSanitized.length > 500) {
       return fail(res, 400, "El mensaje no puede superar 500 caracteres");
     }
 
@@ -55,7 +62,12 @@ async function sendMessage(req, res) {
       return fail(res, 404, "Chat no encontrado");
     }
 
-    // 3️⃣ VERIFICAR QUE EL USUARIO ES PARTICIPANTE O ORGANIZADOR
+    // 3️⃣ VERIFICAR QUE EL EVENTO SIGUE ACTIVO
+    if (evento.estado === "FINALIZADO" || evento.estado === "CANCELADO") {
+      return fail(res, 403, "No se pueden enviar mensajes en un evento finalizado o cancelado");
+    }
+
+    // 4️⃣ VERIFICAR QUE EL USUARIO ES PARTICIPANTE O ORGANIZADOR
     const isParticipante = evento.isParticipante(uid);
     const isOrganizador = evento.isOrganizador(uid);
 
@@ -63,28 +75,28 @@ async function sendMessage(req, res) {
       return fail(res, 403, "Solo los participantes pueden enviar mensajes");
     }
 
-    // 4️⃣ OBTENER INFORMACIÓN DEL USUARIO DESDE MONGODB
+    // 5️⃣ OBTENER INFORMACIÓN DEL USUARIO DESDE MONGODB
     const user = await User.findOne({ uid }).lean();
     if (!user) {
       return fail(res, 404, "Usuario no encontrado");
     }
 
-    // 5️⃣ CREAR EL MENSAJE EN LA BASE DE DATOS
+    // 6️⃣ CREAR EL MENSAJE EN LA BASE DE DATOS
     const message = await GroupMessage.create({
       chatId,
       senderUid: uid,
       senderName: user.nombre || "Usuario",
       senderPhoto: user.foto || "",
-      text: textTrimmed,
+      text: textSanitized,
       type: "TEXT"
     });
 
-    console.log(`✅ Mensaje enviado al chat ${chatId} por ${user.nombre}`);
+    console.log(`Mensaje enviado al chat ${chatId}`);
 
     return ok(res, message, "Mensaje enviado correctamente");
 
   } catch (error) {
-    console.error("❌ Error en sendMessage:", error);
+    console.error("Error en sendMessage:", error);
     return fail(res, 500, "Error interno al enviar mensaje");
   }
 }
@@ -99,8 +111,9 @@ async function getMessages(req, res) {
     const limit = Math.min(parseInt(req.query.limit || "50", 10), 100);
 
     // 1️⃣ VALIDAR CHAT ID
-    if (!chatId) {
-      return fail(res, 400, "chatId es obligatorio");
+    if (!chatId || typeof chatId !== "string" || chatId.length > 200 ||
+        !/^[a-zA-Z0-9_-]+$/.test(chatId)) {
+      return fail(res, 400, "chatId inválido");
     }
 
     // 2️⃣ VERIFICAR QUE EL EVENTO (CHAT) EXISTE
@@ -109,18 +122,25 @@ async function getMessages(req, res) {
       return fail(res, 404, "Chat no encontrado");
     }
 
-    // 3️⃣ OBTENER MENSAJES ORDENADOS POR FECHA (MÁS ANTIGUOS PRIMERO)
+    // 3️⃣ VERIFICAR QUE EL USUARIO ES PARTICIPANTE O ORGANIZADOR
+    const isParticipante = (evento.participantes || []).some(p => p.uid === req.uid);
+    const isOrganizador = evento.organizadorUid === req.uid;
+    if (!isParticipante && !isOrganizador) {
+      return fail(res, 403, "No autorizado: no perteneces a este chat");
+    }
+
+    // 4️⃣ OBTENER MENSAJES ORDENADOS POR FECHA (MÁS ANTIGUOS PRIMERO)
     const messages = await GroupMessage.find({ chatId })
       .sort({ createdAt: 1 }) // Orden cronológico ascendente
       .limit(limit)
       .lean();
 
-    console.log(`📨 Obtenidos ${messages.length} mensajes del chat ${chatId}`);
+    console.log(`Obtenidos ${messages.length} mensajes del chat ${chatId}`);
 
     return ok(res, messages);
 
   } catch (error) {
-    console.error("❌ Error en getMessages:", error);
+    console.error("Error en getMessages:", error);
     return fail(res, 500, "Error interno al obtener mensajes");
   }
 }

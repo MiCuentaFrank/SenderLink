@@ -2,7 +2,14 @@ const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
   uid: { type: String, required: true, unique: true },
-  email: { type: String, required: true },
+  email: {
+    type: String,
+    required: true,
+    validate: {
+      validator: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+      message: "Formato de email inválido"
+    }
+  },
 
   // Perfil básico
   nombre: { type: String, default: "" },
@@ -41,6 +48,14 @@ const UserSchema = new mongoose.Schema({
     totalKm: { type: Number, default: 0 },
     streakDays: { type: Number, default: 0 }
   },
+
+  // Rutas completadas (para verificación y stats)
+  completedRoutes: [{
+    routeId: { type: String, required: true },
+    completedAt: { type: Date, default: Date.now },
+    durationMin: { type: Number, default: 0 },
+    xpGained: { type: Number, default: 0 }
+  }],
 
   // Para “Completa tu perfil”
   profileCompletion: { type: Number, default: 0 } // 0..100

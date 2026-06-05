@@ -13,25 +13,25 @@ import com.senderlink.app.utils.DifficultyMapper
 data class Route(
 
     @SerializedName("_id")
-    val id: String,
+    val id: String = "",
 
-    val type: String,
-    val source: String,
-    val name: String,
-    val description: String,
+    val type: String = "",
+    val source: String = "",
+    val name: String = "",
+    val description: String = "",
 
     @SerializedName("coverImage")
-    val coverImage: String,
-    val images: List<String>,
+    val coverImage: String = "",
+    val images: List<String> = emptyList(),
 
     @SerializedName("distanceKm")
-    val distanceKm: Double,
+    val distanceKm: Double = 0.0,
 
     @SerializedName("durationMin")
     val durationMin: Int? = null,
 
     // ⚠️ Valor crudo del backend (se normaliza en Android)
-    val difficulty: String,
+    val difficulty: String = "",
 
     // Ubicación textual
     val startLocality: String? = null,

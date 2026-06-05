@@ -65,12 +65,14 @@
 
                     <!-- NOMBRE -->
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilNombre"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Nombre o nick"
                         app:boxBackgroundMode="outline"
                         app:boxStrokeColor="@color/sl_primary"
-                        app:hintTextColor="@color/sl_primary">
+                        app:hintTextColor="@color/sl_primary"
+                        app:errorEnabled="true">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etNombre"
@@ -123,20 +125,23 @@
 
                     <!-- PROVINCIA -->
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilProvincia"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:hint="Provincia (opcional)"
                         app:boxBackgroundMode="outline"
                         app:boxStrokeColor="@color/sl_primary"
-                        app:hintTextColor="@color/sl_primary">
+                        app:hintTextColor="@color/sl_primary"
+                        app:endIconMode="dropdown_menu">
 
-                        <com.google.android.material.textfield.TextInputEditText
+                        <AutoCompleteTextView
                             android:id="@+id/etProvincia"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="textCapWords"
-                            android:imeOptions="actionNext" />
+                            android:completionThreshold="1"
+                            android:imeOptions="actionNext"
+                            android:inputType="textCapWords" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                 </LinearLayout>
@@ -357,7 +362,7 @@
                 app:backgroundTint="@color/sl_primary"
                 app:cornerRadius="16dp" />
 
-            <!-- ESPACIADO -->
+            <!-- ESPACIADO inferior -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="40dp" />

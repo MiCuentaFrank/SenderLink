@@ -20,8 +20,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
+import com.senderlink.app.view.adapters.AchievementAdapter
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import android.app.Activity
+import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
+import com.senderlink.app.view.FixedUCropActivity
+import com.yalantis.ucrop.UCrop
+import java.io.File
 import com.senderlink.app.R
 import com.senderlink.app.databinding.FragmentPerfilBinding
 import com.senderlink.app.model.Post
@@ -31,8 +37,11 @@ import com.senderlink.app.repository.CommunityRepository
 import com.senderlink.app.repository.UserRepository
 import com.senderlink.app.view.LoginActivity
 import com.senderlink.app.view.adapters.CommentAdapter
+import androidx.recyclerview.widget.GridLayoutManager
 import com.senderlink.app.view.adapters.PostAdapter
+import com.senderlink.app.view.adapters.RouteAdapter
 import com.senderlink.app.viewmodel.PerfilPostsViewModel
+import com.senderlink.app.viewmodel.PerfilRoutesViewModel
 import com.senderlink.app.viewmodel.PerfilViewModel
 import retrofit2.Call
 import retrofit2.Callback
@@ -45,22 +54,49 @@ class PerfilFragment : Fragment() {
 
     private val viewModel: PerfilViewModel by viewModels()
     private val postsViewModel: PerfilPostsViewModel by viewModels()
+    private val routesViewModel: PerfilRoutesViewModel by viewModels()
     private lateinit var myPostsAdapter: PostAdapter
+    private lateinit var myRoutesAdapter: RouteAdapter
+    private var isRoutesGridMode = false
 
     private val communityRepo = CommunityRepository()
+    private val userRepo = UserRepository()
+    private lateinit var achievementAdapter: AchievementAdapter
 
-    private val pickImageLauncher =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            if (uri != null) {
-                // ✅ 1) Preview inmediato
+    // Recibe el resultado del crop y sube al backend
+    private val cropProfileLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val croppedUri = UCrop.getOutput(result.data ?: return@registerForActivityResult)
+                    ?: return@registerForActivityResult
                 Glide.with(this)
-                    .load(uri)
+                    .load(croppedUri)
                     .placeholder(R.drawable.bg_avatar_circle)
                     .error(R.drawable.bg_avatar_circle)
                     .into(binding.imgFotoPerfil)
+                try {
+                    val photoPart = userRepo.buildPhotoPartFromUri(requireContext(), croppedUri)
+                    viewModel.uploadProfilePhoto(photoPart)
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Error preparando imagen", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
 
-                // ✅ 2) Subir al backend
-                viewModel.updateProfilePhoto(requireContext(), uri)
+    // Abre galería → lanza uCrop (1:1)
+    private val pickImageLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri != null) {
+                val destUri = Uri.fromFile(
+                    File(requireContext().cacheDir, "crop_profile_${System.currentTimeMillis()}.jpg")
+                )
+                val ctx = requireContext()
+                val intent = UCrop.of(uri, destUri)
+                    .withAspectRatio(1f, 1f)
+                    .withMaxResultSize(512, 512)
+                    .getIntent(ctx)
+                intent.setClass(ctx, FixedUCropActivity::class.java)
+                cropProfileLauncher.launch(intent)
             }
         }
 
@@ -81,17 +117,21 @@ class PerfilFragment : Fragment() {
 
         setupMenu()      // ✅ reemplaza a toolbarPerfil menu
         setupViews()
+        setupLogros()
         observeViewModel()
 
         binding.btnEditFoto.setOnClickListener { pickImageLauncher.launch("image/*") }
         binding.imgFotoPerfil.setOnClickListener { pickImageLauncher.launch("image/*") }
+        binding.btnGrabarRuta.setOnClickListener {
+            findNavController().navigate(R.id.action_perfilFragment_to_createRouteFragment)
+        }
 
         setupMyPosts()
+        setupMyRoutes()
 
         viewModel.loadUserData()
         postsViewModel.loadMyPosts()
-
-        setupDemoLists()
+        routesViewModel.loadMyRoutes()
     }
 
     /**
@@ -112,7 +152,12 @@ class PerfilFragment : Fragment() {
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 return when (menuItem.itemId) {
                     R.id.action_share -> {
-                        Toast.makeText(requireContext(), "Compartir perfil (pendiente)", Toast.LENGTH_SHORT).show()
+                        val user = viewModel.userData.value
+                        val texto = "¡Sígueme en SenderLink! Soy ${user?.nombre ?: "un senderista"}, nivel ${user?.progreso?.level ?: 1} - ${user?.progreso?.rankTitle ?: "Explorer"}"
+                        startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, texto)
+                        }, "Compartir perfil"))
                         true
                     }
                     else -> false
@@ -132,11 +177,16 @@ class PerfilFragment : Fragment() {
         }
 
         binding.btnCambiarVista.setOnClickListener {
-            Toast.makeText(requireContext(), "Cambiar vista (pendiente)", Toast.LENGTH_SHORT).show()
+            isRoutesGridMode = !isRoutesGridMode
+            binding.btnCambiarVista.text = if (isRoutesGridMode) "☰" else "⊞"
+            binding.rvRutasPublicadas.layoutManager = if (isRoutesGridMode)
+                GridLayoutManager(requireContext(), 2)
+            else
+                LinearLayoutManager(requireContext())
         }
 
         binding.txtVerTodosLogros.setOnClickListener {
-            Toast.makeText(requireContext(), "Ver todos los logros (pendiente)", Toast.LENGTH_SHORT).show()
+            showLogrosBottomSheet(viewModel.userData.value?.badges ?: emptyList())
         }
     }
 
@@ -161,9 +211,37 @@ class PerfilFragment : Fragment() {
                     .error(R.drawable.bg_avatar_circle)
                     .into(binding.imgFotoPerfil)
 
+                // XP / nivel
+                val level = user.progreso?.level ?: 1
+                val xp = user.progreso?.xp ?: 0
+                val rank = user.progreso?.rankTitle ?: "Explorer"
+                val xpEnNivel = xp % 100
+                binding.txtNivel.text = "Nivel $level · $rank"
+                binding.progressXp.progress = xpEnNivel
+                binding.txtXp.text = "$xpEnNivel / 100 XP"
+
+                // Perfil completado
+                val completion = user.profileCompletion
+                binding.txtProfileCompletion.text = "$completion%"
+                binding.progressPerfil.progress = completion
+
+                // Imagen de fondo del perfil (foto del usuario con alpha)
+                if (user.foto.isNotBlank()) {
+                    Glide.with(this)
+                        .load(user.foto)
+                        .centerCrop()
+                        .into(binding.imgBackgroundProfile)
+                }
+
+                // Logros
+                achievementAdapter.submitList(user.badges)
+
             } else {
                 binding.txtNombre.text = "Usuario"
                 binding.txtSubtitulo.text = "Explorador · España"
+                binding.txtNivel.text = "Nivel 1 · Explorer"
+                binding.progressXp.progress = 0
+                binding.txtXp.text = "0 / 100 XP"
 
                 Glide.with(this)
                     .load(null as String?)
@@ -195,10 +273,15 @@ class PerfilFragment : Fragment() {
 
                     viewModel.handleUpdatePhotoResult(result)
 
-                    // ✅ refresca cards inmediatamente
-                    myPostsAdapter.setCurrentUserPhotoUrl(result.data.foto)
+                    // Actualiza el caché global → ComunidadFragment y cualquier observer
+                    // de UserManager.currentUser reciben la nueva foto automáticamente
+                    com.senderlink.app.utils.UserManager.getInstance().updateCache(result.data)
 
-                    // ✅ refresca posts desde backend
+                    // Refresca cards inmediatamente
+                    val uid = FirebaseAuth.getInstance().currentUser?.uid
+                    myPostsAdapter.setCurrentUserPhotoUrl(result.data.foto, uid)
+
+                    // Refresca posts desde backend
                     postsViewModel.loadMyPosts()
                 }
 
@@ -214,11 +297,16 @@ class PerfilFragment : Fragment() {
         }
     }
 
+    private fun setupLogros() {
+        achievementAdapter = AchievementAdapter()
+        binding.rvLogros.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        binding.rvLogros.adapter = achievementAdapter
+    }
+
     private fun setupMyPosts() {
         myPostsAdapter = PostAdapter(
-            onLike = {
-                Toast.makeText(requireContext(), "Like (pendiente)", Toast.LENGTH_SHORT).show()
-            },
+            onLike = { post -> postsViewModel.toggleLike(post.id) },
             onComments = { post -> showCommentsBottomSheet(post) }
         )
 
@@ -237,8 +325,74 @@ class PerfilFragment : Fragment() {
         }
 
         binding.txtVerMisPublicaciones.setOnClickListener {
-            Toast.makeText(requireContext(), "Ver todo (pendiente)", Toast.LENGTH_SHORT).show()
+            findNavController().navigate(R.id.action_perfilFragment_to_misPublicacionesFragment)
         }
+    }
+
+    private fun setupMyRoutes() {
+        myRoutesAdapter = RouteAdapter { route ->
+            val action = PerfilFragmentDirections
+                .actionPerfilFragmentToRouteDetailFragment(route.id)
+            findNavController().navigate(action)
+        }
+
+        binding.rvRutasPublicadas.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvRutasPublicadas.adapter = myRoutesAdapter
+        binding.rvRutasPublicadas.isNestedScrollingEnabled = false
+
+        routesViewModel.routes.observe(viewLifecycleOwner) { routes ->
+            myRoutesAdapter.submitList(routes)
+        }
+
+        routesViewModel.error.observe(viewLifecycleOwner) { msg ->
+            if (msg != null) {
+                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+                routesViewModel.clearError()
+            }
+        }
+    }
+
+    private fun showLogrosBottomSheet(earnedBadges: List<String>) {
+        val dialog = BottomSheetDialog(requireContext())
+        val v = layoutInflater.inflate(R.layout.bottomsheet_logros, null)
+        dialog.setContentView(v)
+
+        val rv = v.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvTodosLogros)
+        rv.layoutManager = androidx.recyclerview.widget.GridLayoutManager(requireContext(), 3)
+
+        // Mostrar todos los badges posibles: desbloqueados en color, bloqueados en gris
+        val allBadges = AchievementAdapter.ALL_BADGES
+        val adapterDesbloqueados = AchievementAdapter(locked = false)
+        val adapterBloqueados = AchievementAdapter(locked = true)
+
+        // Combinar en un adapter que mezcle ambos estados
+        val mixedAdapter = object : androidx.recyclerview.widget.RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerView.ViewHolder>() {
+            inner class VH(val binding: com.senderlink.app.databinding.ItemAchievementBinding) :
+                androidx.recyclerview.widget.RecyclerView.ViewHolder(binding.root)
+
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+                val binding = com.senderlink.app.databinding.ItemAchievementBinding.inflate(
+                    layoutInflater, parent, false
+                )
+                return VH(binding)
+            }
+
+            override fun onBindViewHolder(holder: androidx.recyclerview.widget.RecyclerView.ViewHolder, position: Int) {
+                val badge = allBadges[position]
+                val unlocked = earnedBadges.contains(badge)
+                val (iconRes, label) = AchievementAdapter.badgeInfo(badge)
+                val vhTyped = holder as VH
+                vhTyped.binding.imgAch.setImageResource(iconRes)
+                vhTyped.binding.txtAch.text = label
+                vhTyped.binding.imgAch.alpha = if (unlocked) 1f else 0.25f
+                vhTyped.binding.txtAch.alpha = if (unlocked) 1f else 0.25f
+            }
+
+            override fun getItemCount() = allBadges.size
+        }
+
+        rv.adapter = mixedAdapter
+        dialog.show()
     }
 
     private fun showCommentsBottomSheet(post: Post) {
@@ -256,6 +410,7 @@ class PerfilFragment : Fragment() {
 
         communityRepo.getComments(post.id).enqueue(object : Callback<CommentsResponse> {
             override fun onResponse(call: Call<CommentsResponse>, response: Response<CommentsResponse>) {
+                if (!isAdded) return
                 if (response.isSuccessful && response.body()?.ok == true) {
                     commentAdapter.submitList(response.body()?.data ?: emptyList())
                 } else {
@@ -264,7 +419,8 @@ class PerfilFragment : Fragment() {
             }
 
             override fun onFailure(call: Call<CommentsResponse>, t: Throwable) {
-                Toast.makeText(requireContext(), t.message ?: "Error de red", Toast.LENGTH_SHORT).show()
+                if (!isAdded) return
+                Toast.makeText(requireContext(), "Error de conexión", Toast.LENGTH_SHORT).show()
             }
         })
 
@@ -284,6 +440,7 @@ class PerfilFragment : Fragment() {
                         call: Call<CreateCommentResponse>,
                         response: Response<CreateCommentResponse>
                     ) {
+                        if (!isAdded) return
                         if (response.isSuccessful && response.body()?.ok == true) {
                             et.setText("")
                             communityRepo.getComments(post.id)
@@ -292,6 +449,7 @@ class PerfilFragment : Fragment() {
                                         call: Call<CommentsResponse>,
                                         response: Response<CommentsResponse>
                                     ) {
+                                        if (!isAdded) return
                                         if (response.isSuccessful && response.body()?.ok == true) {
                                             commentAdapter.submitList(response.body()?.data ?: emptyList())
                                         }
@@ -307,7 +465,8 @@ class PerfilFragment : Fragment() {
                     }
 
                     override fun onFailure(call: Call<CreateCommentResponse>, t: Throwable) {
-                        Toast.makeText(requireContext(), t.message ?: "Error de red", Toast.LENGTH_SHORT).show()
+                        if (!isAdded) return
+                        Toast.makeText(requireContext(), "Error de conexión", Toast.LENGTH_SHORT).show()
                     }
                 })
         }
@@ -325,6 +484,11 @@ class PerfilFragment : Fragment() {
         dialogView.findViewById<View>(R.id.optionEditProfile).setOnClickListener {
             dialog.dismiss()
             findNavController().navigate(R.id.action_perfilFragment_to_editProfileFragment)
+        }
+
+        dialogView.findViewById<View>(R.id.optionMessages).setOnClickListener {
+            dialog.dismiss()
+            findNavController().navigate(R.id.action_perfilFragment_to_conversationsFragment)
         }
 
         dialogView.findViewById<View>(R.id.optionLogout).setOnClickListener {
@@ -346,13 +510,12 @@ class PerfilFragment : Fragment() {
 
     private fun logout() {
         FirebaseAuth.getInstance().signOut()
+        com.senderlink.app.utils.UserManager.getInstance().clearCache()
         val intent = Intent(requireContext(), LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         activity?.finish()
     }
-
-    private fun setupDemoLists() { }
 
     override fun onDestroyView() {
         super.onDestroyView()

@@ -8,31 +8,31 @@ import com.google.gson.annotations.SerializedName
  */
 data class GroupMessage(
     @SerializedName("_id")
-    val id: String,
+    val id: String = "",
 
     @SerializedName("chatId")
-    val chatId: String,
+    val chatId: String = "",
 
     @SerializedName("senderUid")
-    val senderUid: String,
+    val senderUid: String = "",
 
     @SerializedName("senderName")
-    val senderName: String,
+    val senderName: String = "",
 
     @SerializedName("senderPhoto")
     val senderPhoto: String? = null,
 
     @SerializedName("text")
-    val text: String,
+    val text: String = "",
 
     @SerializedName("type")
     val type: String = "TEXT",
 
     @SerializedName("createdAt")
-    val createdAt: String,
+    val createdAt: String = "",
 
     @SerializedName("updatedAt")
-    val updatedAt: String
+    val updatedAt: String = ""
 ) {
     fun isMine(currentUid: String): Boolean = senderUid == currentUid
 
@@ -40,9 +40,10 @@ data class GroupMessage(
 
     fun getFormattedTime(): String {
         return try {
+            if (createdAt.length < 16) return ""
             createdAt.substring(11, 16) // "2026-01-21T14:30:00.000Z" → "14:30"
         } catch (e: Exception) {
-            "00:00"
+            ""
         }
     }
 

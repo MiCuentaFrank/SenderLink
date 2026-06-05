@@ -1,27 +1,29 @@
 package com.senderlink.app.view
 
 import android.os.Bundle
-import android.util.Log
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.updatePadding
-import androidx.navigation.NavController
-import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
-import com.google.android.material.appbar.AppBarLayout
-import com.google.android.material.appbar.MaterialToolbar
+import androidx.navigation.ui.NavigationUI
 import com.senderlink.app.R
 import com.senderlink.app.databinding.ActivityMainScreenBinding
+import com.senderlink.app.utils.UserManager
 
 class MainScreenActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainScreenBinding
-    private lateinit var navController: NavController
+    private val userManager = UserManager.getInstance()
+    private var statusBarHeight = 0
 
-    private lateinit var toolbar: MaterialToolbar
-    private lateinit var appBar: AppBarLayout
+    // Destinos donde el AppBar debe ser visible
+    private val appBarDestinations = setOf(
+        R.id.nav_home,
+        R.id.nav_comunidad,
+        R.id.nav_maps
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,85 +31,38 @@ class MainScreenActivity : AppCompatActivity() {
         binding = ActivityMainScreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // ✅ Views
-        toolbar = binding.toolbar
-        appBar = binding.appBarLayout
-
-        // ✅ Toolbar global
-        setSupportActionBar(toolbar)
-
-        // ✅ 1) Pintar la STATUS BAR del mismo color que tu AppBar (verde)
-        window.statusBarColor = getColor(R.color.sl_primary)
-
-        // ✅ 2) Iconos BLANCOS en status bar (porque el fondo es verde oscuro)
-        WindowInsetsControllerCompat(window, binding.root).isAppearanceLightStatusBars = false
-
-        // ✅ (Opcional recomendado) Iconos oscuros en nav bar si tu bottom nav es blanca
-        WindowInsetsControllerCompat(window, binding.root).isAppearanceLightNavigationBars = true
-
-        // ✅ NavController
+        // 1) Obtener el NavHostFragment
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        navController = navHostFragment.navController
+        val navController = navHostFragment.navController
 
-        // ✅ Solo insets abajo (gestos / nav bar)
-        ViewCompat.setOnApplyWindowInsetsListener(binding.bottomNavigationView) { v, insets ->
-            val bottomInset = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
-            v.updatePadding(bottom = bottomInset)
-            insets
+        // 2) Conectar BottomNavigation con NavController
+        NavigationUI.setupWithNavController(binding.bottomNavigationView, navController)
+
+        // 3) Cargar usuario y observar para actualizar el saludo
+        userManager.loadCurrentUser()
+        userManager.currentUser.observe(this) { _ ->
+            binding.tvUserGreeting.text = "¡Hola, ${userManager.getUserName()}!"
         }
 
-        setupBottomNavWithStateRestore()
-    }
-
-    private fun setupBottomNavWithStateRestore() {
-
-        binding.bottomNavigationView.setOnItemSelectedListener { item ->
-
-            // ✅ HOME especial
-            if (item.itemId == R.id.nav_home) {
-                if (navController.currentDestination?.id == R.id.nav_home) {
-                    return@setOnItemSelectedListener true
-                }
-                navController.popBackStack(R.id.nav_home, false)
-                Log.d("MainScreenActivity", "✅ Navegando a Home con backstack limpio")
-                return@setOnItemSelectedListener true
-            }
-
-            val options = NavOptions.Builder()
-                .setLaunchSingleTop(true)
-                .setRestoreState(true)
-                .setPopUpTo(
-                    navController.graph.startDestinationId,
-                    inclusive = false,
-                    saveState = true
-                )
-                .build()
-
-            return@setOnItemSelectedListener try {
-                navController.navigate(item.itemId, null, options)
-                true
-            } catch (e: IllegalArgumentException) {
-                Log.e("MainScreenActivity", "Error al navegar: ${e.message}")
-                false
-            }
-        }
-
-        binding.bottomNavigationView.setOnItemReselectedListener {
-            // no-op
-        }
-
+        // 4) Mostrar/ocultar AppBar según el destino activo
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            when (destination.id) {
-                R.id.nav_home ->
-                    binding.bottomNavigationView.menu.findItem(R.id.nav_home)?.isChecked = true
-                R.id.nav_comunidad ->
-                    binding.bottomNavigationView.menu.findItem(R.id.nav_comunidad)?.isChecked = true
-                R.id.nav_maps ->
-                    binding.bottomNavigationView.menu.findItem(R.id.nav_maps)?.isChecked = true
-                R.id.nav_perfil ->
-                    binding.bottomNavigationView.menu.findItem(R.id.nav_perfil)?.isChecked = true
+            val showAppBar = destination.id in appBarDestinations
+            binding.appBarLayout.visibility = if (showAppBar) View.VISIBLE else View.GONE
+            binding.statusBarScrim.visibility = if (showAppBar) View.GONE else View.VISIBLE
+            (binding.navHostFragment.layoutParams as? ConstraintLayout.LayoutParams)?.let {
+                it.topMargin = if (showAppBar) 0 else statusBarHeight
+                binding.navHostFragment.requestLayout()
             }
+        }
+
+        // 5) Edge-to-edge: ajustar tamaño del scrim y padding del bottom nav
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
+            val bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            statusBarHeight = bars.top
+            binding.statusBarScrim.layoutParams.height = statusBarHeight
+            binding.bottomNavigationView.setPadding(0, 0, 0, bars.bottom)
+            windowInsets
         }
     }
 }

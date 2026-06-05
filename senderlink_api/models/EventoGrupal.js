@@ -117,14 +117,16 @@ const EventoGrupalSchema = new mongoose.Schema(
 EventoGrupalSchema.index({ organizadorUid: 1, createdAt: -1 });
 EventoGrupalSchema.index({ estado: 1, fecha: -1 });
 EventoGrupalSchema.index({ routeId: 1, fecha: -1 });
+EventoGrupalSchema.index({ "participantes.uid": 1 });
 
 // ===========================================
 // MIDDLEWARE: Generar chatId automático
 // ===========================================
-EventoGrupalSchema.pre("save", function () {
+EventoGrupalSchema.pre("save", function (next) {
   if (!this.chatId) {
     this.chatId = `evento_${this._id}_${Date.now()}`;
   }
+  next();
 });
 
 
